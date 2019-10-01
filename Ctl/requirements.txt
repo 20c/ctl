@@ -1,5 +1,5 @@
 munge >=0.4, <1
 cfu >= 1.2.0, < 2
 grainy >= 1.4.0, <2
-git-url-parse==1.1.0
+git-url-parse==1.2.2
 pluginmgr >= 0.6
