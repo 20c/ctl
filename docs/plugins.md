@@ -1,6 +1,9 @@
 ### [Chain](plugins/chain.md)
 Chain plugins
 
+### [Changelog](plugins/changelog.md)
+Manage CHANGELOG.(md|yaml) files
+
 ### [Command](plugins/command.md)
 Run Custom commands
 

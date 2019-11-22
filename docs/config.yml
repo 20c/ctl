@@ -59,6 +59,10 @@ ctl:
           - stage: copy
             plugin: copy
 
+    # plugin: changelog
+
+    - name: changelog
+      type: changelog
 
   permissions:
     - namespace: ctl

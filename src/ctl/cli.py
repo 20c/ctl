@@ -10,7 +10,7 @@ import grainy.core
 import ctl
 import ctl.plugins.all
 from ctl import Context, Ctl, plugin
-from ctl.exceptions import PermissionDenied, ConfigError
+from ctl.exceptions import PermissionDenied, ConfigError, PluginOperationStopped
 from ctl.events import common_events
 
 
@@ -180,6 +180,9 @@ def main(argv=sys.argv, run=True):
     try:
         ctlr.usage_log.info("ran command: `{}`".format(" ".join(argv[1:])), typ="usage")
         plugin_obj.execute(**vars(args))
+    except PluginOperationStopped as exc:
+        exc.plugin.log.error(u"{}".format(exc))
+        sys.exit(1)
     except Exception as e:
         ctlr.log.error("command error {}".format(e))
         ctlr.log.error(traceback.format_exc())

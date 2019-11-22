@@ -14,6 +14,7 @@ nav:
     - ctl.auth: api/auth.md
     - ctl.plugins: api/ctl.plugins.md
     - ctl.plugins.chain: api/ctl.plugins.chain.md
+    - ctl.plugins.changelog: api/ctl.plugins.changelog.md
     - ctl.plugins.copy: api/ctl.plugins.copy.md
     - ctl.plugins.command: api/ctl.plugins.command.md
     - ctl.plugins.email: api/ctl.plugins.email.md

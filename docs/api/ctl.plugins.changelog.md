@@ -1,0 +1,1 @@
+{pymdgen:ctl.plugins.changelog}

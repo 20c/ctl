@@ -1,0 +1,15 @@
+ctl:
+  plugins:
+
+    - type: changelog
+      name: changelog
+      config:
+        # you can paths for the files here
+        # these are also exposed to the CLI
+        # data_file: CHANGELOG.yaml
+        # md_file: CHANGELOG.md
+
+
+  permissions:
+    - namespace: ctl
+      permission: crud
