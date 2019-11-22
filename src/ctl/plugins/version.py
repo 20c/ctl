@@ -9,9 +9,13 @@ import argparse
 from ctl.plugins import ExecutablePlugin
 from ctl.plugins.repository import RepositoryPlugin
 from ctl.plugins.git import temporary_plugin as temporary_git_plugin
+from ctl.plugins.changelog import (
+    temporary_plugin as temporary_changelog_plugin,
+    ChangelogVersionMissing,
+)
 from ctl.util.versioning import bump_semantic, version_string
 from ctl.auth import expose
-from ctl.exceptions import UsageError, OperationNotExposed
+from ctl.exceptions import UsageError, OperationNotExposed, PluginOperationStopped
 from ctl.docs import pymdgen_confu_types
 
 
@@ -35,6 +39,11 @@ class VersionPluginConfig(confu.schema.Schema):
     branch_release = confu.schema.Str(
         default="master",
         help="the breanch to merge to when " "the --merge-release flag is present",
+    )
+
+    changelog_validate = confu.schema.Bool(
+        default=True,
+        help="If a changelog data file (CHANGELOG.yaml) exists, validate before tagging",
     )
 
 
@@ -128,6 +137,8 @@ class VersionPlugin(ExecutablePlugin):
             "version after bumping `major`, `minor` or `patch`",
             action="store_true",
         )
+
+        confu_cli_args.add(op_bump_parser, "changelog_validate")
 
         cls.add_repo_argument(op_bump_parser, plugin_config)
 
@@ -304,7 +315,7 @@ class VersionPlugin(ExecutablePlugin):
         if version not in ["major", "minor", "patch", "dev"]:
             raise ValueError("Invalid semantic version: {}".format(version))
 
-        bump_dev = version != "dev"
+        is_dev = version == "dev"
 
         current = repo_plugin.version
         version = bump_semantic(current, version)
@@ -315,8 +326,53 @@ class VersionPlugin(ExecutablePlugin):
             )
         )
 
+        if self.get_config("changelog_validate") and not is_dev:
+            self.validate_changelog(repo, version)
+
         self.tag(version=version_string(version), repo=repo, **kwargs)
 
-        if bump_dev and not self.no_auto_dev:
+        if not is_dev and not self.no_auto_dev:
             self.log.info("Creating dev tag")
             self.bump(version="dev", repo=repo, **kwargs)
+
+    def validate_changelog(self, repo, version, data_file="CHANGELOG.yaml"):
+
+        """
+        Checks for the existance of a changelog data file
+        like CHANGELOG.yaml or CHANGELOG.json and
+        if found will validate that the specified
+        version exists.
+
+        Will raise a KeyError on validation failure
+
+        **Arrguments**
+
+        - version (`str`): tag version (eg. 1.0.0)
+        - repo (`str`): name of existing repository type plugin instance
+        """
+
+        version = version_string(version)
+        repo_plugin = self.repository(repo)
+
+        changelog_path = os.path.join(repo_plugin.checkout_path, data_file)
+
+        if not os.path.exists(changelog_path):
+            return
+
+        changelog_plugin = temporary_changelog_plugin(
+            self.ctl, "{}_changelog".format(self.plugin_name), data_file=changelog_path
+        )
+
+        self.log.info(
+            "Found changelog data file at {} - validating ...".format(changelog_path)
+        )
+
+        try:
+            changelog_plugin.validate(changelog_path, version)
+        except ChangelogVersionMissing as exc:
+            raise PluginOperationStopped(
+                self,
+                "{}\nYou can set the --no-changelog-validate flag to skip this check".format(
+                    exc
+                ),
+            )

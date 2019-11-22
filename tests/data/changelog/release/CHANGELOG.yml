@@ -1,0 +1,19 @@
+1.0.0:
+  changed:
+  - first change
+  - second change
+  removed:
+  - first feature removed
+1.1.0:
+  added:
+  - first feature added
+  changed:
+  - first change
+  - second change
+unreleased:
+  added: []
+  changed: []
+  deprecated: []
+  fixed: []
+  removed: []
+  security: []

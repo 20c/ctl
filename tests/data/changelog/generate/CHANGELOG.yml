@@ -1,0 +1,13 @@
+unreleased:
+  changed:
+    - first change
+    - second change
+  added:
+    - first feature added
+
+1.0.0:
+  changed:
+    - first change
+    - second change
+  removed:
+    - first feature removed

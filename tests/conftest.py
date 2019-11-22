@@ -1,6 +1,8 @@
 import os
 import pytest
 
+import pytest_filedata
+
 import ctl
 
 
@@ -22,3 +24,12 @@ def ctlr(config_dir):
 @pytest.fixture(params=["permission_denied"])
 def ctldeny(config_dir):
     return ctl.Ctl(config_dir=os.path.join(config_dir, "permission_denied"))
+
+
+pytest_filedata.setup(os.path.dirname(__file__))
+
+def pytest_generate_tests(metafunc):
+    for fixture in metafunc.fixturenames:
+        if fixture.startswith('data_'):
+            data = pytest_filedata.get_data(fixture)
+            metafunc.parametrize(fixture, list(data.values()), ids=list(data.keys()))
