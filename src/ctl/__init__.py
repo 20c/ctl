@@ -211,7 +211,7 @@ class Context:
         user_home = os.path.expanduser("~")
 
         self.tmpdir = os.path.abspath(os.path.join(self.home, "tmp"))
-        self.cachedir = os.path.abspath(os.path.join(user_home, ".ctl", "cache"))
+        self.cachedir = os.path.abspath(os.path.join(user_home, ".cache", "ctl"))
         self.user_home = user_home
 
         if not os.path.exists(self.tmpdir):

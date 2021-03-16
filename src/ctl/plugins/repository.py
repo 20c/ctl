@@ -25,7 +25,7 @@ class PluginConfig(confu.schema.Schema):
         help="checkout to this local "
         "location - if not specified "
         "will default to "
-        "~/.ctl/cache/{repo_url}",
+        "~/.cache/ctl/repo/{repo_url}",
     )
 
     branch = confu.schema.Str(help="Checkout this branch", default="master")
@@ -156,7 +156,7 @@ class RepositoryPlugin(ExecutablePlugin):
             # print("resource", parsed_url.resource)
 
             self.checkout_path = os.path.join(
-                self.ctl.cachedir, parsed_url.resource, parsed_url.pathname
+                self.ctl.cachedir, "repo", parsed_url.resource, parsed_url.pathname
             )
 
         # while checkout patch can be relative in the config, we want
