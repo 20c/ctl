@@ -49,7 +49,6 @@ class Semver2Plugin(VersionBasePlugin):
             "--prerelease",
             type=str,
             help="tag a prerelease with the specified prerlease name",
-            default="rc",
         )
 
         # operation `release`
