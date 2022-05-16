@@ -37,6 +37,9 @@ def test_process(tmpdir, ctlr):
 
         if os.path.splitext(processed)[1] == ".sh":
             assert bool(os.stat(processed).st_mode & stat.S_IXUSR)
+        else:
+            assert not bool(os.stat(processed).st_mode & stat.S_IXUSR)
+
 
 
 def test_expose_vars(tmpdir, ctlr):
