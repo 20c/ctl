@@ -106,7 +106,7 @@ def test_execute(tmpdir, ctlr):
     assert dummy_repo._tag == "1.0.0"
 
     plugin.execute(
-        op="bump", version="patch", repository="dummy_repo", init=True, no_auto_dev=True
+        op="bump", version="patch", repository="dummy_repo", init=True
     )
     assert dummy_repo._tag == "1.0.1"
 

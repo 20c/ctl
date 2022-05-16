@@ -135,23 +135,6 @@ class VersionBasePlugin(ExecutablePlugin):
     def init_version(self, value):
         self._init_version = value
 
-    @property
-    def no_auto_dev(self):
-        """
-        `True` if we do **NOT** want to automatically bump a dev version when a major
-        minor or patch version is bumped
-        """
-        return getattr(self, "_no_auto_dev", False)
-
-    @no_auto_dev.setter
-    def no_auto_dev(self, value):
-        self._no_auto_dev = value
-
-    def execute(self, **kwargs):
-        super().execute(**kwargs)
-        self.no_auto_dev = kwargs.get("no_auto_dev", False)
-        self.init_version = kwargs.get("init", False)
-
     def repository(self, target):
         """
         Return plugin instance for repository

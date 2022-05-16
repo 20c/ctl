@@ -60,12 +60,6 @@ class VersionPlugin(VersionBasePlugin):
         )
 
         op_bump_parser = parsers.get("op_bump_parser")
-        op_bump_parser.add_argument(
-            "--no-auto-dev",
-            help="disable automatic bumping of dev "
-            "version after bumping `major`, `minor` or `patch`",
-            action="store_true",
-        )
 
         # operations `merge_release`
         op_mr_parser = sub.add_parser(
@@ -180,7 +174,3 @@ class VersionPlugin(VersionBasePlugin):
             self.validate_changelog(repo, version)
 
         self.tag(version=version_string(version), repo=repo, **kwargs)
-
-        if not is_dev and not self.no_auto_dev:
-            self.log.info("Creating dev tag")
-            self.bump(version="dev", repo=repo, **kwargs)
