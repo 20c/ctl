@@ -4,34 +4,11 @@ Unreleased:
   - '`version tag/bump` support for poetry based projects (#27)'
   - '`semver2` plugin (#20)`'
   - '`remote` config attribute for repository plugins'
-  changed: []
-  deprecated: []
   fixed:
   - version plugins no longer mangle pyproject.toml formatting (#35)
   - git plugin will now always set remote and branch for pull and push
   - semver2 plugin always trying to tag a prerelease during bump action (#39)
-  removed: []
-  security: []
-0.2.0:
-  changed:
-  - 'pypi plugin: config `repository` changed to `pypi_repository` (#2)'
-  - 'pypi plugin: config `target` changed to `repository` (#2)'
-0.3.0:
-  added:
-  - '`venv` plugin: `sync_setup` operation added'
-  - '`confuargparserouter`: better way to route confu generated cli parameters to
-    sub parsers'
-  - '`changelog` plugin`'
-  - '`version` plugin: changelog validation'
-  fixed:
-  - 'fix #13: plugin.expose_vars: don''t raise on io error'
-  - 'fix #5: fix config error handling for errors that happen outside of plugin config'
-  - 'fix #6: fix semantic version bumping when the current version is truncated'
-0.3.1:
-  changed:
-  - switch to confu package, away from cfu (same version and codebase, different package
-    name)
-  - update test requirements for pyaml according to python version
+  - changelog version sorting issues during generate and release (#38)
 1.0.0:
   added:
   - python 3.7 support (#15)
@@ -49,3 +26,23 @@ Unreleased:
   - python2.7 support (#21)
   - python3.4 support (#21)
   - python3.5 support (#21)
+0.3.1:
+  changed:
+  - switch to confu package, away from cfu (same version and codebase, different package
+    name)
+  - update test requirements for pyaml according to python version
+0.3.0:
+  added:
+  - '`venv` plugin: `sync_setup` operation added'
+  - '`confuargparserouter`: better way to route confu generated cli parameters to
+    sub parsers'
+  - '`changelog` plugin`'
+  - '`version` plugin: changelog validation'
+  fixed:
+  - 'fix #13: plugin.expose_vars: don''t raise on io error'
+  - 'fix #5: fix config error handling for errors that happen outside of plugin config'
+  - 'fix #6: fix semantic version bumping when the current version is truncated'
+0.2.0:
+  changed:
+  - 'pypi plugin: config `repository` changed to `pypi_repository` (#2)'
+  - 'pypi plugin: config `target` changed to `repository` (#2)'

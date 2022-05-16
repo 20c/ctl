@@ -36,6 +36,7 @@ grainy = "^1.4"
 git-url-parse = "^1.1"
 pluginmgr = "^1"
 semver = "<=3"
+natsort = "^8"
 
 [tool.poetry.dev-dependencies]
 # docs

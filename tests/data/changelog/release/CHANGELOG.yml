@@ -5,15 +5,15 @@ Unreleased:
   deprecated: []
   removed: []
   security: []
-1.0.0:
-  changed:
-  - first change
-  - second change
-  removed:
-  - first feature removed
 1.1.0:
   added:
   - first feature added
   changed:
   - first change
   - second change
+1.0.0:
+  changed:
+  - first change
+  - second change
+  removed:
+  - first feature removed
