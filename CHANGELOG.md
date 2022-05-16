@@ -12,6 +12,8 @@
 - git plugin will now always set remote and branch for pull and push
 - semver2 plugin always trying to tag a prerelease during bump action (#39)
 - changelog version sorting issues during generate and release (#38)
+### Removed
+- version plugin: automatic creation of dev tags (#46)
 
 
 ## 1.0.0
