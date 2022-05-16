@@ -8,6 +8,7 @@ import re
 
 import confu.schema
 import munge
+from natsort import natsorted
 
 import ctl
 from ctl.auth import expose
@@ -151,6 +152,20 @@ class ChangeLogPlugin(ExecutablePlugin):
         fn = self.get_op(kwargs.get("op"))
         fn(**kwargs)
 
+    def sort_changelog(self, changelog):
+        """
+        Takes a changelog `dict` and sorts keys by version using
+        natural sort
+
+        Returns the sorted `dict`
+        """
+
+        changelog_list = []
+        for key in natsorted(list(changelog.keys()), reverse=True):
+            changelog_list.append((key, changelog.get(key)))
+
+        return dict(changelog_list)
+
     @expose("ctl.{plugin_name}.release")
     def release(self, version, data_file, **kwargs):
         """
@@ -179,6 +194,8 @@ class ChangeLogPlugin(ExecutablePlugin):
 
         changelog[version] = release_section
         changelog["Unreleased"] = {section: [] for section in CHANGELOG_SECTIONS}
+
+        changelog = self.sort_changelog(changelog)
 
         ext = os.path.splitext(data_file)[1][1:]
         codec = munge.get_codec(ext)
@@ -301,7 +318,7 @@ class ChangeLogPlugin(ExecutablePlugin):
             for version, changes in list(data.items())
         ]
 
-        releases = sorted(releases, key=lambda i: i.get("version"), reverse=True)
+        releases = natsorted(releases, key=lambda i: i.get("version"), reverse=True)
 
         for release in releases:
             out.extend(["", "", "## {version}".format(**release)])
@@ -358,7 +375,7 @@ class ChangeLogPlugin(ExecutablePlugin):
                 change_list.append(match_change.group(1))
                 continue
 
-        return changelog
+        return self.sort_changelog(changelog)
 
     def version_exists(self, data_file, version):
         """
