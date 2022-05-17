@@ -4,6 +4,8 @@ Unreleased:
   - '`version tag/bump` support for poetry based projects (#27)'
   - '`semver2` plugin (#20)`'
   - '`remote` config attribute for repository plugins'
+  changed:
+  - default cache dir location (#29)
   fixed:
   - version plugins no longer mangle pyproject.toml formatting (#35)
   - git plugin will now always set remote and branch for pull and push
