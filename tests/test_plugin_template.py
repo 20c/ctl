@@ -1,4 +1,5 @@
 import os
+import stat
 
 from util import instantiate_test_plugin
 
@@ -28,10 +29,17 @@ def test_process(tmpdir, ctlr):
     plugin = instantiate(tmpdir, ctlr)
     plugin.execute()
 
-    assert len(plugin.debug_info["rendered"]) == 2
+    assert len(plugin.debug_info["rendered"]) == 3
     for processed in plugin.debug_info["rendered"]:
         with open(processed) as fh:
             assert fh.read() == "some content first variable\n"
+
+
+        if os.path.splitext(processed)[1] == ".sh":
+            assert bool(os.stat(processed).st_mode & stat.S_IXUSR)
+        else:
+            assert not bool(os.stat(processed).st_mode & stat.S_IXUSR)
+
 
 
 def test_expose_vars(tmpdir, ctlr):

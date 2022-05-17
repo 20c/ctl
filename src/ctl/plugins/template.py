@@ -158,3 +158,5 @@ class TemplatePlugin(CopyPlugin):
         self.log.info(self.output(path))
         self.engine.render(path, out_dir=self.output(), env=self.tmpl_env)
         self.debug_append("rendered", self.output(path))
+
+        os.chmod(self.output(path), os.stat(self.source(path)).st_mode)
