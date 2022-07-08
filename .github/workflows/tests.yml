@@ -15,7 +15,7 @@ jobs:
         run: |
             poetry run pre-commit run --all-files
   test:
-    #needs: linting
+    needs: linting
     strategy:
       fail-fast: false
       matrix:
