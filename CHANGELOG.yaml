@@ -14,6 +14,7 @@ Unreleased:
   - template plugin will now copy file permissions (#37)
   removed:
   - 'version plugin: automatic creation of dev tags (#46)'
+  - python 3.6 support (#43)
 1.0.0:
   added:
   - python 3.7 support (#15)
