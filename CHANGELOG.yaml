@@ -4,6 +4,7 @@ Unreleased:
   - '`version tag/bump` support for poetry based projects (#27)'
   - '`semver2` plugin (#20)`'
   - '`remote` config attribute for repository plugins'
+  - python 3.10 support (#43)
   changed:
   - default cache dir location (#29)
   fixed:
