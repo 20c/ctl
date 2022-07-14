@@ -7,6 +7,7 @@
 - `version tag/bump` support for poetry based projects (#27)
 - `semver2` plugin (#20)`
 - `remote` config attribute for repository plugins
+- python 3.10 support (#43)
 ### Fixed
 - version plugins no longer mangle pyproject.toml formatting (#35)
 - git plugin will now always set remote and branch for pull and push
@@ -17,6 +18,7 @@
 - default cache dir location (#29)
 ### Removed
 - version plugin: automatic creation of dev tags (#46)
+- python 3.6 support (#43)
 
 
 ## 1.0.0

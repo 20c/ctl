@@ -4,6 +4,7 @@ Unreleased:
   - '`version tag/bump` support for poetry based projects (#27)'
   - '`semver2` plugin (#20)`'
   - '`remote` config attribute for repository plugins'
+  - python 3.10 support (#43)
   changed:
   - default cache dir location (#29)
   fixed:
@@ -14,6 +15,7 @@ Unreleased:
   - template plugin will now copy file permissions (#37)
   removed:
   - 'version plugin: automatic creation of dev tags (#46)'
+  - python 3.6 support (#43)
 1.0.0:
   added:
   - python 3.7 support (#15)
