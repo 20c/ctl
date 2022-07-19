@@ -14,6 +14,7 @@
 - semver2 plugin always trying to tag a prerelease during bump action (#39)
 - changelog version sorting issues during generate and release (#38)
 - template plugin will now copy file permissions (#37)
+- reposiotry plugins: when specifying a branch that does not exist locally or remotely the branch will be created (#47)
 ### Changed
 - default cache dir location (#29)
 ### Removed

@@ -168,4 +168,4 @@ class RepositoryPlugin(ExecutablePlugin):
 
         self.clone()
         if branch != self.branch:
-            self.checkout(branch)
+            self.checkout(branch, create=True)
