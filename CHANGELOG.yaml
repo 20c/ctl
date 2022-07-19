@@ -13,6 +13,7 @@ Unreleased:
   - semver2 plugin always trying to tag a prerelease during bump action (#39)
   - changelog version sorting issues during generate and release (#38)
   - template plugin will now copy file permissions (#37)
+  - 'reposiotry plugins: when specifying a branch that does not exist locally or remotely the branch will be created (#47)'
   removed:
   - 'version plugin: automatic creation of dev tags (#46)'
   - python 3.6 support (#43)
