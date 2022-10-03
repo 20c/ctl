@@ -42,7 +42,7 @@ class TemplatePluginConfig(CopyPluginConfig):
 
 def update(a, b):
     for key, value in list(b.items()):
-        if isinstance(value, collections.Mapping):
+        if isinstance(value, collections.abc.Mapping):
             a[key] = update(a.get(key, {}), value)
         else:
             a[key] = value
