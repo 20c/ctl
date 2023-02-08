@@ -23,7 +23,7 @@ def init_tmp_repo(tmpdir):
         shell=True,
     )
     subprocess.call(
-        ["cd {path}; git push -u origin master;".format(path=repo_path_clone)],
+        [f"cd {repo_path_clone}; git push -u origin master;"],
         shell=True,
     )
 

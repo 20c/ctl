@@ -62,7 +62,6 @@ class LogPlugin(ctl.plugins.PluginBase):
         self.loggers = loggers
 
     def configure_logger(self, logger_name, logger_config):
-
         """
         Configure python logger from plugin config
 
@@ -88,7 +87,6 @@ class LogPlugin(ctl.plugins.PluginBase):
             logger.addHandler(fh)
 
     def attach_to_logger(self, logger_name):
-
         """
         Attach plugin to python logger
 

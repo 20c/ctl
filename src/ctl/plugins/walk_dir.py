@@ -76,7 +76,6 @@ class WalkDirPlugin(ctl.plugins.ExecutablePlugin):
         config = WalkDirPluginConfig("config")
 
     def prepare(self, **kwargs):
-
         """
         prepare plugin for execution
 
@@ -102,7 +101,6 @@ class WalkDirPlugin(ctl.plugins.ExecutablePlugin):
             os.makedirs(self._output)
 
     def source(self, path=None):
-
         """
         Returns the source path
 
@@ -123,7 +121,6 @@ class WalkDirPlugin(ctl.plugins.ExecutablePlugin):
         return self._source
 
     def output(self, path=None):
-
         """
         Returns the output path
 
@@ -146,7 +143,6 @@ class WalkDirPlugin(ctl.plugins.ExecutablePlugin):
         return self._output
 
     def execute(self, **kwargs):
-
         """
         Execute the plugin
 
@@ -166,7 +162,7 @@ class WalkDirPlugin(ctl.plugins.ExecutablePlugin):
 
         self._source = self.render_tmpl(self._source)
 
-        self.source_regex = fr"^{self.source()}/"
+        self.source_regex = rf"^{self.source()}/"
 
         self.process_files()
 
@@ -186,7 +182,6 @@ class WalkDirPlugin(ctl.plugins.ExecutablePlugin):
                 for filepath, filename in [
                     (os.path.join(path, _f), _f) for _f in filenames
                 ]:
-
                     if self.skip_dotfiles and filename[0] == ".":
                         continue
 

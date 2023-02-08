@@ -89,7 +89,6 @@ try:
             __complex__
         ) = __pow__ = __rpow__ = __sub__ = __rsub__ = _fail_with_undefined_error
 
-
 except ImportError:
 
     class IgnoreUndefined:

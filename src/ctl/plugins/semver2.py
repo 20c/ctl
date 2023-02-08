@@ -25,10 +25,7 @@ class Semver2Plugin(VersionBasePlugin):
 
     @classmethod
     def add_arguments(cls, parser, plugin_config, confu_cli_args):
-
-        parsers = super(Semver2Plugin, cls).add_arguments(
-            parser, plugin_config, confu_cli_args
-        )
+        parsers = super().add_arguments(parser, plugin_config, confu_cli_args)
 
         sub = parsers.get("sub")
         shared_parser = parsers.get("shared_parser")
@@ -61,7 +58,6 @@ class Semver2Plugin(VersionBasePlugin):
         cls.add_repo_argument(op_release_parser, plugin_config)
 
     def execute(self, **kwargs):
-
         super().execute(**kwargs)
 
         if "version" in kwargs and isinstance(kwargs["version"], list):

@@ -22,7 +22,6 @@ class LogAlertPlugin(LogPlugin):
         self.messages = []
 
     def alert(self, **kwargs):
-
         """
         Send alert through another plugin
 

@@ -18,7 +18,7 @@ def instantiate(tmpdir, ctlr=None, **kwargs):
             "pipfile": os.path.join(
                 os.path.dirname(__file__), "data", "venv", "Pipfile"
             ),
-            "python_version": "{}.{}".format(vi[0], vi[1]),
+            "python_version": f"{vi[0]}.{vi[1]}",
         }
     }
     print(config)

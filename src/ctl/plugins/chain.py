@@ -146,7 +146,6 @@ class ChainPlugin(ctl.plugins.ExecutablePlugin):
         self.log.info(f"completed chain `{self.plugin_name}`")
 
     def execute_stage(self, stage, num=1, total=1):
-
         """
         Execute a stage
 
@@ -162,7 +161,7 @@ class ChainPlugin(ctl.plugins.ExecutablePlugin):
         )
         plugin = self.other_plugin(stage["plugin"])
         fn = getattr(plugin, stage["action"]["name"], None)
-        if not isinstance(fn, collections.Callable):
+        if not isinstance(fn, collections.abc.Callable):
             raise AttributeError(
                 "Action `{action.name}` does not exist in plugin `{plugin}".format(
                     **stage

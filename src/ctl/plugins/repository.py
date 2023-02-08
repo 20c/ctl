@@ -148,7 +148,6 @@ class RepositoryPlugin(ExecutablePlugin):
         branch = self.get_config("branch")
 
         if not self.checkout_path:
-
             parsed_url = giturlparse.parse(self.repo_url)
 
             # print("pathname", parsed_url.pathname)

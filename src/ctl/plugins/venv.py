@@ -130,10 +130,9 @@ class VenvPlugin(command.CommandPlugin):
         """
 
         if not self.venv_exists(path):
-            raise UsageError("No virtualenv found at {}".format(path or self.output))
+            raise UsageError(f"No virtualenv found at {path or self.output}")
 
     def execute(self, **kwargs):
-
         self.kwargs = kwargs
 
         python_version = self.get_config("python_version")

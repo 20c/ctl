@@ -86,7 +86,6 @@ def test_set_repository_error(tmpdir, ctlr):
 
 
 def test_build_dist(tmpdir, ctlr):
-
     """
     Test building the dist files
     """
@@ -102,7 +101,6 @@ def test_build_dist(tmpdir, ctlr):
 
 
 def test_validate_dist(tmpdir, ctlr):
-
     """
     Test validating using twine check
     """

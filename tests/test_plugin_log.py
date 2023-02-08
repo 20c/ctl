@@ -1,4 +1,5 @@
 import logging
+
 from util import instantiate_test_plugin
 
 from ctl.log import ATTACHED

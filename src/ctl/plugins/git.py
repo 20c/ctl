@@ -104,7 +104,6 @@ class GitPlugin(RepositoryPlugin):
 
     @classmethod
     def add_arguments(cls, parser, plugin_config, confu_cli_args):
-
         shared_parser = argparse.ArgumentParser(add_help=False)
         group = shared_parser.add_mutually_exclusive_group(required=False)
         group.add_argument("--repo-url", type=str)
@@ -126,7 +125,6 @@ class GitPlugin(RepositoryPlugin):
         op_checkout_parser.add_argument("tag", nargs=1, help="tag or branch")
 
     def execute(self, **kwargs):
-
         """
         Execute plugin operation
 

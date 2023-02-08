@@ -43,10 +43,7 @@ class VersionPlugin(VersionBasePlugin):
 
     @classmethod
     def add_arguments(cls, parser, plugin_config, confu_cli_args):
-
-        parsers = super(VersionPlugin, cls).add_arguments(
-            parser, plugin_config, confu_cli_args
-        )
+        parsers = super().add_arguments(parser, plugin_config, confu_cli_args)
         sub = parsers.get("sub")
         shared_parser = parsers.get("shared_parser")
         group = parsers.get("group")
@@ -70,7 +67,6 @@ class VersionPlugin(VersionBasePlugin):
         cls.add_repo_argument(op_mr_parser, plugin_config)
 
     def execute(self, **kwargs):
-
         super().execute(**kwargs)
 
         if "version" in kwargs and isinstance(kwargs["version"], list):
