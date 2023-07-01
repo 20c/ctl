@@ -2,6 +2,10 @@ name: tests
 
 on: [push, pull_request]
 
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   linting:
@@ -14,6 +18,7 @@ jobs:
       - name: Run linters
         run: |
             poetry run black --check .
+
   test:
     needs: linting
     strategy:
