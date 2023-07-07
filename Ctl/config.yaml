@@ -4,6 +4,12 @@ ctl:
     - type: changelog
       name: changelog
 
+    - name: this_repo
+      type: git
+      config:
+        branch: main
+        repo_url: git@github.com:20c/ctl.git
+
     - name: version
       type: version
       config:
