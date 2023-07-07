@@ -71,7 +71,6 @@ class VersionBasePlugin(ExecutablePlugin):
 
     @classmethod
     def add_arguments(cls, parser, plugin_config, confu_cli_args):
-
         shared_parser = argparse.ArgumentParser(add_help=False)
         release_parser = argparse.ArgumentParser(add_help=False)
         group = release_parser.add_mutually_exclusive_group(required=False)
@@ -178,7 +177,6 @@ class VersionBasePlugin(ExecutablePlugin):
         return plugin
 
     def update_version_files(self, repo_plugin, version, files):
-
         """
         Finds the various files in a repo that will need to
         have new version values written, such as Ctl/VERSION
@@ -194,7 +192,6 @@ class VersionBasePlugin(ExecutablePlugin):
                 files.append(path)
 
     def update_ctl_version(self, repo_plugin, version):
-
         """
         Writes a new version to the Ctl/VERSION files
         """
@@ -204,7 +201,6 @@ class VersionBasePlugin(ExecutablePlugin):
         return repo_plugin.version_file
 
     def update_pyproject_version(self, repo_plugin, version):
-
         """
         Writes a new version to the pyproject.toml file
         if it exists
@@ -228,7 +224,6 @@ class VersionBasePlugin(ExecutablePlugin):
                 return
 
     def validate_changelog(self, repo, version, data_file="CHANGELOG.yaml"):
-
         """
         Checks for the existance of a changelog data file
         like CHANGELOG.yaml or CHANGELOG.json and

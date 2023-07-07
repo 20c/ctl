@@ -37,7 +37,6 @@ plugin = PluginManager("ctl.plugins")
 
 
 def plugin_cli_arguments(ctlr, parser, plugin_config):
-
     """
     set up cli arguments for the plugin
     """
@@ -75,7 +74,6 @@ def read_config(schema, config_dir, config_name="config", ctx=None):
         raise OSError(f"config dir not found at {conf_path}")
 
     for codec, filename in munge.find_datafile(config_name, conf_path):
-
         if tmpl:
             # if twentyc.tmpl was imported, render config before
             # loading it.
@@ -272,7 +270,6 @@ class Ctl:
     # def set_config_dir(self):
 
     def __init__(self, ctx=None, config_dir=None, full_init=True):
-
         self.init_context(ctx=ctx, config_dir=config_dir)
         self.init_logging()
 

@@ -115,7 +115,7 @@ class PyPIPlugin(release.ReleasePlugin):
         elif os.path.exists(os.path.join(path, "poetry.lock")):
             command.append("poetry build")
         else:
-            raise IOError("Could find neither setup.py nor poetry.lock")
+            raise OSError("Could find neither setup.py nor poetry.lock")
 
         self._run_commands(command)
 

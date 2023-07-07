@@ -14,7 +14,6 @@ class GitDummy(PluginBase):
 
 
 def test_apply():
-
     username = pwd.getpwuid(os.getuid()).pw_name
 
     config = {"config": {"git": "git_dummy"}}

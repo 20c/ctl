@@ -1,8 +1,8 @@
 import os
 import shutil
-import toml
 
 import pytest
+import toml
 from util import instantiate_version as instantiate
 
 import ctl
@@ -105,9 +105,7 @@ def test_execute(tmpdir, ctlr):
     plugin.execute(op="tag", version="1.0.0", repository="dummy_repo", init=True)
     assert dummy_repo._tag == "1.0.0"
 
-    plugin.execute(
-        op="bump", version="patch", repository="dummy_repo", init=True
-    )
+    plugin.execute(op="bump", version="patch", repository="dummy_repo", init=True)
     assert dummy_repo._tag == "1.0.1"
 
     with pytest.raises(ValueError, match="operation not defined"):

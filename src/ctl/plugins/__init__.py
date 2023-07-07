@@ -101,7 +101,6 @@ class PluginBase(pluginmgr.config.PluginBase):
     #        pass
 
     def __init__(self, plugin_config, ctx, *args, **kwargs):
-
         """
         **Argument(s)**:
 
@@ -244,7 +243,7 @@ class PluginBase(pluginmgr.config.PluginBase):
         if not op:
             # TODO UsageError
             raise ValueError("operation not defined")
-        elif not isinstance(getattr(self, op, None), collections.Callable):
+        elif not isinstance(getattr(self, op, None), collections.abc.Callable):
             # TODO Usage Error
             raise ValueError("invalid operation")
 

@@ -23,5 +23,5 @@ class pymdgen_confu_types:
     def confu_type_info(self, attr):
         attr_name = attr.__class__.__name__
         if getattr(attr, "item", None):
-            return "{}<{}>".format(attr_name, self.confu_type_info(attr.item))
+            return f"{attr_name}<{self.confu_type_info(attr.item)}>"
         return attr_name

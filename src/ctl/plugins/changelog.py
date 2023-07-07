@@ -88,7 +88,6 @@ class ChangeLogPlugin(ExecutablePlugin):
 
     @classmethod
     def add_arguments(cls, parser, plugin_config, confu_cli_args):
-
         generate_parser = argparse.ArgumentParser(add_help=False)
         group = generate_parser.add_argument_group()
         group.add_argument(

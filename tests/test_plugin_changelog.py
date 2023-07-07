@@ -61,7 +61,6 @@ def test_generate_datafile(tmpdir, ctlr, data_changelog_generate_datafile):
 
 
 def test_release(tmpdir, ctlr, data_changelog_release):
-
     md_file_src = os.path.join(data_changelog_release.path, "CHANGELOG.md")
 
     plugin = instantiate(tmpdir, ctlr)
@@ -78,7 +77,6 @@ def test_release(tmpdir, ctlr, data_changelog_release):
 
 
 def test_validate(tmpdir, ctlr, data_changelog_generate):
-
     data_file = os.path.join(data_changelog_generate.path, "CHANGELOG.yml")
     plugin = instantiate(tmpdir, ctlr, data_file=data_file)
 

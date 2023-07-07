@@ -76,7 +76,6 @@ class EmailPlugin(PluginBase):
             self._send(body, subject, sender, recipient)
 
     def _send(self, body, subject, sender, recipient, **kwargs):
-
         """
         Send email, private method use `send` instead
 

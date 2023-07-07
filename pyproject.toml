@@ -13,6 +13,10 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Topic :: Software Development",
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Documentation",
@@ -26,48 +30,46 @@ packages = [
 [tool.poetry.scripts]
 ctl = "ctl.cli:main"
 
-
 [tool.poetry.dependencies]
-#python = ">=3.6.1, <4"
-python = "^3.7"
-munge = "^1"
-confu = "^1.4"
-grainy = "^1.4"
-git-url-parse = "^1.1"
-pluginmgr = "^1"
+python = "^3.8"
+
+confu = ">=1.4"
+git-url-parse = ">=1.1"
+grainy = ">=1.4"
+munge = ">=1"
+natsort = ">=8"
+pluginmgr = ">=1"
 semver = "<=3"
-natsort = "^8"
 
 [tool.poetry.dev-dependencies]
-# tests
-codecov = ">=2"
+# testing
 coverage = ">=5"
 pytest = ">=6"
 pytest-cov = "^2.10.1"
 pytest-filedata = "^0.4.0"
 tox = ">=3"
 tox-gh-actions = ">=2"
+
 jinja2 = ">=2"
 tmpl = ">=1"
-twine = "^3.3.0"
-# pipenv-setup requires an old specific version of black to install
-# pipenv-setup = "^3.1.1"
-PyYAML = "^5.3.1"
+twine = ">=3"
+PyYAML = ">1"
 tomlkit = "<1"
 
-# docs
-markdown = "^3.3.7"
-markdown-include = ">=0.5,<1"
-mkdocs = "^1.1.2"
-
 # linting
-# bandit = "^1.6.2"
+# bandit = ">=1.6.2"
 black = ">=20"
 isort = ">=5.7"
 flake8 = ">=3.8"
 mypy = ">=0.950"
 pre-commit = ">=2.13"
 pyupgrade = ">=2.19"
+
+# docs
+markdown = "*"
+markdown-include = ">=0.5,<1"
+mkdocs = ">=1.2.3"
+
 
 [tool.poetry.plugins."markdown.extensions"]
 pymdgen = "pymdgen.md:Extension"

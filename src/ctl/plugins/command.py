@@ -125,7 +125,6 @@ class CommandPlugin(ctl.plugins.ExecutablePlugin):
     # in the plugin's config, and default to `r` if not specified
     @expose("ctl.{plugin_name}")
     def execute(self, **kwargs):
-
         """
         execute the command(s) specified in the plugin
         config `command` list
@@ -138,7 +137,6 @@ class CommandPlugin(ctl.plugins.ExecutablePlugin):
         self._run_commands(command, **kwargs)
 
     def _run_commands(self, command, **kwargs):
-
         """
         execute a list of commands
 
@@ -165,7 +163,6 @@ class CommandPlugin(ctl.plugins.ExecutablePlugin):
         # TODO: should return True here?
 
     def _exec(self, command):
-
         """
         execute a single command
 

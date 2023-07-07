@@ -43,7 +43,6 @@ class expose:
 
         @wraps(fn)
         def wrapped(self, *args, **kwargs):
-
             # format the namespace using the plugin instance
             # and any arguments passed to the decorated method
             namespace_args = {
@@ -58,7 +57,7 @@ class expose:
                 # level is not specified at all in the decorator,
                 # in which case we obtain from plugin config and default to 'r'
                 permissions = self.config.get("permissions", {}).get(fn.__name__, "r")
-            elif isinstance(level, collections.Callable):
+            elif isinstance(level, collections.abc.Callable):
                 # level is specified and a function, call it and set from there
                 permissions = level(self)
             else:

@@ -47,7 +47,6 @@ class LogGitPlugin(LogUserPlugin):
         super().init()
 
     def apply(self, message, level):
-
         """
         Add git information to log message
 

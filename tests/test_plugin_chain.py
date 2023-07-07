@@ -7,7 +7,6 @@ import ctl
 
 
 def instantiate(tmpdir, ctlr=None, **kwargs):
-
     path_dir = str(tmpdir.mkdir("chain_out"))
 
     path_1 = os.path.join(path_dir, "test")

@@ -20,7 +20,6 @@ def validate_prerelease(prerelease):
         prerelease = list(prerelease.split("."))
 
     for identifier in prerelease:
-
         if identifier == "":
             raise ValueError("Identifiers must not be empty")
 

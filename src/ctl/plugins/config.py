@@ -19,7 +19,7 @@ def option_name(path, delimiter="--"):
 
 def destination_name(path, delimiter="__"):
     """returns a cli option destination name from attribute path"""
-    return "{}".format(delimiter.join(path))
+    return f"{delimiter.join(path)}"
 
 
 def list_options(schema):

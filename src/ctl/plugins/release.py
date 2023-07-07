@@ -43,7 +43,6 @@ class ReleasePlugin(command.CommandPlugin):
 
     @classmethod
     def add_arguments(cls, parser, plugin_config, confu_cli_args):
-
         shared_parser = argparse.ArgumentParser(add_help=False)
         group = shared_parser.add_argument_group()
 
@@ -105,7 +104,6 @@ class ReleasePlugin(command.CommandPlugin):
             self.repository.checkout(self.orig_branch)
 
     def set_repository(self, repository):
-
         """
         Set release repository. Distributions will be built from that
         repository.

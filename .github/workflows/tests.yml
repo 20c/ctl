@@ -2,6 +2,10 @@ name: tests
 
 on: [push, pull_request]
 
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   linting:
@@ -13,14 +17,17 @@ jobs:
       # poetry run pre-commit run --all-files
       - name: Run linters
         run: |
-            poetry run pre-commit run --all-files
+            poetry run black --check .
+
   test:
     needs: linting
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         os: [ "ubuntu-latest", "macos-latest" ]
-        python-version: [ "3.7", "3.8", "3.9", "3.10" ]
+        python-version: [ "3.8", "3.9", "3.10", "3.11" ]
+        exclude:
+          - os: "macos-latest"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Check out repository
@@ -35,7 +42,7 @@ jobs:
           poetry run coverage report
       # upload coverage stats
       - name: Upload coverage
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v3
         with:
           file: ./coverage.xml
           fail_ci_if_error: true

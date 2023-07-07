@@ -1,8 +1,8 @@
 import os
 import shutil
-import toml
 
 import pytest
+import toml
 from util import instantiate_semver2 as instantiate
 
 import ctl
