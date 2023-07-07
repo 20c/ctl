@@ -3,7 +3,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/ctl.svg?maxAge=60)](https://pypi.python.org/pypi/ctl)
 [![PyPI](https://img.shields.io/pypi/pyversions/ctl.svg?maxAge=600)](https://pypi.python.org/pypi/ctl)
-[![Tests](https://github.com/20c/ctl/workflows/tests/badge.svg)](https://github.com/20c/ctl)
+[![tests](https://github.com/20c/ctl/actions/workflows/tests.yml/badge.svg)](https://github.com/20c/ctl/actions/workflows/tests.yml)
 [![Codecov](https://img.shields.io/codecov/c/github/20c/ctl/master.svg?maxAge=60)](https://codecov.io/github/20c/ctl)
 
 Full control of your environment
@@ -14,10 +14,10 @@ Full control of your environment
 
 ## License
 
-Copyright 2016-2020 20C, LLC
+Copyright 2016-2023 20C, LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this softare except in compliance with the License.
+you may not use this software except in compliance with the License.
 You may obtain a copy of the License at
 
    http://www.apache.org/licenses/LICENSE-2.0
