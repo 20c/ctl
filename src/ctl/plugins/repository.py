@@ -5,7 +5,7 @@ Plugin interface for plugins that manage software repositories
 import os
 
 import confu.schema
-import giturlparse
+import urllib
 
 from ctl.docs import pymdgen_confu_types
 from ctl.plugins import ExecutablePlugin
@@ -148,7 +148,7 @@ class RepositoryPlugin(ExecutablePlugin):
         branch = self.get_config("branch")
 
         if not self.checkout_path:
-            parsed_url = giturlparse.parse(self.repo_url)
+            parsed_url = urllib.urlparse(self.repo_url)
 
             # print("pathname", parsed_url.pathname)
             # print("href", parsed_url.href)
@@ -158,7 +158,7 @@ class RepositoryPlugin(ExecutablePlugin):
             # print("resource", parsed_url.resource)
 
             self.checkout_path = os.path.join(
-                self.ctl.cachedir, "repo", parsed_url.resource, parsed_url.pathname
+                self.ctl.cachedir, "repo", parsed_url.netloc, parsed_url.path
             )
 
         # while checkout patch can be relative in the config, we want
