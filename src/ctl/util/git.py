@@ -17,7 +17,7 @@ from ogr.services.gitlab import GitlabService
 __all__ = ["GitManager", "EphemeralGitContext", "MergeNotPossible"]
 
 # A context variable to hold the GitManager instance
-git_manager_var = contextvars.ContextVar("git_manager")
+ephemeral_git_context = contextvars.ContextVar("ephemeral_git_context")
 
 
 class MergeNotPossible(OSError):
@@ -120,7 +120,7 @@ class GitManager:
         self.repository_config_filename = repository_config_filename
         self.repository_config = RepositoryConfig()
 
-        self.init_repository(self.default_branch)
+        self.init_repository()
 
     @property
     def service(self):
@@ -174,16 +174,16 @@ class GitManager:
         """
         return self.repo.head.commit.hexsha
 
-    def init_repository(self, branch: str):
+    def init_repository(self):
         """
         Clones the repository if it does not exist
         """
         try:
             self.repo = git.Repo(self.directory)
-            self.switch_branch(branch)
+            self.switch_branch(self.default_branch)
         except git.exc.InvalidGitRepositoryError:
             self.repo = git.Repo.clone_from(
-                self.url, self.directory, branch=branch, progress=None
+                self.url, self.directory, branch=self.default_branch, progress=None
             )
 
         self.index = self.repo.index
@@ -429,6 +429,32 @@ class GitManager:
 
         self.index.commit(message)
 
+    def changed_files(self, file_paths: list[str] = None):
+        """
+        Returns a list of changed files
+
+        **Arguments**
+
+        - file_paths: A list of file paths to check for changes. If not provided, will check all files.
+        """
+
+        # identify new files in file paths that dont exist in index
+
+        if file_paths:
+            new_files = [
+                path for path in file_paths if path in self.repo.untracked_files
+            ]
+            changed_files = [
+                item.a_path
+                for item in self.index.diff(None)
+                if item.a_path in file_paths
+            ]
+        else:
+            new_files = []
+            changed_files = [item.a_path for item in self.index.diff(None)]
+
+        return list(set(changed_files + new_files))
+
     def remote_branch_reference(self, branch_name: str):
         """
         Return the ref of remote branch whose name matches branch_name, or None if one does not exist.
@@ -495,6 +521,18 @@ class GitManager:
         return self.create_merge_request(title)
 
 
+class EphemeralGitContextState(pydantic.BaseModel):
+    git_manager: GitManager
+    branch: str = None
+    commit_message: str = "Commit changes"
+    dry_run: bool = False
+    _initialized: bool = False
+
+    files_to_add: list[str] = pydantic.Field(default_factory=list)
+
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+
+
 class EphemeralGitContext:
     """
     A context manager that sets up the repository on open, fetches and pulls.
@@ -503,39 +541,54 @@ class EphemeralGitContext:
     Any git failures during the context should result in the repository being hard reset.
     """
 
-    def __init__(
-        self,
-        git_manager: GitManager = None,
-        branch: str = None,
-        commit_message: str = "Commit changes",
-    ):
+    def __init__(self, **kwargs):
         """
         Initializes the context manager with an optional GitManager instance and an optional branch name.
 
         **Arguments**
 
         - git_manager (GitManager, optional): The GitManager instance to use. If not provided, will try to get from context.
-        - branch (str, optional): The branch to switch to. Defaults to None.
+        - branch (str, optional): The branch to use. Defaults to None.
         - commit_message (str, optional): The commit message to use. Defaults to 'Commit changes'.
+        - dry_run (bool, optional): Whether to perform a dry run. Defaults to False. WARNING: dry-run here specifically refers to
+            commit and push operations, not the entire context manager. It will still reset and pull the repository.
         """
-        self.git_manager = git_manager if git_manager else git_manager_var.get()
-        self.branch = branch
-        self.commit_message = commit_message
+
+        # this should never be set by the user
+        kwargs.pop("_initialized", None)
+
+        try:
+            self.state = ephemeral_git_context.get()
+        except LookupError:
+            self.state = None
+
+        if not self.state and not kwargs:
+            raise ValueError("No state provided and no context set")
+
+        if not self.state or kwargs:
+            self.state = EphemeralGitContextState(**kwargs)
 
     def __enter__(self):
         """
         Sets up the repository, fetches and pulls.
         """
-        git_manager_var.set(self.git_manager)
+        self.state_token = ephemeral_git_context.set(self.state)
 
-        if self.branch:
-            self.git_manager.switch_branch(self.branch)
+        if self.state._initialized:
+            # already initialized, can just return
+            return self
 
         if self.git_manager.is_dirty:
             self.git_manager.reset(hard=True)
 
+        if self.state.branch:
+            self.git_manager.switch_branch(self.state.branch)
+
         self.git_manager.fetch()
         self.git_manager.pull()
+
+        self.state._initialized = True
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -543,10 +596,29 @@ class EphemeralGitContext:
         Commits all changes and attempts to push.
         In case of any git failures, hard resets the repository.
         """
+        if not self.state.dry_run:
+            self.finalize(exc_type)
+        else:
+            for changed_file in self.git_manager.changed_files(self.state.files_to_add):
+                self.git_manager.log.info(f"[dry-run] commit changes: {changed_file}")
+
+        ephemeral_git_context.reset(self.state_token)
+
+        return False  # re-raise any exception
+
+    @property
+    def git_manager(self):
+        return self.state.git_manager
+
+    def finalize(self, exc_type):
+        if self.state.dry_run:
+            return
+
         if exc_type is None:
             try:
                 # Commit all changes
-                self.git_manager.commit(self.commit_message)
+                self.git_manager.add(self.state.files_to_add)
+                self.git_manager.commit(self.state.commit_message)
                 # Attempt to push
                 self.git_manager.push()
             except GitCommandError:
@@ -555,7 +627,6 @@ class EphemeralGitContext:
         else:
             # Hard reset the repository in case of other exceptions
             self.git_manager.reset(hard=True)
-        return False  # re-raise any exception
 
     def add_files(self, file_paths: list[str]):
         """
@@ -564,4 +635,5 @@ class EphemeralGitContext:
         Args:
             file_paths (list[str]): A list of file paths to add to the repository.
         """
-        self.git_manager.add(file_paths)
+
+        self.state.files_to_add.extend(file_paths)

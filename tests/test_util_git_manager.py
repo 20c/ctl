@@ -129,6 +129,47 @@ def test_git_manager_push(git_repo, clone_dir):
     assert "test.txt" in os.listdir(remote_dir)
 
 
+# Test that the GitManager changed_files method correctly returns a list of changed files
+# and unttracked files
+
+
+def test_git_manager_changed_files(git_repo):
+    tmp_dir, repo = git_repo
+    git_manager = GitManager(url="http://localhost", directory=tmp_dir)
+
+    # Create a new file and add it to the index
+    with open(os.path.join(tmp_dir, "test.txt"), "w") as f:
+        f.write("Test")
+    git_manager.repo.index.add(["test.txt"])
+    git_manager.repo.index.commit("Test commit")
+
+    # Create a new file and do not add it to the index
+    with open(os.path.join(tmp_dir, "test2.txt"), "w") as f:
+        f.write("Test")
+
+    # Change the contents of the first file
+    with open(os.path.join(tmp_dir, "test.txt"), "w") as f:
+        f.write("Test2")
+
+    changed_files_no_untracked = git_manager.changed_files()
+
+    assert changed_files_no_untracked == ["test.txt"]
+
+    changed_files_with_untracked = git_manager.changed_files(["test.txt", "test2.txt"])
+
+    assert changed_files_with_untracked == ["test.txt", "test2.txt"]
+
+    changed_files_discard_unchanged = git_manager.changed_files(["readme.md"])
+
+    assert changed_files_discard_unchanged == []
+
+    changed_files_discard_unchanged = git_manager.changed_files(
+        ["test.txt", "readme.md"]
+    )
+
+    assert changed_files_discard_unchanged == ["test.txt"]
+
+
 # Test that a GitManager instance can reset a repository
 @pytest.mark.parametrize("allow_unsafe, expected", [(True, True), (False, False)])
 def test_git_manager_reset(git_repo, clone_dir, allow_unsafe, expected):
@@ -394,6 +435,23 @@ def test_ephemeral_git_context_failure(git_repo, clone_dir):
             git_manager.add(["test_context.txt"])
             # Raise an exception to trigger the failure handling
             raise DummyException("Test exception")
+    commit_tree = git_manager.repo.head.commit.tree
+    file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
+    assert "test_context.txt" not in file_paths
+
+
+# Test that EpemeralGitContext correctly handles dry-run mode
+def test_ephemeral_git_context_dry_run(git_repo, clone_dir):
+    remote_dir, git_repo = git_repo
+    git_manager = GitManager(url=remote_dir, directory=clone_dir)
+
+    with EphemeralGitContext(
+        git_manager=git_manager, commit_message="Test commit", dry_run=True
+    ):
+        # Create a new file and add it to the index within the context
+        with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
+            f.write("Test")
+        git_manager.add(["test_context.txt"])
     commit_tree = git_manager.repo.head.commit.tree
     file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
     assert "test_context.txt" not in file_paths
