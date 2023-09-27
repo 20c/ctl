@@ -6,6 +6,7 @@ repositories on Github and Gitlab.
 import contextvars
 import logging
 import os
+import functools
 
 import git
 import munge
@@ -14,10 +15,16 @@ from git import GitCommandError
 from ogr.services.github import GithubService
 from ogr.services.gitlab import GitlabService
 
-__all__ = ["GitManager", "EphemeralGitContext", "MergeNotPossible"]
+__all__ = [
+    "GitManager",
+    "EphemeralGitContext", 
+    "MergeNotPossible", 
+    "ephemeral_git_context", 
+    "ephemeral_git_context_state"
+]
 
 # A context variable to hold the GitManager instance
-ephemeral_git_context = contextvars.ContextVar("ephemeral_git_context")
+ephemeral_git_context_state = contextvars.ContextVar("ephemeral_git_context_state")
 
 
 class MergeNotPossible(OSError):
@@ -385,7 +392,7 @@ class GitManager:
         self.repo.heads[branch_name].checkout()
         self.index = self.repo.index
 
-    def reset(self, hard: bool = False):
+    def reset(self, hard: bool = False, from_origin:bool=True):
         """
         Reset the current branch.
 
@@ -394,10 +401,18 @@ class GitManager:
         - hard: A boolean indicating whether to perform a hard reset from origin/branch
         """
         if self.allow_unsafe:
-            if hard:
-                self.repo.git.reset("--hard", f"{self.origin}/{self.branch}")
+
+            if from_origin and self.origin and self.remote_branch_reference(self.branch):
+                if hard:
+                    self.repo.git.reset("--hard", f"{self.origin}/{self.branch}")
+                else:
+                    self.repo.git.reset(f"{self.origin}/{self.branch}")
             else:
-                self.repo.git.reset(f"{self.origin}/{self.branch}")
+                if hard:
+                    self.repo.git.reset("--hard")
+                else:
+                    self.repo.git.reset()
+
 
     def add(self, file_paths: list[str]):
         """
@@ -479,13 +494,16 @@ class GitManager:
                 return ref
         return None
 
-    def create_merge_request(self, title: str):
+    def create_change_request(self, title: str, description: str = "", target_branch: str = None, source_branch: str = None):
         """
         Create new MR/PR in Service from the current branch into default_branch
 
         **Arguments**
 
         - title: The title of the merge request
+        - description: The description of the merge request
+        - target_branch: The target branch of the merge request. Defaults to default_branch
+        - source_branch: The source branch of the merge request. Defaults to current branch
 
         **Returns**
 
@@ -497,40 +515,69 @@ class GitManager:
 
         _project = self.service_project()
 
+        if not target_branch:
+            target_branch = self.default_branch
+        
+        if not source_branch:
+            source_branch = self.branch
+
         # check if MR/PR already exists
 
         for mr in _project.get_pr_list():
-            if mr.source_branch == self.branch:
+
+            # skip closed/merged MRs
+
+            if mr.status != "open":
+                continue
+
+            if mr.source_branch == source_branch and mr.target_branch == target_branch:
                 self.log.info(
                     f"Merge request already exists for branch {self.branch}, updating it"
                 )
-                return mr.update_info(title=title)
+                return mr.update_info(title=title, body=description)
 
-        return _project.create_pull(
+        return _project.create_pr(
             title=title,
-            description="",
-            target_branch=self.default_branch,
-            source_branch=self.branch,
+            body=description,
+            target_branch=target_branch,
+            source_branch=source_branch,
         )
+
+    def create_merge_request(self, title: str):
+        """
+        Alias for create_change_request
+        """
+
+        return self.create_change_request(title)
 
     def create_pull_request(self, title: str):
         """
-        Alias for create_merge_request
+        Alias for create_change_request
         """
 
-        return self.create_merge_request(title)
+        return self.create_change_request(title)
 
+
+class ChangeRequest(pydantic.BaseModel):
+    title: str
+    description: str = ""
+    target_branch: str = None
+    source_branch: str = None
 
 class EphemeralGitContextState(pydantic.BaseModel):
     git_manager: GitManager
     branch: str = None
     commit_message: str = "Commit changes"
     dry_run: bool = False
-    _initialized: bool = False
+
+    change_request: ChangeRequest = None
 
     files_to_add: list[str] = pydantic.Field(default_factory=list)
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+
+    _initialized: bool = False
+
 
 
 class EphemeralGitContext:
@@ -558,7 +605,7 @@ class EphemeralGitContext:
         kwargs.pop("_initialized", None)
 
         try:
-            self.state = ephemeral_git_context.get()
+            self.state = ephemeral_git_context_state.get()
         except LookupError:
             self.state = None
 
@@ -572,20 +619,24 @@ class EphemeralGitContext:
         """
         Sets up the repository, fetches and pulls.
         """
-        self.state_token = ephemeral_git_context.set(self.state)
+        self.state_token = ephemeral_git_context_state.set(self.state)
 
         if self.state._initialized:
             # already initialized, can just return
             return self
+        
+        self.git_manager.fetch()
 
         if self.git_manager.is_dirty:
             self.git_manager.reset(hard=True)
 
         if self.state.branch:
             self.git_manager.switch_branch(self.state.branch)
+            self.git_manager.reset(hard=True)
 
-        self.git_manager.fetch()
-        self.git_manager.pull()
+        # if branch exists remotely
+        if self.git_manager.remote_branch_reference(self.git_manager.branch):
+            self.git_manager.pull()
 
         self.state._initialized = True
 
@@ -602,7 +653,7 @@ class EphemeralGitContext:
             for changed_file in self.git_manager.changed_files(self.state.files_to_add):
                 self.git_manager.log.info(f"[dry-run] commit changes: {changed_file}")
 
-        ephemeral_git_context.reset(self.state_token)
+        ephemeral_git_context_state.reset(self.state_token)
 
         return False  # re-raise any exception
 
@@ -614,13 +665,26 @@ class EphemeralGitContext:
         if self.state.dry_run:
             return
 
+        print(self.state.files_to_add)
+        print("changed files", self.git_manager.changed_files(self.state.files_to_add))
+        if not self.git_manager.changed_files(self.state.files_to_add):
+            return
+
+
         if exc_type is None:
             try:
                 # Commit all changes
-                self.git_manager.add(self.state.files_to_add)
+                self.git_manager.add(self.git_manager.changed_files(self.state.files_to_add))
                 self.git_manager.commit(self.state.commit_message)
                 # Attempt to push
                 self.git_manager.push()
+                # if change request config is specified create a change request
+                if self.state.change_request:
+                    self.state.change_request.source_branch = self.git_manager.branch
+                    self.state.change_request.target_branch = self.git_manager.default_branch
+                    print(self.state.change_request.model_dump())
+                    self.git_manager.create_change_request(**self.state.change_request.model_dump())
+
             except GitCommandError:
                 # Hard reset the repository in case of git failures
                 self.git_manager.reset(hard=True)
@@ -637,3 +701,18 @@ class EphemeralGitContext:
         """
 
         self.state.files_to_add.extend(file_paths)
+
+
+
+def ephemeral_git_context(**init_kwargs):
+    """
+    Decorator for the EphemeralGitContext class.
+    This decorator allows the use of EphemeralGitContext as a decorator itself.
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            with EphemeralGitContext(**init_kwargs):
+                return func(*args, **kwargs)
+        return wrapper
+    return decorator

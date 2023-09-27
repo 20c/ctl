@@ -6,7 +6,7 @@ import pytest
 import yaml
 from git import Repo
 
-from ctl.util.git import EphemeralGitContext, GitManager
+from ctl.util.git import EphemeralGitContext, GitManager, ChangeRequest
 
 
 class DummyException(Exception):
@@ -49,6 +49,9 @@ def git_repo_with_config():
         }
         with open(os.path.join(tmp_dir, "config.yaml"), "w") as f:
             yaml.dump(config, f)
+
+        repo.index.add(["config.yaml"])
+        repo.index.commit("Add config")
 
         yield tmp_dir, repo
 
@@ -157,7 +160,7 @@ def test_git_manager_changed_files(git_repo):
 
     changed_files_with_untracked = git_manager.changed_files(["test.txt", "test2.txt"])
 
-    assert changed_files_with_untracked == ["test.txt", "test2.txt"]
+    assert sorted(changed_files_with_untracked) == sorted(["test.txt", "test2.txt"])
 
     changed_files_discard_unchanged = git_manager.changed_files(["readme.md"])
 
@@ -353,6 +356,7 @@ def test_git_manager_create_merge_request(
     git_manager = GitManager(
         url="http://localhost", directory=tmp_dir, default_service="gitlab"
     )
+    git_manager.switch_branch("test")
 
     # Mock the service_project method to return a mock project
     mock_project = MagicMock()
@@ -364,19 +368,33 @@ def test_git_manager_create_merge_request(
 
     # Check that the service_project and create_pull methods were called with the correct arguments
     mock_service_project.assert_called_once()
-    mock_project.create_pull.assert_called_once_with(
+    mock_project.create_pr.assert_called_once_with(
         title=title,
-        description="",
+        body="",
         target_branch=git_manager.default_branch,
         source_branch=git_manager.branch,
     )
 
 
+
+@pytest.mark.parametrize("source_branch, target_branch, status, expected",[
+    ("test", "main", "open", True),
+    ("test", "main", "closed", False),
+    ("test", "main", "merged", False),
+    ("test", "test-2", "open", False),
+])
 @patch("ctl.util.git.GithubService")
 @patch("ctl.util.git.GitlabService")
 @patch.object(GitManager, "service_project")
 def test_git_manager_create_merge_request_existing(
-    mock_service_project, mock_gitlab_service, mock_github_service, git_repo_with_config
+    mock_service_project, 
+    mock_gitlab_service, 
+    mock_github_service, 
+    git_repo_with_config,
+    source_branch,
+    target_branch,
+    status,
+    expected
 ):
     """
     Test that the GitManager.create_merge_request method correctly updates an existing merge request
@@ -391,13 +409,17 @@ def test_git_manager_create_merge_request_existing(
         url="http://localhost", directory=tmp_dir, default_service="gitlab"
     )
 
+    git_manager.switch_branch(source_branch)
+
     # Mock the service_project method to return a mock project
     mock_project = MagicMock()
     mock_service_project.return_value = mock_project
 
     # Mock the get_pr_list method to return a list containing a mock merge request with the same source branch
     mock_merge_request = MagicMock()
-    mock_merge_request.source_branch = git_manager.branch
+    mock_merge_request.source_branch = source_branch
+    mock_merge_request.target_branch = target_branch
+    mock_merge_request.status = status
     mock_project.get_pr_list.return_value = [mock_merge_request]
 
     # Call the create_merge_request method
@@ -405,22 +427,69 @@ def test_git_manager_create_merge_request_existing(
     git_manager.create_merge_request(title)
 
     # Check that the update_info method of the merge request was called with the correct arguments
-    mock_merge_request.update_info.assert_called_once_with(title=title)
+    if expected:
+        mock_merge_request.update_info.assert_called_once_with(title=title, body="")
+    else:
+        mock_merge_request.update_info.assert_not_called()
 
 
 # Test that EphemeralGitContext correctly sets up and tears down the repository
 def test_ephemeral_git_context_success(git_repo, clone_dir):
     remote_dir, git_repo = git_repo
     git_manager = GitManager(url=remote_dir, directory=clone_dir)
-    with EphemeralGitContext(git_manager=git_manager, commit_message="Test commit"):
+    with EphemeralGitContext(git_manager=git_manager, commit_message="Test commit") as ctx:
         # Create a new file and add it to the index within the context
         with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
             f.write("Test")
-        git_manager.add(["test_context.txt"])
+        ctx.add_files(["test_context.txt"])
     commit_tree = git_manager.repo.head.commit.tree
     file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
     assert "test_context.txt" in file_paths
 
+# Test that EphemeralGitContext correctly sets up and tears down the repository and also
+# creates a change request if change_request is set
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+@patch.object(GitManager, "service_project")
+def test_ephemeral_git_context_success_with_change_request(
+    mock_service_project, 
+    mock_gitlab_service, 
+    mock_github_service, 
+    git_repo_with_config, 
+    clone_dir
+):
+    remote_dir, git_repo = git_repo_with_config
+
+    # Mock the GithubService and GitlabService instances
+    mock_github_service.return_value = MagicMock()
+    mock_gitlab_service.return_value = MagicMock()
+    # Mock the service_project method to return a mock project
+    mock_project = MagicMock()
+    mock_service_project.return_value = mock_project
+
+    git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir, default_service="gitlab")
+
+    change_request = ChangeRequest(
+        title="Test change request",
+        description="Test change request body",
+    )
+
+    with EphemeralGitContext(git_manager=git_manager, branch="test", commit_message="Test commit", change_request=change_request) as ctx:
+        # Create a new file and add it to the index within the context
+        with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
+            f.write("Test")
+        ctx.add_files(["test_context.txt"])
+
+    mock_project.create_pr.assert_called_once_with(
+        title=change_request.title,
+        body=change_request.description,
+        target_branch=git_manager.default_branch,
+        source_branch="test",
+    )
+
+    commit_tree = git_manager.repo.head.commit.tree
+    file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
+    assert "test_context.txt" in file_paths
 
 # Test that EphemeralGitContext correctly handles exceptions and resets the repository
 def test_ephemeral_git_context_failure(git_repo, clone_dir):
@@ -428,11 +497,11 @@ def test_ephemeral_git_context_failure(git_repo, clone_dir):
     git_manager = GitManager(url=remote_dir, directory=clone_dir)
 
     with pytest.raises(DummyException):
-        with EphemeralGitContext(git_manager=git_manager, commit_message="Test commit"):
+        with EphemeralGitContext(git_manager=git_manager, commit_message="Test commit") as ctx:
             # Create a new file and add it to the index within the context
             with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
                 f.write("Test")
-            git_manager.add(["test_context.txt"])
+            ctx.add_files(["test_context.txt"])
             # Raise an exception to trigger the failure handling
             raise DummyException("Test exception")
     commit_tree = git_manager.repo.head.commit.tree
@@ -447,11 +516,11 @@ def test_ephemeral_git_context_dry_run(git_repo, clone_dir):
 
     with EphemeralGitContext(
         git_manager=git_manager, commit_message="Test commit", dry_run=True
-    ):
+    ) as ctx:
         # Create a new file and add it to the index within the context
         with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
             f.write("Test")
-        git_manager.add(["test_context.txt"])
+        ctx.add_files(["test_context.txt"])
     commit_tree = git_manager.repo.head.commit.tree
     file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
     assert "test_context.txt" not in file_paths
