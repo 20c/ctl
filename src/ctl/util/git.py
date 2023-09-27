@@ -572,6 +572,8 @@ class EphemeralGitContextState(pydantic.BaseModel):
 
     change_request: ChangeRequest = None
 
+    validate_clean: callable = None
+
     files_to_add: list[str] = pydantic.Field(default_factory=list)
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
@@ -599,6 +601,7 @@ class EphemeralGitContext:
         - commit_message (str, optional): The commit message to use. Defaults to 'Commit changes'.
         - dry_run (bool, optional): Whether to perform a dry run. Defaults to False. WARNING: dry-run here specifically refers to
             commit and push operations, not the entire context manager. It will still reset and pull the repository.
+        - change_request (ChangeRequest, optional): A ChangeRequest instance to use. Defaults to None.
         """
 
         # this should never be set by the user
@@ -665,11 +668,14 @@ class EphemeralGitContext:
         if self.state.dry_run:
             return
 
-        print(self.state.files_to_add)
-        print("changed files", self.git_manager.changed_files(self.state.files_to_add))
         if not self.git_manager.changed_files(self.state.files_to_add):
+            # no changes, can just return
             return
 
+        if self.state.validate_clean and self.state.validate_clean(self.git_manager):
+            # we have a custom validation function and it returned True, indicating
+            # that the changes that are there can be ignored, so we can just return
+            return
 
         if exc_type is None:
             try:

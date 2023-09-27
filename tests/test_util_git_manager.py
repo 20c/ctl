@@ -437,14 +437,54 @@ def test_git_manager_create_merge_request_existing(
 def test_ephemeral_git_context_success(git_repo, clone_dir):
     remote_dir, git_repo = git_repo
     git_manager = GitManager(url=remote_dir, directory=clone_dir)
-    with EphemeralGitContext(git_manager=git_manager, commit_message="Test commit") as ctx:
+    with EphemeralGitContext(git_manager=git_manager, branch="test", commit_message="Test commit") as ctx:
         # Create a new file and add it to the index within the context
         with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
             f.write("Test")
         ctx.add_files(["test_context.txt"])
+
+    # asset files were committed
+
     commit_tree = git_manager.repo.head.commit.tree
     file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
     assert "test_context.txt" in file_paths
+
+    # assert test branch now exists remotely
+
+    assert git_manager.remote_branch_reference("test") is not None
+
+
+# Test that EphemeralGitContext correctly sets up and tears down the repository and also
+# honors validate_clean if set
+def test_ephemeral_git_context_success_with_validate_clean(git_repo, clone_dir):
+    remote_dir, git_repo = git_repo
+    git_manager = GitManager(url=remote_dir, directory=clone_dir)
+    
+    def validate_clean(git_manager):
+        # return True indicating we consider the repository clean
+        # regardless of the actual state
+        return True
+
+    with EphemeralGitContext(
+        git_manager=git_manager, 
+        branch="test", 
+        commit_message="Test commit", 
+        validate_clean=validate_clean
+    ) as ctx:
+        # Create a new file and add it to the index within the context
+        with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
+            f.write("Test")
+        ctx.add_files(["test_context.txt"])
+
+    # asset files were NOT committed
+
+    commit_tree = git_manager.repo.head.commit.tree
+    file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
+    assert "test_context.txt" not in file_paths
+
+    # assert test branch is still missing from remote
+
+    assert git_manager.remote_branch_reference("test") is None
 
 # Test that EphemeralGitContext correctly sets up and tears down the repository and also
 # creates a change request if change_request is set
