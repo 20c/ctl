@@ -65,13 +65,41 @@ def plugin_cli_arguments(ctlr, parser, plugin_config):
         confu_cli_args.add(parser)
 
 
+def default_config(requested_plugin=None):
+    """
+    Generates a bare minimum config
+
+    Will also attempt a bootrap config for the requested plugin
+    """
+
+    if requested_plugin:
+        plugin_bootstrap = [
+            {
+                "type": requested_plugin,
+                "name": requested_plugin,
+                "config": {},
+            }
+        ]
+    
+    return confu.config.Config(BaseSchema.config(), {
+        "ctl": {
+            "plugins": plugin_bootstrap if requested_plugin else [],
+            "permissions": [
+                {
+                    "namespace": "ctl",
+                    "permission": "r",
+                }
+            ]
+        }
+    }, {})
+
 def read_config(schema, config_dir, config_name="config", ctx=None):
     """
     read a config file from config_dir
     """
     conf_path = os.path.expanduser(config_dir)
     if not os.path.exists(conf_path):
-        raise OSError(f"config dir not found at {conf_path}")
+        return default_config(ctx.ctl_operation if ctx else None)
 
     for codec, filename in munge.find_datafile(config_name, conf_path):
         if tmpl:
@@ -93,7 +121,7 @@ def read_config(schema, config_dir, config_name="config", ctx=None):
         meta = dict(config_dir=config_dir, config_file=filename)
         return confu.config.Config(schema, data, meta)
 
-    raise OSError(f"config dir not found at {conf_path}")
+    return default_config(ctx.ctl_operation if ctx else None)
 
 
 class Context:
@@ -152,6 +180,7 @@ class Context:
         config_dir and config_file cannot both be passed
         if config_file is passed, home or config::home must be set
         """
+        self.ctl_operation = kwargs.get("ctl_operation")
         opt = self.__class__.pop_options(kwargs)
 
         # TODO move this to the pop_options function, use confu
@@ -175,6 +204,7 @@ class Context:
         # if no config and home wasn't defined, check search path
         elif not self.home:
             self.find_home()
+
 
         self.init()
 
@@ -269,7 +299,8 @@ class Ctl:
     # things that could happen
     # def set_config_dir(self):
 
-    def __init__(self, ctx=None, config_dir=None, full_init=True):
+    def __init__(self, ctx=None, config_dir=None, full_init=True, requested_plugin=None):
+        self.requested_plugin = requested_plugin
         self.init_context(ctx=ctx, config_dir=config_dir)
         self.init_logging()
 
@@ -290,6 +321,7 @@ class Ctl:
         self.init_plugin_manager()
         self.init_plugins()
 
+
     def init_context(self, ctx=None, config_dir=None):
         # TODO check for mutual exclusive
         if not ctx:
@@ -298,7 +330,7 @@ class Ctl:
 
         # TODO - should have defaults from confu
         if not self.ctx.config:
-            raise RuntimeError("no config found")
+            self.ctx.config = default_config(self.requested_plugin)
 
         self.home = ctx.home
         self.tmpdir = ctx.tmpdir
