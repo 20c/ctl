@@ -612,3 +612,68 @@ def test_nested_ephemeral_git_contexts(git_repo, clone_dir):
 
     assert "test_context_inner_1.txt" in os.listdir(remote_dir)
 
+# Test readonly ephemeral git context
+def test_readonly_ephemeral_git_context(git_repo, clone_dir):
+    remote_dir, git_repo = git_repo
+    git_manager = GitManager(url=remote_dir, directory=clone_dir)
+
+    with EphemeralGitContext(
+        git_manager=git_manager, commit_message="Test commit", readonly=True
+    ) as ctx:
+        # Create a new file and add it to the index within the context
+        with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
+            f.write("Test")
+
+        with pytest.raises(ValueError):
+            ctx.add_files(["test_context.txt"])
+    commit_tree = git_manager.repo.head.commit.tree
+    file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
+    assert "test_context.txt" not in file_paths
+
+# Test nested EphemeralGitContexts where the outer context is readonly
+def test_nested_readonly_ephemeral_git_contexts(git_repo, clone_dir):
+    remote_dir, git_repo = git_repo
+    git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir)
+
+    with EphemeralGitContext(git_manager=git_manager, branch="outer", readonly=True, commit_message="Test commit") as ctx:
+        
+        assert git_manager.branch == "outer"
+
+        # Create a new file and add it to the index within the context
+        with open(os.path.join(clone_dir, "test_context_outer_1.txt"), "w") as f:
+            f.write("Test")
+
+        with pytest.raises(ValueError):
+            ctx.add_files(["test_context_outer_1.txt"])
+        
+        with EphemeralGitContext(git_manager=git_manager, branch="inner", commit_message="Nested Test commit") as ctx2:
+            
+            assert git_manager.branch == "inner"
+
+            # Create a new file and add it to the index within the context
+            with open(os.path.join(clone_dir, "test_context_inner_1.txt"), "w") as f:
+                f.write("Test")
+            ctx2.add_files(["test_context_inner_1.txt"])
+        
+        # test that branch is "outer"
+        assert git_manager.branch == "outer"
+
+        # Create a new file and add it to the index within the context
+        with open(os.path.join(clone_dir, "test_context_outer_2.txt"), "w") as f:
+            f.write("Test")
+
+        with pytest.raises(ValueError):
+            ctx.add_files(["test_context_outer_2.txt"])
+
+    # back to default branch
+    assert git_manager.branch == git_manager.default_branch
+
+    # "outer" branch should not exist in remote repo
+
+    assert not git_manager.remote_branch_reference("outer")
+
+    # "inner" branch should exist and have the file
+
+    git_repo.git.checkout("inner")
+
+    assert "test_context_inner_1.txt" in os.listdir(remote_dir)

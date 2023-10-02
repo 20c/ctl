@@ -569,6 +569,8 @@ class EphemeralGitContextState(pydantic.BaseModel):
     branch: str = None
     commit_message: str = "Commit changes"
     dry_run: bool = False
+    readonly: bool = False
+
     context_id: str = pydantic.Field(default_factory=lambda: str(uuid.uuid4())[:8])
 
     change_request: ChangeRequest = None
@@ -654,9 +656,9 @@ class EphemeralGitContext:
         Commits all changes and attempts to push.
         In case of any git failures, hard resets the repository.
         """
-        if not self.state.dry_run:
+        if not self.state.dry_run and not self.state.readonly:
             self.finalize(exc_type, exc_val, exc_tb)
-        else:
+        elif self.state.dry_run:
             for changed_file in self.git_manager.changed_files(self.state.files_to_add):
                 self.git_manager.log.info(f"[dry-run] commit changes: {changed_file}")
 
@@ -708,7 +710,7 @@ class EphemeralGitContext:
         self.git_manager.repo.git.stash(f"ephemeral-git-context-{current_state.context_id}")
 
     def finalize(self, exc_type, exc_val, exc_tb):
-        if self.state.dry_run:
+        if self.state.dry_run or self.state.readonly:
             return
 
         if not self.git_manager.changed_files(self.state.files_to_add):
@@ -731,7 +733,6 @@ class EphemeralGitContext:
                 if self.state.change_request:
                     self.state.change_request.source_branch = self.git_manager.branch
                     self.state.change_request.target_branch = self.git_manager.default_branch
-                    print(self.state.change_request.model_dump())
                     self.git_manager.create_change_request(**self.state.change_request.model_dump())
 
             except GitCommandError:
@@ -750,6 +751,9 @@ class EphemeralGitContext:
         Args:
             file_paths (list[str]): A list of file paths to add to the repository.
         """
+
+        if self.state.readonly:
+            raise ValueError("Cannot add files in readonly ephemeral git context")
 
         self.state.files_to_add.extend(file_paths)
 
