@@ -544,6 +544,7 @@ def test_ephemeral_git_context_failure(git_repo, clone_dir):
             ctx.add_files(["test_context.txt"])
             # Raise an exception to trigger the failure handling
             raise DummyException("Test exception")
+        
     commit_tree = git_manager.repo.head.commit.tree
     file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
     assert "test_context.txt" not in file_paths
@@ -564,3 +565,50 @@ def test_ephemeral_git_context_dry_run(git_repo, clone_dir):
     commit_tree = git_manager.repo.head.commit.tree
     file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
     assert "test_context.txt" not in file_paths
+
+# Test nested EphemeralGitContexts
+def test_nested_ephemeral_git_contexts(git_repo, clone_dir):
+    remote_dir, git_repo = git_repo
+    git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir)
+
+    with EphemeralGitContext(git_manager=git_manager, branch="outer", commit_message="Test commit") as ctx:
+        
+        assert git_manager.branch == "outer"
+
+        # Create a new file and add it to the index within the context
+        with open(os.path.join(clone_dir, "test_context_outer_1.txt"), "w") as f:
+            f.write("Test")
+        ctx.add_files(["test_context_outer_1.txt"])
+        
+        with EphemeralGitContext(git_manager=git_manager, branch="inner", commit_message="Nested Test commit") as ctx2:
+            
+            assert git_manager.branch == "inner"
+
+            # Create a new file and add it to the index within the context
+            with open(os.path.join(clone_dir, "test_context_inner_1.txt"), "w") as f:
+                f.write("Test")
+            ctx2.add_files(["test_context_inner_1.txt"])
+        
+        # test that branch is "outer"
+        assert git_manager.branch == "outer"
+
+        # Create a new file and add it to the index within the context
+        with open(os.path.join(clone_dir, "test_context_outer_2.txt"), "w") as f:
+            f.write("Test")
+        ctx.add_files(["test_context_outer_2.txt"])
+
+    # back to default branch
+    assert git_manager.branch == git_manager.default_branch
+
+    # checkout outer branch in remote repo
+
+    git_repo.git.checkout("outer")
+
+    # check that the files exist at their remote branches
+    assert "test_context_outer_1.txt" in os.listdir(remote_dir)
+    assert "test_context_outer_2.txt" in os.listdir(remote_dir)
+
+    git_repo.git.checkout("inner")
+
+    assert "test_context_inner_1.txt" in os.listdir(remote_dir)
+

@@ -7,7 +7,7 @@ import contextvars
 import logging
 import os
 import functools
-
+import uuid
 import git
 import munge
 import pydantic
@@ -569,6 +569,7 @@ class EphemeralGitContextState(pydantic.BaseModel):
     branch: str = None
     commit_message: str = "Commit changes"
     dry_run: bool = False
+    context_id: str = pydantic.Field(default_factory=lambda: str(uuid.uuid4())[:8])
 
     change_request: ChangeRequest = None
 
@@ -622,6 +623,9 @@ class EphemeralGitContext:
         """
         Sets up the repository, fetches and pulls.
         """
+
+        self.stash_current_context()
+
         self.state_token = ephemeral_git_context_state.set(self.state)
 
         if self.state._initialized:
@@ -651,12 +655,28 @@ class EphemeralGitContext:
         In case of any git failures, hard resets the repository.
         """
         if not self.state.dry_run:
-            self.finalize(exc_type)
+            self.finalize(exc_type, exc_val, exc_tb)
         else:
             for changed_file in self.git_manager.changed_files(self.state.files_to_add):
                 self.git_manager.log.info(f"[dry-run] commit changes: {changed_file}")
 
         ephemeral_git_context_state.reset(self.state_token)
+
+        # reset to previous branch
+        try:
+            prev_state = ephemeral_git_context_state.get()
+
+            self.git_manager.switch_branch(prev_state.branch if prev_state.branch else self.git_manager.default_branch)
+            self.git_manager.reset(hard=True)
+
+            # try tro pop stash
+            try:
+                self.git_manager.repo.git.stash("pop")
+            except GitCommandError:
+                pass
+
+        except LookupError:
+            pass
 
         return False  # re-raise any exception
 
@@ -664,7 +684,30 @@ class EphemeralGitContext:
     def git_manager(self):
         return self.state.git_manager
 
-    def finalize(self, exc_type):
+    def stash_current_context(self):
+
+        # stash current repo state if we are moving into a nested
+        # context
+
+        try:
+            current_state = ephemeral_git_context_state.get()
+        except LookupError:
+            
+            # no state
+            
+            return
+
+        if not self.git_manager.is_dirty:
+
+            # nothing to stash
+            
+            return
+
+        # stash
+
+        self.git_manager.repo.git.stash(f"ephemeral-git-context-{current_state.context_id}")
+
+    def finalize(self, exc_type, exc_val, exc_tb):
         if self.state.dry_run:
             return
 
@@ -694,9 +737,11 @@ class EphemeralGitContext:
             except GitCommandError:
                 # Hard reset the repository in case of git failures
                 self.git_manager.reset(hard=True)
+                raise
         else:
             # Hard reset the repository in case of other exceptions
             self.git_manager.reset(hard=True)
+            raise exc_val
 
     def add_files(self, file_paths: list[str]):
         """
