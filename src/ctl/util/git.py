@@ -523,6 +523,31 @@ class GitManager:
 
         # check if MR/PR already exists
 
+        mr = self.get_open_change_request(target_branch, source_branch)
+        if mr:
+            self.log.info(
+                f"Merge request already exists for branch {self.branch}, updating it"
+            )
+            return mr.update_info(title=title, body=description)
+
+        return _project.create_pr(
+            title=title,
+            body=description,
+            target_branch=target_branch,
+            source_branch=source_branch,
+        )
+
+    def get_open_change_request(self, target_branch:str, source_branch:str):
+
+        """
+        Checks if the merge request exists in an open state
+        """
+
+        if not self.service:
+            raise ValueError("No service configured")
+
+        _project = self.service_project()
+
         for mr in _project.get_pr_list():
 
             # skip closed/merged MRs
@@ -531,17 +556,10 @@ class GitManager:
                 continue
 
             if mr.source_branch == source_branch and mr.target_branch == target_branch:
-                self.log.info(
-                    f"Merge request already exists for branch {self.branch}, updating it"
-                )
-                return mr.update_info(title=title, body=description)
+                return mr
 
-        return _project.create_pr(
-            title=title,
-            body=description,
-            target_branch=target_branch,
-            source_branch=source_branch,
-        )
+        return None
+
 
     def create_merge_request(self, title: str):
         """

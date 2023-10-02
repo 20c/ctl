@@ -367,7 +367,7 @@ def test_git_manager_create_merge_request(
     git_manager.create_merge_request(title)
 
     # Check that the service_project and create_pull methods were called with the correct arguments
-    mock_service_project.assert_called_once()
+    mock_service_project.assert_called()
     mock_project.create_pr.assert_called_once_with(
         title=title,
         body="",
