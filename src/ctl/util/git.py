@@ -738,7 +738,7 @@ class EphemeralGitContext:
 
         # stash
 
-        self.git_manager.repo.git.stash(f"ephemeral-git-context-{current_state.context_id}")
+        self.git_manager.repo.git.stash("push")
 
     def finalize(self, exc_type, exc_val, exc_tb):
         if self.state.dry_run or self.state.readonly:
