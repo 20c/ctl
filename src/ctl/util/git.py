@@ -25,6 +25,7 @@ __all__ = [
 
 # A context variable to hold the GitManager instance
 ephemeral_git_context_state = contextvars.ContextVar("ephemeral_git_context_state")
+current_ephemeral_git_context = contextvars.ContextVar("current_ephemeral_git_context")
 
 
 class MergeNotPossible(OSError):
@@ -628,6 +629,8 @@ class EphemeralGitContext:
         # this should never be set by the user
         kwargs.pop("_initialized", None)
 
+        self.state_token = None
+
         try:
             self.state = ephemeral_git_context_state.get()
         except LookupError:
@@ -644,13 +647,15 @@ class EphemeralGitContext:
         Sets up the repository, fetches and pulls.
         """
 
-        self.stash_current_context()
-
-        self.state_token = ephemeral_git_context_state.set(self.state)
+        self.context_token = current_ephemeral_git_context.set(self)
 
         if self.state._initialized:
             # already initialized, can just return
             return self
+        
+        self.stash_current_context()
+        
+        self.state_token = ephemeral_git_context_state.set(self.state)
         
         self.git_manager.fetch()
 
@@ -674,12 +679,20 @@ class EphemeralGitContext:
         Commits all changes and attempts to push.
         In case of any git failures, hard resets the repository.
         """
+
+        current_ephemeral_git_context.reset(self.context_token)
+
+        if not self.state_token:
+            # no state token,  means state was reused, can just
+            # return
+            return
+
         if not self.state.dry_run and not self.state.readonly:
             self.finalize(exc_type, exc_val, exc_tb)
         elif self.state.dry_run:
             for changed_file in self.git_manager.changed_files(self.state.files_to_add):
                 self.git_manager.log.info(f"[dry-run] commit changes: {changed_file}")
-
+        
         ephemeral_git_context_state.reset(self.state_token)
 
         # reset to previous branch

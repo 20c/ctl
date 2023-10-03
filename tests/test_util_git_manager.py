@@ -6,8 +6,13 @@ import pytest
 import yaml
 from git import Repo
 
-from ctl.util.git import EphemeralGitContext, GitManager, ChangeRequest
-
+from ctl.util.git import (
+    EphemeralGitContext, 
+    GitManager, 
+    ChangeRequest,
+    current_ephemeral_git_context,
+    ephemeral_git_context_state,
+)
 
 class DummyException(Exception):
     pass
@@ -677,3 +682,50 @@ def test_nested_readonly_ephemeral_git_contexts(git_repo, clone_dir):
     git_repo.git.checkout("inner")
 
     assert "test_context_inner_1.txt" in os.listdir(remote_dir)
+
+
+# Test that reusing the current ephemeral git context works without opening a new state
+
+def test_reuse_ephemeral_git_context(git_repo, clone_dir):
+    remote_dir, git_repo = git_repo
+    git_manager = GitManager(url=remote_dir, directory=clone_dir)
+    with EphemeralGitContext(git_manager=git_manager, branch="test", commit_message="Test commit") as ctx:
+        with EphemeralGitContext() as reused_ctx:
+            # Create a new file and add it to the index within the context
+            with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
+                f.write("Test")
+            reused_ctx.add_files(["test_context.txt"])
+        
+        # files added in original contaxt
+        assert ctx.state.files_to_add == ["test_context.txt"]
+
+        # reused context should not have committed and pushed anything
+        assert not git_manager.remote_branch_reference("test")
+
+    # assert test branch now exists remotely
+
+    assert git_manager.remote_branch_reference("test")
+
+    # "inner" branch should exist and have the file
+
+    git_repo.git.checkout("test")
+
+    assert "test_context.txt" in os.listdir(remote_dir)
+
+# Test current_ephemeral_git_context holds the current ctx
+def test_context_vars(git_repo, clone_dir):
+    remote_dir, git_repo = git_repo
+    git_manager = GitManager(url=remote_dir, directory=clone_dir)
+    with EphemeralGitContext(git_manager=git_manager, branch="test", commit_message="Test commit") as ctx:
+        assert current_ephemeral_git_context.get() == ctx
+        assert ephemeral_git_context_state.get() == ctx.state
+        with EphemeralGitContext() as reused_ctx:
+            assert current_ephemeral_git_context.get() == reused_ctx
+            assert ephemeral_git_context_state.get() == reused_ctx.state
+            assert reused_ctx.state == ctx.state
+        with EphemeralGitContext(git_manager=git_manager, branch="inner", commit_message="Nested Test commit") as ctx2:
+            assert current_ephemeral_git_context.get() == ctx2
+            assert ephemeral_git_context_state.get() == ctx2.state
+            assert ctx2.state != ctx.state
+        assert current_ephemeral_git_context.get() == ctx
+        assert ephemeral_git_context_state.get() == ctx.state
