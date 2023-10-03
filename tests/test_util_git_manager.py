@@ -732,7 +732,6 @@ def test_context_vars(git_repo, clone_dir):
 
 # Test stashing between contexts
 
-@pytest.mark.skip
 def test_stash_between_contexts(git_repo, clone_dir):
     remote_dir, git_repo = git_repo
     git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir)
@@ -748,7 +747,7 @@ def test_stash_between_contexts(git_repo, clone_dir):
         assert git_manager.is_dirty
         
         with EphemeralGitContext(git_manager=git_manager, branch="inner", commit_message="Nested Test commit") as ctx2:
-            assert ctx.stash_pushed
+            assert ctx2.stash_pushed
             assert git_manager.branch == "inner"
 
             # Create a new file and add it to the index within the context
@@ -756,7 +755,7 @@ def test_stash_between_contexts(git_repo, clone_dir):
                 f.write("Test")
             ctx2.add_files(["test_context_inner_1.txt"])
         
-        assert ctx.stash_popped
+        assert ctx2.stash_popped
 
         # test that branch is "outer"
         assert git_manager.branch == "outer"

@@ -630,6 +630,8 @@ class EphemeralGitContext:
         kwargs.pop("_initialized", None)
 
         self.state_token = None
+        self.stash_pushed = False
+        self.stash_popped = False
 
         try:
             self.state = ephemeral_git_context_state.get()
@@ -652,6 +654,8 @@ class EphemeralGitContext:
         if self.state._initialized:
             # already initialized, can just return
             return self
+        
+        self.stash_current_context()
         
         self.state_token = ephemeral_git_context_state.set(self.state)
         
@@ -700,6 +704,13 @@ class EphemeralGitContext:
             self.git_manager.switch_branch(prev_state.branch if prev_state.branch else self.git_manager.default_branch)
             self.git_manager.reset(hard=True)
 
+            # try tro pop stash
+            try:
+                self.git_manager.repo.git.stash("pop")
+                self.stash_popped = True
+            except GitCommandError:
+                pass
+
         except LookupError:
             pass
 
@@ -708,6 +719,22 @@ class EphemeralGitContext:
     @property
     def git_manager(self):
         return self.state.git_manager
+
+    def stash_current_context(self):
+
+        # stash current repo state if we are moving into a nested
+        # context
+
+        if not self.git_manager.is_dirty:
+
+            # nothing to stash
+            
+            return
+
+        # stash
+
+        self.git_manager.repo.git.stash("push")
+        self.stash_pushed = True
 
     def finalize(self, exc_type, exc_val, exc_tb):
         if self.state.dry_run or self.state.readonly:
