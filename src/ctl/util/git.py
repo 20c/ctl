@@ -536,10 +536,17 @@ class GitManager:
 
         mr = self.get_open_change_request(target_branch, source_branch)
         if mr:
+
+            if mr.title == title and mr.description == description:
+                self.log.info(
+                    f"Merge request already exists for branch {self.branch} with same title and description, skipping"
+                )
+                return mr
+
             self.log.info(
                 f"Merge request already exists for branch {self.branch}, updating it"
             )
-            return mr.update_info(title=title, body=description)
+            return mr.update_info(title=title, description=description)
 
         return _project.create_pr(
             title=title,

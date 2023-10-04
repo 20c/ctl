@@ -432,7 +432,7 @@ def test_git_manager_create_merge_request_existing(
 
     # Check that the update_info method of the merge request was called with the correct arguments
     if expected:
-        mock_merge_request.update_info.assert_called_once_with(title=title, body="")
+        mock_merge_request.update_info.assert_called_once_with(title=title, description="")
     else:
         mock_merge_request.update_info.assert_not_called()
 
