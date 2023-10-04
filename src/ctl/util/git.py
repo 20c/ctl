@@ -45,8 +45,6 @@ class RepositoryConfig(pydantic.BaseModel):
     """
 
     gitlab_url: str = pydantic.Field(default_factory=lambda: os.getenv("GITLAB_URL"))
-    github_url: str = pydantic.Field(default_factory=lambda: os.getenv("GITHUB_URL"))
-
     gitlab_token: str = pydantic.Field(
         default_factory=lambda: os.getenv("GITLAB_TOKEN")
     )
@@ -255,12 +253,10 @@ class GitManager:
             # instance_url wants only the scheme and host
             # so we need to parse it out of the full url
 
-            parsed_url = urllib.parse.urlparse(config.gitlab_url)
-            base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
             self.services.gitlab = GitlabService(
-                token=config.gitlab_token, instance_url=base_url
+                token=config.gitlab_token, instance_url=self.repository_config.gitlab_url
             )
-        if config.github_url and not self.services.github:
+        if not self.services.github:
             self.services.github = GithubService(
                 token=config.github_token
             )
@@ -275,13 +271,7 @@ class GitManager:
         Returns the service project for the service
         """
         _service = getattr(self.services, service) if service else self.service
-
-        if _service == self.services.gitlab:
-            project_url = self.repository_config.gitlab_url
-        elif _service == self.services.github:
-            project_url = self.repository_config.github_url
-
-        return _service.get_project_from_url(project_url)
+        return _service.get_project_from_url(self.url)
 
     def service_file_url(self, file_path: str, service: str = None):
         """
