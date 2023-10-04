@@ -1,7 +1,7 @@
 import os
 import tempfile
 from unittest.mock import MagicMock, patch
-
+from ogr.abstract import PRStatus
 import pytest
 import yaml
 from git import Repo
@@ -50,6 +50,7 @@ def git_repo_with_config():
         # create a config yaml file
         config = {
             "gitlab_url": "https://gitlab.com",
+            "github_token": "test_token",
         }
         with open(os.path.join(tmp_dir, "config.yaml"), "w") as f:
             yaml.dump(config, f)
@@ -224,7 +225,7 @@ def test_git_manager_load_repository_config(
 
     # Check that the GithubService and GitlabService were called with the correct arguments
     mock_github_service.assert_called_once_with(
-        token=None
+        token="test_token"
     )
     mock_gitlab_service.assert_called_once_with(
         token=None, instance_url="https://gitlab.com"
@@ -381,10 +382,10 @@ def test_git_manager_create_merge_request(
 
 
 @pytest.mark.parametrize("source_branch, target_branch, status, expected",[
-    ("test", "main", "open", True),
-    ("test", "main", "closed", False),
-    ("test", "main", "merged", False),
-    ("test", "test-2", "open", False),
+    ("test", "main", PRStatus.open, True),
+    ("test", "main", PRStatus.closed, False),
+    ("test", "main", PRStatus.merged, False),
+    ("test", "test-2", PRStatus.open, False),
 ])
 @patch("ctl.util.git.GithubService")
 @patch("ctl.util.git.GitlabService")

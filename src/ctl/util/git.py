@@ -16,6 +16,7 @@ from typing import Callable
 from git import GitCommandError
 from ogr.services.github import GithubService
 from ogr.services.gitlab import GitlabService
+from ogr.abstract import PRStatus
 
 __all__ = [
     "GitManager",
@@ -256,7 +257,7 @@ class GitManager:
             self.services.gitlab = GitlabService(
                 token=config.gitlab_token, instance_url=self.repository_config.gitlab_url
             )
-        if not self.services.github:
+        if config.github_token and not self.services.github:
             self.services.github = GithubService(
                 token=config.github_token
             )
@@ -562,7 +563,7 @@ class GitManager:
 
             # skip closed/merged MRs
 
-            if mr.status != "open":
+            if mr.status != PRStatus.open:
                 continue
 
             if mr.source_branch == source_branch and mr.target_branch == target_branch:
