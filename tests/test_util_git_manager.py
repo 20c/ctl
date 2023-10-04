@@ -49,7 +49,7 @@ def git_repo_with_config():
 
         # create a config yaml file
         config = {
-            "gitlab_url": "https://gitlab.com",
+            "gitlab_url": "https://gitlab.com/project/repo",
             "github_url": "https://github.com",
         }
         with open(os.path.join(tmp_dir, "config.yaml"), "w") as f:
@@ -221,12 +221,12 @@ def test_git_manager_load_repository_config(
     mock_github_service.return_value = MagicMock()
     mock_gitlab_service.return_value = MagicMock()
 
-    assert git_manager.repository_config.gitlab_url == "https://gitlab.com"
+    assert git_manager.repository_config.gitlab_url == "https://gitlab.com/project/repo"
     assert git_manager.repository_config.github_url == "https://github.com"
 
     # Check that the GithubService and GitlabService were called with the correct arguments
     mock_github_service.assert_called_once_with(
-        token=None, instance_url="https://github.com"
+        token=None
     )
     mock_gitlab_service.assert_called_once_with(
         token=None, instance_url="https://gitlab.com"

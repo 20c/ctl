@@ -11,6 +11,8 @@ import uuid
 import git
 import munge
 import pydantic
+import urllib
+from typing import Callable
 from git import GitCommandError
 from ogr.services.github import GithubService
 from ogr.services.gitlab import GitlabService
@@ -42,8 +44,8 @@ class RepositoryConfig(pydantic.BaseModel):
     Repository config model
     """
 
-    gitlab_url: str = None
-    github_url: str = None
+    gitlab_url: str = pydantic.Field(default_factory=lambda: os.getenv("GITLAB_URL"))
+    github_url: str = pydantic.Field(default_factory=lambda: os.getenv("GITHUB_URL"))
 
     gitlab_token: str = pydantic.Field(
         default_factory=lambda: os.getenv("GITLAB_TOKEN")
@@ -186,6 +188,11 @@ class GitManager:
         """
         Clones the repository if it does not exist
         """
+
+        # ensure directory exists
+        if not os.path.exists(self.directory):
+            os.makedirs(self.directory)
+
         try:
             self.repo = git.Repo(self.directory)
             self.switch_branch(self.default_branch)
@@ -226,7 +233,7 @@ class GitManager:
                 f"Loaded repository config from {config_filename} - {self.repository_config}"
             )
         else:
-            self.log.warning(f"Could not find repository config file {config_filename}")
+            self.log.warning(f"Could not find repository config file: `{config_filename}`")
 
     def set_origin(self):
         """
@@ -244,12 +251,18 @@ class GitManager:
         Initializes the services for the repository
         """
         if config.gitlab_url and not self.services.gitlab:
+            
+            # instance_url wants only the scheme and host
+            # so we need to parse it out of the full url
+
+            parsed_url = urllib.parse.urlparse(config.gitlab_url)
+            base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
             self.services.gitlab = GitlabService(
-                token=config.gitlab_token, instance_url=config.gitlab_url
+                token=config.gitlab_token, instance_url=base_url
             )
         if config.github_url and not self.services.github:
             self.services.github = GithubService(
-                token=config.github_token, instance_url=config.github_url
+                token=config.github_token
             )
 
         if self.default_service and not getattr(self.services, self.default_service):
@@ -262,7 +275,13 @@ class GitManager:
         Returns the service project for the service
         """
         _service = getattr(self.services, service) if service else self.service
-        return _service.get_project_from_url(_service.instance_url)
+
+        if _service == self.services.gitlab:
+            project_url = self.repository_config.gitlab_url
+        elif _service == self.services.github:
+            project_url = self.repository_config.github_url
+
+        return _service.get_project_from_url(project_url)
 
     def service_file_url(self, file_path: str, service: str = None):
         """
@@ -594,7 +613,7 @@ class EphemeralGitContextState(pydantic.BaseModel):
 
     change_request: ChangeRequest = None
 
-    validate_clean: callable = None
+    validate_clean: Callable = None
 
     files_to_add: list[str] = pydantic.Field(default_factory=list)
 
@@ -703,6 +722,9 @@ class EphemeralGitContext:
 
             self.git_manager.switch_branch(prev_state.branch if prev_state.branch else self.git_manager.default_branch)
             self.git_manager.reset(hard=True)
+
+            if not self.stash_pushed:
+                return
 
             # try tro pop stash
             try:
