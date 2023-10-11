@@ -809,7 +809,8 @@ class EphemeralGitContext:
         """
 
         if self.state.readonly:
-            raise ValueError("Cannot add files in readonly ephemeral git context")
+            self.git_manager.log.debug(f"Cannot add files in readonly ephemeral git context: {file_paths}")
+            return
 
         self.state.files_to_add.extend(file_paths)
 

@@ -621,15 +621,31 @@ def test_readonly_ephemeral_git_context(git_repo, clone_dir):
     remote_dir, git_repo = git_repo
     git_manager = GitManager(url=remote_dir, directory=clone_dir)
 
+    with open(os.path.join(clone_dir, "README.md"), "w") as f:
+        f.write("Test")
+
     with EphemeralGitContext(
         git_manager=git_manager, commit_message="Test commit", readonly=True
     ) as ctx:
+
+        # branch should still be dirty
+        assert git_manager.is_dirty
+
+        # no stashing
+        assert not ctx.stash_pushed
+
         # Create a new file and add it to the index within the context
         with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
             f.write("Test")
 
-        with pytest.raises(ValueError):
-            ctx.add_files(["test_context.txt"])
+        
+        ctx.add_files(["test_context.txt"])
+        assert not ctx.state.files_to_add
+
+        # README.md changes should still be there
+        with open(os.path.join(clone_dir, "README.md"), "r") as f:
+            assert f.read() == "Test"
+
     commit_tree = git_manager.repo.head.commit.tree
     file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
     assert "test_context.txt" not in file_paths
@@ -647,8 +663,9 @@ def test_nested_readonly_ephemeral_git_contexts(git_repo, clone_dir):
         with open(os.path.join(clone_dir, "test_context_outer_1.txt"), "w") as f:
             f.write("Test")
 
-        with pytest.raises(ValueError):
-            ctx.add_files(["test_context_outer_1.txt"])
+        ctx.add_files(["test_context_outer_1.txt"])
+
+        assert not ctx.state.files_to_add
         
         with EphemeralGitContext(git_manager=git_manager, branch="inner", commit_message="Nested Test commit") as ctx2:
             
@@ -666,8 +683,9 @@ def test_nested_readonly_ephemeral_git_contexts(git_repo, clone_dir):
         with open(os.path.join(clone_dir, "test_context_outer_2.txt"), "w") as f:
             f.write("Test")
 
-        with pytest.raises(ValueError):
-            ctx.add_files(["test_context_outer_2.txt"])
+        ctx.add_files(["test_context_outer_2.txt"])
+
+        assert not ctx.state.files_to_add
 
     # back to default branch
     assert git_manager.branch == git_manager.default_branch
