@@ -344,11 +344,19 @@ class GitManager:
 
         Will return True if the branch did not exist at origin and was pushed, False otherwise
         """
+        local_branch = self.repo.heads[self.branch]
         if not self.remote_branch_reference(self.branch):
             # branch does not exist at origin, push it
             self.log.info(f"Branch {self.branch} does not exist at origin, pushing it")
             self.push()
+            # set tracking branch
+            local_branch.set_tracking_branch(self.origin.refs[self.branch])
             return True
+        
+        if not local_branch.tracking_branch():
+            # set tracking branch
+            local_branch.set_tracking_branch(self.origin.refs[self.branch])
+
         return False
 
     def create_branch(self, branch_name: str):
@@ -620,7 +628,6 @@ class EphemeralGitContextState(pydantic.BaseModel):
     _initialized: bool = False
 
 
-
 class EphemeralGitContext:
     """
     A context manager that sets up the repository on open, fetches and pulls.
@@ -671,22 +678,24 @@ class EphemeralGitContext:
         if self.state._initialized:
             # already initialized, can just return
             return self
-        
-        self.stash_current_context()
-        
+
         self.state_token = ephemeral_git_context_state.set(self.state)
         
-        self.git_manager.fetch()
-
-        if self.git_manager.is_dirty:
-            self.git_manager.reset(hard=True)
+        if not self.state.readonly:
+            self.stash_current_context()
+            self.git_manager.fetch()
+            if self.git_manager.is_dirty:
+                self.git_manager.reset(hard=True)
 
         if self.state.branch:
             self.git_manager.switch_branch(self.state.branch)
-            self.git_manager.reset(hard=True)
+            if self.git_manager.is_dirty and not self.state.readonly:
+                self.git_manager.reset(hard=True)
 
         # if branch exists remotely
-        if self.git_manager.remote_branch_reference(self.git_manager.branch):
+        if self.git_manager.remote_branch_reference(self.git_manager.branch) and not self.state.readonly:
+            # set tracking branch if necessary
+            self.git_manager.require_remote_branch()
             self.git_manager.pull()
 
         self.state._initialized = True
@@ -729,7 +738,7 @@ class EphemeralGitContext:
                 self.git_manager.repo.git.stash("pop")
                 self.stash_popped = True
             except GitCommandError:
-                pass
+                raise
 
         except LookupError:
             pass

@@ -730,13 +730,21 @@ def test_context_vars(git_repo, clone_dir):
         assert ephemeral_git_context_state.get() == ctx.state
 
 # Test stashing between contexts
-
 def test_stash_between_contexts(git_repo, clone_dir):
     remote_dir, git_repo = git_repo
     git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir)
 
+    # Create a new file and add it to the index within the context
+
+    with open(os.path.join(clone_dir, "README.md"), "w") as f:
+        f.write("Testing initial")
+
     with EphemeralGitContext(git_manager=git_manager, branch="outer", commit_message="Test commit") as ctx:
         
+        # assert stashes
+        assert ctx.stash_pushed
+        assert git_manager.repo.git.stash("list")
+
         assert git_manager.branch == "outer"
 
         # Create a new file and add it to the index within the context
@@ -777,3 +785,13 @@ def test_stash_between_contexts(git_repo, clone_dir):
     git_repo.git.checkout("inner")
 
     assert "test_context_inner_1.txt" in os.listdir(remote_dir)
+
+    # assert that README.md was stashed and popped
+
+    assert "README.md" in os.listdir(clone_dir)
+    with open(os.path.join(clone_dir, "README.md"), "r") as f:
+        assert f.read() == "Testing initial"
+
+    # assert all stashes have been popped
+
+    assert not git_manager.repo.git.stash("list")
