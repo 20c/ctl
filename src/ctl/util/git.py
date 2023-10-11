@@ -12,7 +12,7 @@ import git
 import munge
 import pydantic
 import urllib
-from typing import Callable
+from typing import Callable, Union
 from git import GitCommandError
 from ogr.services.github import GithubService
 from ogr.services.gitlab import GitlabService
@@ -610,7 +610,7 @@ class ChangeRequest(pydantic.BaseModel):
 
 class EphemeralGitContextState(pydantic.BaseModel):
     git_manager: GitManager
-    branch: str = None
+    branch: Union[str,None] = None
     commit_message: str = "Commit changes"
     dry_run: bool = False
     readonly: bool = False
