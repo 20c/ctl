@@ -60,6 +60,43 @@ def git_repo_with_config():
 
         yield tmp_dir, repo
 
+# fixture to create two git repostirories and make one the submodule of the other
+@pytest.fixture
+def git_repo_with_submodule():
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+
+        # create two directories one for each repo
+        main_dir = os.path.join(tmp_dir, "main_repo")
+        os.mkdir(main_dir)
+        
+        submodule_dir = os.path.join(tmp_dir, "submodule_repo")
+        os.mkdir(submodule_dir)
+
+        # init submodule repository and add a README file
+        submodule_repo = Repo.init(submodule_dir, initial_branch="main")
+        assert submodule_repo.active_branch.name == "main"
+        open(os.path.join(submodule_dir, "README.md"), "w").close()
+        submodule_repo.index.add(["README.md"])
+        submodule_repo.index.commit("Initial commit")
+
+        # init main repository and add a README file
+        main_repo = Repo.init(main_dir, initial_branch="main")
+        assert main_repo.active_branch.name == "main"
+        open(os.path.join(main_dir, "README.md"), "w").close()
+        main_repo.index.add(["README.md"])
+        main_repo.index.commit("Initial commit")
+
+        # add submodule to main repo
+        main_repo.git.submodule("add", f"file://{submodule_dir}", "test_submodule")
+        main_repo.git.commit("-am", "submodules")
+
+        assert main_repo.is_dirty() is False
+
+        assert os.path.exists(os.path.join(main_dir, "test_submodule", "README.md"))
+
+        yield main_dir, main_repo, submodule_dir
+
 
 # Fixture to create a temporary directory to be later used to clone
 # a repository into
@@ -341,6 +378,21 @@ def test_git_manager_sync_with_merge(git_repo, clone_dir):
     assert "test_sync_remote.txt" in os.listdir(clone_dir)
     assert "test_sync_local.txt" in os.listdir(clone_dir)
 
+def test_submodule_init(git_repo_with_submodule, clone_dir):
+    """
+    Test that the GitManager correctly initializes submodules
+    """
+    remote_dir, git_repo, submodule_dir = git_repo_with_submodule
+    GitManager(url=f"file://{remote_dir}", directory=clone_dir)
+    assert os.path.exists(os.path.join(clone_dir, "test_submodule", "README.md"))
+
+def test_submodule_init_disabled(git_repo_with_submodule, clone_dir):
+    """
+    Test that the GitManager does not initialize submodules if submodules=False
+    """
+    remote_dir, git_repo, submodule_dir = git_repo_with_submodule
+    GitManager(url=f"file://{remote_dir}", directory=clone_dir, submodules=False)
+    assert not os.path.exists(os.path.join(clone_dir, "test_submodule", "README.md"))
 
 @patch("ctl.util.git.GithubService")
 @patch("ctl.util.git.GitlabService")
@@ -435,7 +487,6 @@ def test_git_manager_create_merge_request_existing(
         mock_merge_request.update_info.assert_called_once_with(title=title, description="")
     else:
         mock_merge_request.update_info.assert_not_called()
-
 
 # Test that EphemeralGitContext correctly sets up and tears down the repository
 def test_ephemeral_git_context_success(git_repo, clone_dir):

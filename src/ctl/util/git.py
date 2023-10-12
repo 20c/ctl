@@ -74,6 +74,7 @@ class GitManager:
     - repository_config_filename: The name of the repository config file to look for
         within the repository once it's checked out.
     - allow_unsafe: Whether to allow unsafe operations such as hard resets
+    - submodules: Whether to initialize submodules
 
     **Attributes**
 
@@ -90,6 +91,7 @@ class GitManager:
         within the repository once it's checked out.
     - repository_config: The repository config
     - allow_unsafe: Whether to allow unsafe operations such as hard resets
+    - submodules: Whether to initialize submodules
 
     **Properties**
 
@@ -112,6 +114,7 @@ class GitManager:
         log: object = None,
         repository_config_filename="config",
         allow_unsafe: bool = False,
+        submodules: bool = True,
     ):
         self.url = url
         self.directory = directory
@@ -121,6 +124,7 @@ class GitManager:
         self.repo = None
         self.default_service = default_service
         self.allow_unsafe = allow_unsafe
+        self.submodules = submodules
 
         self.services = Services()
 
@@ -211,6 +215,20 @@ class GitManager:
         self.load_repository_config(self.repository_config_filename)
 
         self.init_services(self.repository_config)
+
+        self.init_submodules()
+
+    def init_submodules(self):
+        """
+        Initializes and updates existing submodules
+        """
+
+        if not self.submodules:
+            return
+
+        self.log.debug("Initializing submodules")
+        self.repo.git.submodule("init")
+        self.repo.git.submodule("update")
 
     def load_repository_config(self, config_filename: str):
         """
@@ -529,6 +547,8 @@ class GitManager:
         The created merge request
         """
 
+        self.log.info(f"Creating merge request for branch {self.branch}")
+
         if not self.service:
             raise ValueError("No service configured")
 
@@ -544,7 +564,6 @@ class GitManager:
 
         mr = self.get_open_change_request(target_branch, source_branch)
         if mr:
-
             if mr.title == title and mr.description == description:
                 self.log.info(
                     f"Merge request already exists for branch {self.branch} with same title and description, skipping"
@@ -769,13 +788,20 @@ class EphemeralGitContext:
         if self.state.dry_run or self.state.readonly:
             return
 
-        if not self.git_manager.changed_files(self.state.files_to_add):
-            # no changes, can just return
-            return
-
         if self.state.validate_clean and self.state.validate_clean(self.git_manager):
             # we have a custom validation function and it returned True, indicating
             # that the changes that are there can be ignored, so we can just return
+            return
+
+        if not self.git_manager.changed_files(self.state.files_to_add):
+            # no new changes to commit/push
+
+            # if state has a change request, create it anyway
+            # this will check if there are any differences between the 
+            # current branch (local) and the default branch (remote)
+            self.create_change_request()
+
+            # nothing to commit/push so we can just return
             return
 
         if exc_type is None:
@@ -785,11 +811,8 @@ class EphemeralGitContext:
                 self.git_manager.commit(self.state.commit_message)
                 # Attempt to push
                 self.git_manager.push()
-                # if change request config is specified create a change request
-                if self.state.change_request:
-                    self.state.change_request.source_branch = self.git_manager.branch
-                    self.state.change_request.target_branch = self.git_manager.default_branch
-                    self.git_manager.create_change_request(**self.state.change_request.model_dump())
+
+                self.create_change_request()
 
             except GitCommandError:
                 # Hard reset the repository in case of git failures
@@ -799,6 +822,36 @@ class EphemeralGitContext:
             # Hard reset the repository in case of other exceptions
             self.git_manager.reset(hard=True)
             raise exc_val
+
+
+    def create_change_request(self):
+        """
+        Create a change request if one is set in the state
+        """
+
+        if not self.state.change_request:
+            return
+
+        if self.state.readonly or self.state.dry_run:
+            self.log.debug(f"Cannot create change request in readonly or dry-run ephemeral git context")
+            return 
+
+        # are there any differences between the current branch (local) and the default branch (remote)?
+        # to check this we diff the current branch against the default branch
+
+        diff = self.git_manager.repo.git.diff(f"{self.git_manager.origin.name}/{self.git_manager.default_branch}..HEAD")
+
+        if not diff:
+            # no differences, nothing to do
+            return
+
+        # make sure current branch exists remotely
+        self.git_manager.require_remote_branch()
+
+        # create change request
+        self.state.change_request.source_branch = self.git_manager.branch
+        self.state.change_request.target_branch = self.git_manager.default_branch
+        self.git_manager.create_change_request(**self.state.change_request.model_dump())        
 
     def add_files(self, file_paths: list[str]):
         """
