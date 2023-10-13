@@ -780,6 +780,122 @@ def test_reuse_ephemeral_git_context(git_repo, clone_dir):
 
     assert "test_context.txt" in os.listdir(remote_dir)
 
+
+# Test that ephemeral context deletes local branch before switching to it
+def test_ephemeral_git_context_delete_local_branch(git_repo, clone_dir):
+
+    remote_dir, git_repo = git_repo
+
+    # needs to allow_unsafe=False so git reset doesnt reset our branch
+    # branch should be reset through deletion
+    git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir, allow_unsafe=False)
+
+    git_manager.switch_branch("test", create=True)
+
+    orig_readme_content = open(os.path.join(clone_dir, "README.md"), "r").read()
+
+    # change README.md
+
+    with open(os.path.join(clone_dir, "README.md"), "w") as f:
+        f.write("Testing")
+    git_manager.repo.index.add(["README.md"])
+    git_manager.repo.index.commit("Test commit")
+
+    git_manager.switch_branch("main")
+   
+    with EphemeralGitContext(git_manager=git_manager, branch="test", commit_message="Test commit") as ctx:
+
+        # check that README.md has been reset
+
+        assert open(os.path.join(clone_dir, "README.md"), "r").read() == orig_readme_content
+
+# Test that ephemeral context deletes local branch before switching to it
+def test_ephemeral_git_context_delete_local_branch_readonly(git_repo, clone_dir):
+
+    remote_dir, git_repo = git_repo
+
+    # needs to allow_unsafe=False so git reset doesnt reset our branch
+    # branch should be reset through deletion
+    git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir, allow_unsafe=False)
+
+    git_manager.switch_branch("test", create=True)
+
+    orig_readme_content = open(os.path.join(clone_dir, "README.md"), "r").read()
+
+    # change README.md
+
+    with open(os.path.join(clone_dir, "README.md"), "w") as f:
+        f.write("Testing")
+    git_manager.repo.index.add(["README.md"])
+    git_manager.repo.index.commit("Test commit")
+
+    git_manager.switch_branch("main")
+   
+    with EphemeralGitContext(git_manager=git_manager, branch="test", commit_message="Test commit", readonly=True) as ctx:
+
+        # check that README.md has NOT been reset
+
+        assert open(os.path.join(clone_dir, "README.md"), "r").read() == "Testing"
+
+
+# Test that ephemeral context deletes local branch before switching to it
+def test_ephemeral_git_context_delete_local_branch_remake_from_remote(git_repo, clone_dir):
+
+    remote_dir, git_repo = git_repo
+
+    # create remote "test" branch and change README.md and commit
+
+    git_repo.git.checkout("main")
+    git_repo.git.checkout("-b", "test")
+    with open(os.path.join(remote_dir, "README.md"), "w") as f:
+        f.write("Testing initial")
+    git_repo.git.commit("-am", "Test commit")
+    git_repo.git.checkout("main")
+
+    assert open(os.path.join(remote_dir, "README.md"), "r").read() == ""
+
+    git_repo.git.checkout("test")
+
+    assert open(os.path.join(remote_dir, "README.md"), "r").read() == "Testing initial"
+
+    git_repo.git.checkout("main")
+
+    # needs to allow_unsafe=False so git reset doesnt reset our branch
+    # branch should be reset through deletion
+    git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir, allow_unsafe=False)
+
+    git_manager.switch_branch("test")
+    #git_manager.pull()
+    
+    with open(os.path.join(clone_dir, "README.md"), "r") as f:
+        orig_readme_content = f.read()
+
+    assert orig_readme_content == "Testing initial"
+
+    # change README.md
+
+    with open(os.path.join(clone_dir, "README.md"), "w") as f:
+        f.write("Testing new")
+    git_manager.repo.index.add(["README.md"])
+    git_manager.repo.index.commit("Test commit")
+
+    git_manager.switch_branch("main")
+    assert open(os.path.join(clone_dir, "README.md"), "r").read() == ""
+   
+    with EphemeralGitContext(git_manager=git_manager, branch="test", commit_message="Test commit") as ctx:
+
+        # check that README.md has been reset
+
+        assert open(os.path.join(clone_dir, "README.md"), "r").read() == orig_readme_content
+
+
+    with EphemeralGitContext(git_manager=git_manager, branch="main", commit_message="Test commit") as ctx:
+
+        # check that README.md has been reset
+
+        assert open(os.path.join(clone_dir, "README.md"), "r").read() == ""
+
+
 # Test current_ephemeral_git_context holds the current ctx
 def test_context_vars(git_repo, clone_dir):
     remote_dir, git_repo = git_repo
