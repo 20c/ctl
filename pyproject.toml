@@ -35,7 +35,6 @@ ctl = "ctl.cli:main"
 python = "^3.9"
 
 confu = ">=1.4"
-git-url-parse = ">=1.1"
 grainy = ">=1.4"
 munge = ">=1"
 natsort = ">=8"
