@@ -397,6 +397,20 @@ class GitManager:
         except git.exc.GitCommandError:
             self.log.warning(f"Could not create branch {branch_name}")
 
+    def branch_exists(self, branch_name: str):
+        """
+        Returns True if the branch exists locally, False otherwise
+
+        Args:
+            branch_name (str): The name of the branch to check
+        """
+
+        try:
+            self.repo.heads[branch_name]
+            return True
+        except IndexError:
+            return False
+
     def switch_branch(self, branch_name: str, create: bool = True):
         """
         Switches to the given branch
@@ -711,7 +725,15 @@ class EphemeralGitContext:
             if self.git_manager.is_dirty:
                 self.git_manager.reset(hard=True)
 
-        if self.state.branch:
+        if self.state.branch and self.state.branch != self.git_manager.branch:
+
+            # delete local branch if it exists
+            if self.git_manager.branch_exists(self.state.branch) and not self.state.readonly:
+                # dont delete default branch
+                if self.state.branch != self.git_manager.default_branch:
+                    self.git_manager.log(f"Deleting local branch {self.state.branch}")
+                    self.git_manager.repo.git.branch("-D", self.state.branch)            
+
             self.git_manager.switch_branch(self.state.branch)
             if self.git_manager.is_dirty and not self.state.readonly:
                 self.git_manager.reset(hard=True)
@@ -773,6 +795,10 @@ class EphemeralGitContext:
     def git_manager(self):
         return self.state.git_manager
 
+    @property
+    def can_write(self):
+        return not self.state.readonly and not self.state.dry_run
+    
     def stash_current_context(self):
 
         # stash current repo state if we are moving into a nested
