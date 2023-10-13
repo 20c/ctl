@@ -150,10 +150,13 @@ class RepositoryPlugin(ExecutablePlugin):
         if not self.checkout_path:
 
             git_repo_parts = parse_git_repo(self.repo_url)
-            pathname = f"{git_repo_parts.namespace}/{git_repo_parts.repo}"
             
             self.checkout_path = os.path.join(
-                self.ctl.cachedir, "repo", git_repo_parts.hostname, pathname
+                self.ctl.cachedir, 
+                "repo", 
+                git_repo_parts.hostname, 
+                git_repo_parts.namespace,
+                git_repo_parts.repo
             )
 
         # while checkout patch can be relative in the config, we want
