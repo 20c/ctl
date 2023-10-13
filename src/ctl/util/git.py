@@ -309,7 +309,7 @@ class GitManager:
         Fetches the origin repository
         """
 
-        fetch_args = []
+        fetch_args = ["--all"]
         if prune:
             fetch_args.append("--prune")
 
@@ -321,7 +321,7 @@ class GitManager:
         Pulls the origin repository
         """
         self.log.info(f"Pulling from {self.origin.name}")
-        self.repo.git.pull()
+        self.repo.git.pull(self.origin.name, self.branch)
 
     def push(self):
         """
@@ -429,7 +429,6 @@ class GitManager:
         # if branch exists remote but not locally, create from remote
         if branch_exists_remotely and not branch_exists_locally:
             self.fetch()
-
             self.repo.git.checkout(branch_name)
             self.index = self.repo.index
             return
