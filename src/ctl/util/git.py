@@ -636,9 +636,9 @@ class EphemeralGitContextState(pydantic.BaseModel):
 
     context_id: str = pydantic.Field(default_factory=lambda: str(uuid.uuid4())[:8])
 
-    change_request: ChangeRequest = None
+    change_request: Union[ChangeRequest, None] = None
 
-    validate_clean: Callable = None
+    validate_clean: Union[Callable, None] = None
 
     files_to_add: list[str] = pydantic.Field(default_factory=list)
 
