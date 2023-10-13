@@ -304,12 +304,17 @@ class GitManager:
 
         return f"{_service.instance_url}/{_project.full_repo_name}/blob/{self.branch}/{file_path}"
 
-    def fetch(self):
+    def fetch(self, prune:bool=True):
         """
         Fetches the origin repository
         """
+
+        fetch_args = []
+        if prune:
+            fetch_args.append("--prune")
+
         self.log.info(f"Fetching from {self.origin.name}")
-        self.repo.git.fetch()
+        self.repo.git.fetch(*fetch_args)
 
     def pull(self):
         """
@@ -794,13 +799,6 @@ class EphemeralGitContext:
             return
 
         if not self.git_manager.changed_files(self.state.files_to_add):
-            # no new changes to commit/push
-
-            # if state has a change request, create it anyway
-            # this will check if there are any differences between the 
-            # current branch (local) and the default branch (remote)
-            self.create_change_request()
-
             # nothing to commit/push so we can just return
             return
 
