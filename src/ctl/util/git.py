@@ -429,10 +429,8 @@ class GitManager:
         # if branch exists remote but not locally, create from remote
         if branch_exists_remotely and not branch_exists_locally:
             self.fetch()
-            self.repo.head.reference = self.repo.create_head(
-                branch_name, self.origin.refs[branch_name]
-            )
-            self.repo.head.reference.checkout()
+
+            self.repo.git.checkout(branch_name)
             self.index = self.repo.index
             return
 
@@ -731,7 +729,7 @@ class EphemeralGitContext:
             if self.git_manager.branch_exists(self.state.branch) and not self.state.readonly:
                 # dont delete default branch
                 if self.state.branch != self.git_manager.default_branch:
-                    self.git_manager.log(f"Deleting local branch {self.state.branch}")
+                    self.git_manager.log.info(f"Deleting local branch {self.state.branch}")
                     self.git_manager.repo.git.branch("-D", self.state.branch)            
 
             self.git_manager.switch_branch(self.state.branch)
