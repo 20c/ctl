@@ -717,7 +717,7 @@ class EphemeralGitContext:
         self.state_token = ephemeral_git_context_state.set(self.state)
         
         if not self.state.readonly:
-            # self.stash_current_context()
+            self.stash_current_context()
             self.git_manager.fetch()
             if self.git_manager.is_dirty:
                 self.git_manager.reset(hard=True)
@@ -771,11 +771,10 @@ class EphemeralGitContext:
             prev_state = ephemeral_git_context_state.get()
 
             self.git_manager.switch_branch(prev_state.branch if prev_state.branch else self.git_manager.default_branch)
+            self.git_manager.reset(hard=True)
 
             if not self.stash_pushed:
                 return
-
-            #self.git_manager.reset(hard=True)
 
             # try tro pop stash
             try:
