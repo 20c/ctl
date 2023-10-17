@@ -113,7 +113,7 @@ class GitManager:
         default_service: str = None,
         log: object = None,
         repository_config_filename="config",
-        allow_unsafe: bool = False,
+        allow_unsafe: bool = True,
         submodules: bool = True,
     ):
         self.url = url
@@ -382,6 +382,16 @@ class GitManager:
 
         return False
 
+    def set_tracking_branch(self, branch_name: str):
+        """
+        Sets the tracking branch for the current branch to the given branch name
+
+        Args:
+            branch_name (str): The name of the branch to set as tracking branch
+        """
+        if self.remote_branch_reference(branch_name):
+            self.repo.heads[self.branch].set_tracking_branch(self.origin.refs[branch_name])
+
     def create_branch(self, branch_name: str):
         """
         Creates a local branch off the current branch
@@ -419,6 +429,9 @@ class GitManager:
             branch_name (str): The name of the branch to switch to
             create (bool): Whether to create the branch if it does not exist
         """
+
+        self.log.info(f"Switching to branch {branch_name}")
+
         try:
             branch_exists_locally = self.repo.heads[branch_name]
         except IndexError:
@@ -454,6 +467,8 @@ class GitManager:
         - hard: A boolean indicating whether to perform a hard reset from origin/branch
         """
         if self.allow_unsafe:
+
+            self.log.info(f"Resetting {self.branch}{' hard' if hard else ''}")
 
             if from_origin and self.origin and self.remote_branch_reference(self.branch):
                 if hard:
@@ -647,8 +662,8 @@ class EphemeralGitContextState(pydantic.BaseModel):
     git_manager: GitManager
     branch: Union[str,None] = None
     commit_message: str = "Commit changes"
-    dry_run: bool = False
     readonly: bool = False
+    inactive: bool = False
 
     context_id: str = pydantic.Field(default_factory=lambda: str(uuid.uuid4())[:8])
 
@@ -658,9 +673,11 @@ class EphemeralGitContextState(pydantic.BaseModel):
 
     files_to_add: list[str] = pydantic.Field(default_factory=list)
 
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+    stash_pushed: bool = False
+    stash_popped: bool = False
+    original_branch: str = None
 
-    _initialized: bool = False
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
 
 class EphemeralGitContext:
@@ -680,28 +697,23 @@ class EphemeralGitContext:
         - git_manager (GitManager, optional): The GitManager instance to use. If not provided, will try to get from context.
         - branch (str, optional): The branch to use. Defaults to None.
         - commit_message (str, optional): The commit message to use. Defaults to 'Commit changes'.
-        - dry_run (bool, optional): Whether to perform a dry run. Defaults to False. WARNING: dry-run here specifically refers to
-            commit and push operations, not the entire context manager. It will still reset and pull the repository.
         - change_request (ChangeRequest, optional): A ChangeRequest instance to use. Defaults to None.
+        - validate_clean (Callable, optional): A callable that will be called with the GitManager instance as argument.
+        - readonly (bool, optional): Whether to only allow reading from the repository. Defaults to False.
+        - inactive (bool, optional): Whether to deactivate the context. Defaults to False.
         """
 
-        # this should never be set by the user
-        kwargs.pop("_initialized", None)
+        # these should not be set directly
+        kwargs.pop("stash_pushed", None)
+        kwargs.pop("stash_popped", None)
+        kwargs.pop("original_branch", None)
+
+        if not kwargs:
+            # can no longer open empty contexts
+            raise ValueError("Empty context, needs at least `git_manager` set")
 
         self.state_token = None
-        self.stash_pushed = False
-        self.stash_popped = False
-
-        try:
-            self.state = ephemeral_git_context_state.get()
-        except LookupError:
-            self.state = None
-
-        if not self.state and not kwargs:
-            raise ValueError("No state provided and no context set")
-
-        if not self.state or kwargs:
-            self.state = EphemeralGitContextState(**kwargs)
+        self.state = EphemeralGitContextState(**kwargs)
 
     def __enter__(self):
         """
@@ -709,39 +721,43 @@ class EphemeralGitContext:
         """
 
         self.context_token = current_ephemeral_git_context.set(self)
+        self.state_token = ephemeral_git_context_state.set(self.state)
 
-        if self.state._initialized:
-            # already initialized, can just return
+        if not self.active:
+            # context is deactivated
             return self
 
-        self.state_token = ephemeral_git_context_state.set(self.state)
-        
-        if not self.state.readonly:
-            self.stash_current_context()
-            self.git_manager.fetch()
-            if self.git_manager.is_dirty:
-                self.git_manager.reset(hard=True)
+        # reset the current branch
+        self.stash_current_context()
+        self.git_manager.fetch()
+        if self.git_manager.is_dirty:
+            self.reset()
+
+        # track what branch we were on before switching
+        self.state.original_branch = self.git_manager.branch
 
         if self.state.branch and self.state.branch != self.git_manager.branch:
 
+            # switch to branch
+
             # delete local branch if it exists
-            if self.git_manager.branch_exists(self.state.branch) and not self.state.readonly:
+            if self.git_manager.branch_exists(self.state.branch):
                 # dont delete default branch
                 if self.state.branch != self.git_manager.default_branch:
                     self.git_manager.log.info(f"Deleting local branch {self.state.branch}")
                     self.git_manager.repo.git.branch("-D", self.state.branch)            
 
             self.git_manager.switch_branch(self.state.branch)
-            if self.git_manager.is_dirty and not self.state.readonly:
-                self.git_manager.reset(hard=True)
+            if self.git_manager.is_dirty:
+                self.reset()
+
 
         # if branch exists remotely
-        if self.git_manager.remote_branch_reference(self.git_manager.branch) and not self.state.readonly:
-            # set tracking branch if necessary
-            self.git_manager.require_remote_branch()
+        if self.git_manager.remote_branch_reference(self.git_manager.branch):
+            # set tracking branch
+            self.git_manager.set_tracking_branch(self.state.branch)
+            # pull
             self.git_manager.pull()
-
-        self.state._initialized = True
 
         return self
 
@@ -751,40 +767,44 @@ class EphemeralGitContext:
         In case of any git failures, hard resets the repository.
         """
 
-        current_ephemeral_git_context.reset(self.context_token)
+        if not self.active:
+            # context is deactivated
+            return False
 
-        if not self.state_token:
-            # no state token,  means state was reused, can just
-            # return
-            return
-
-        if not self.state.dry_run and not self.state.readonly:
-            self.finalize(exc_type, exc_val, exc_tb)
-        elif self.state.dry_run:
-            for changed_file in self.git_manager.changed_files(self.state.files_to_add):
-                self.git_manager.log.info(f"[dry-run] commit changes: {changed_file}")
-        
-        ephemeral_git_context_state.reset(self.state_token)
-
-        # reset to previous branch
         try:
-            prev_state = ephemeral_git_context_state.get()
 
-            self.git_manager.switch_branch(prev_state.branch if prev_state.branch else self.git_manager.default_branch)
-            self.git_manager.reset(hard=True)
+            current_ephemeral_git_context.reset(self.context_token)
 
-            if not self.stash_pushed:
-                return
+            if self.can_write:
+                # context is allowed to commit and push, so we can finalize
+                self.finalize(exc_type, exc_val, exc_tb)
+            elif self.active:
+                # context is only allowed to read, but active, so we log
+                # what would have been committed / pushed
+                for changed_file in self.git_manager.changed_files(self.state.files_to_add):
+                    self.git_manager.log.info(f"[readonly] would commit changes: {changed_file}")
+            
+            # reset the context state
+            self.log.info(f"Resetting context state {self.state.original_branch}, {self.git_manager.branch}")
+            if self.state.original_branch != self.git_manager.branch:
+                
+                # return to previous branch
+                self.reset()
+                self.git_manager.switch_branch(self.state.original_branch)
+                self.reset()
 
-            # try tro pop stash
-            try:
+            
+        finally:
+            # always pop stash
+            if self.state.stash_pushed:
+                # can_read implied
+                self.log.info(f"Popping stash")
+                self.reset()
                 self.git_manager.repo.git.stash("pop")
-                self.stash_popped = True
-            except GitCommandError:
-                raise
+                self.state.stash_popped = True
 
-        except LookupError:
-            pass
+            # always reset the context state
+            ephemeral_git_context_state.reset(self.state_token)
 
         return False  # re-raise any exception
 
@@ -793,8 +813,30 @@ class EphemeralGitContext:
         return self.state.git_manager
 
     @property
+    def can_read(self):
+        return self.active
+
+    @property
     def can_write(self):
-        return not self.state.readonly and not self.state.dry_run
+        return not self.state.readonly and self.active
+    
+    @property
+    def active(self):
+        return not self.state.inactive
+
+    @property
+    def log(self):
+        return self.git_manager.log
+
+    def reset(self):
+        """
+        Resets the repository
+        """
+        self.git_manager.log.info(f"Resetting repository, {self.can_read}")
+        if not self.can_read:
+            return
+    
+        self.git_manager.reset(hard=True)
     
     def stash_current_context(self):
 
@@ -810,10 +852,12 @@ class EphemeralGitContext:
         # stash
 
         self.git_manager.repo.git.stash("push")
-        self.stash_pushed = True
+        self.state.stash_pushed = True
+        self.log.info(f"Stashed current context")
 
     def finalize(self, exc_type, exc_val, exc_tb):
-        if self.state.dry_run or self.state.readonly:
+        if not self.can_write:
+            # we are not allowed to commit/push so we can just return
             return
 
         if self.state.validate_clean and self.state.validate_clean(self.git_manager):
@@ -837,11 +881,11 @@ class EphemeralGitContext:
 
             except GitCommandError:
                 # Hard reset the repository in case of git failures
-                self.git_manager.reset(hard=True)
+                self.reset()
                 raise
         else:
             # Hard reset the repository in case of other exceptions
-            self.git_manager.reset(hard=True)
+            self.reset()
             raise exc_val
 
 
@@ -850,17 +894,19 @@ class EphemeralGitContext:
         Create a change request if one is set in the state
         """
 
+        if not self.active:
+            return
+
         if not self.state.change_request:
             return
 
-        if self.state.readonly or self.state.dry_run:
-            self.log.debug(f"Cannot create change request in readonly or dry-run ephemeral git context")
+        if not self.can_write:
+            self.log.debug(f"Cannot create change request in readonly ephemeral git context")
             return 
 
-        # are there any differences between the current branch (local) and the default branch (remote)?
+        # are there any differences between the current branch and the default branch?
         # to check this we diff the current branch against the default branch
-
-        diff = self.git_manager.repo.git.diff(f"{self.git_manager.origin.name}/{self.git_manager.default_branch}..HEAD")
+        diff = self.git_manager.repo.git.diff(f"{self.git_manager.default_branch}..HEAD")
 
         if not diff:
             # no differences, nothing to do
@@ -882,8 +928,7 @@ class EphemeralGitContext:
             file_paths (list[str]): A list of file paths to add to the repository.
         """
 
-        if self.state.readonly:
-            self.git_manager.log.debug(f"Cannot add files in readonly ephemeral git context: {file_paths}")
+        if not self.active:
             return
 
         self.state.files_to_add.extend(file_paths)

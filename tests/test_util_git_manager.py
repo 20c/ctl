@@ -492,11 +492,35 @@ def test_git_manager_create_merge_request_existing(
 def test_ephemeral_git_context_success(git_repo, clone_dir):
     remote_dir, git_repo = git_repo
     git_manager = GitManager(url=remote_dir, directory=clone_dir)
+
+    # outside of context, currently in branch `main`
+    
+    assert git_manager.branch == git_manager.default_branch
+
     with EphemeralGitContext(git_manager=git_manager, branch="test", commit_message="Test commit") as ctx:
+        
+        # inside context, currently in branch `test`
+
+        assert git_manager.branch == "test"
+        
         # Create a new file and add it to the index within the context
         with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
             f.write("Test")
         ctx.add_files(["test_context.txt"])
+
+    # outside of context, currently in branch `main`
+
+    assert git_manager.branch == git_manager.default_branch
+
+    # assert new file not in main branch
+
+    commit_tree = git_manager.repo.head.commit.tree
+    file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
+    assert "test_context.txt" not in file_paths
+
+    # switch to test branch
+
+    git_manager.switch_branch("test")
 
     # asset files were committed
 
@@ -569,11 +593,22 @@ def test_ephemeral_git_context_success_with_change_request(
         description="Test change request body",
     )
 
+    # outside of context, currently in branch `main`
+
+    assert git_manager.branch == git_manager.default_branch
+
     with EphemeralGitContext(git_manager=git_manager, branch="test", commit_message="Test commit", change_request=change_request) as ctx:
+
+        # inside context, currently in branch `test`
+
+        assert git_manager.branch == "test"
+
         # Create a new file and add it to the index within the context
         with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
             f.write("Test")
         ctx.add_files(["test_context.txt"])
+
+    # assert change request was created
 
     mock_project.create_pr.assert_called_once_with(
         title=change_request.title,
@@ -581,6 +616,14 @@ def test_ephemeral_git_context_success_with_change_request(
         target_branch=git_manager.default_branch,
         source_branch="test",
     )
+
+    # outside of context, currently in branch `main`
+
+    assert git_manager.branch == git_manager.default_branch
+
+    # switch to test branch
+
+    git_manager.switch_branch("test")
 
     commit_tree = git_manager.repo.head.commit.tree
     file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
@@ -605,13 +648,13 @@ def test_ephemeral_git_context_failure(git_repo, clone_dir):
     assert "test_context.txt" not in file_paths
 
 
-# Test that EpemeralGitContext correctly handles dry-run mode
-def test_ephemeral_git_context_dry_run(git_repo, clone_dir):
+# Test that EpemeralGitContext correctly handles readonly mode
+def test_ephemeral_git_context_readonly(git_repo, clone_dir):
     remote_dir, git_repo = git_repo
     git_manager = GitManager(url=remote_dir, directory=clone_dir)
 
     with EphemeralGitContext(
-        git_manager=git_manager, commit_message="Test commit", dry_run=True
+        git_manager=git_manager, commit_message="Test commit", readonly=True
     ) as ctx:
         # Create a new file and add it to the index within the context
         with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
@@ -667,8 +710,8 @@ def test_nested_ephemeral_git_contexts(git_repo, clone_dir):
 
     assert "test_context_inner_1.txt" in os.listdir(remote_dir)
 
-# Test readonly ephemeral git context
-def test_readonly_ephemeral_git_context(git_repo, clone_dir):
+# Test inactive ephemeral git context
+def test_inactive_ephemeral_git_context(git_repo, clone_dir):
     remote_dir, git_repo = git_repo
     git_manager = GitManager(url=remote_dir, directory=clone_dir)
 
@@ -676,14 +719,14 @@ def test_readonly_ephemeral_git_context(git_repo, clone_dir):
         f.write("Test")
 
     with EphemeralGitContext(
-        git_manager=git_manager, commit_message="Test commit", readonly=True
+        git_manager=git_manager, commit_message="Test commit", inactive=True
     ) as ctx:
 
         # branch should still be dirty
         assert git_manager.is_dirty
 
         # no stashing
-        assert not ctx.stash_pushed
+        assert not ctx.state.stash_pushed
 
         # Create a new file and add it to the index within the context
         with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
@@ -701,14 +744,16 @@ def test_readonly_ephemeral_git_context(git_repo, clone_dir):
     file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
     assert "test_context.txt" not in file_paths
 
-# Test nested EphemeralGitContexts where the outer context is readonly
-def test_nested_readonly_ephemeral_git_contexts(git_repo, clone_dir):
+# Test nested EphemeralGitContexts where the outer context is inactive
+def test_nested_inactive_ephemeral_git_contexts(git_repo, clone_dir):
     remote_dir, git_repo = git_repo
     git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir)
 
-    with EphemeralGitContext(git_manager=git_manager, branch="outer", readonly=True, commit_message="Test commit") as ctx:
+    with EphemeralGitContext(git_manager=git_manager, branch="outer", inactive=True, commit_message="Test commit") as ctx:
         
-        assert git_manager.branch == "outer"
+        # context is inactive, so branch should still be default
+        
+        assert git_manager.branch == git_manager.default_branch
 
         # Create a new file and add it to the index within the context
         with open(os.path.join(clone_dir, "test_context_outer_1.txt"), "w") as f:
@@ -716,9 +761,13 @@ def test_nested_readonly_ephemeral_git_contexts(git_repo, clone_dir):
 
         ctx.add_files(["test_context_outer_1.txt"])
 
+        # context is inactive, so files should not be added
+
         assert not ctx.state.files_to_add
         
         with EphemeralGitContext(git_manager=git_manager, branch="inner", commit_message="Nested Test commit") as ctx2:
+
+            # nested context is active, so branch should be "inner"            
             
             assert git_manager.branch == "inner"
 
@@ -727,14 +776,16 @@ def test_nested_readonly_ephemeral_git_contexts(git_repo, clone_dir):
                 f.write("Test")
             ctx2.add_files(["test_context_inner_1.txt"])
         
-        # test that branch is "outer"
-        assert git_manager.branch == "outer"
+        # test that branch is back to default
+        assert git_manager.branch == git_manager.default_branch
 
         # Create a new file and add it to the index within the context
         with open(os.path.join(clone_dir, "test_context_outer_2.txt"), "w") as f:
             f.write("Test")
 
         ctx.add_files(["test_context_outer_2.txt"])
+
+        # context is inactive, so files should not be added
 
         assert not ctx.state.files_to_add
 
@@ -751,34 +802,92 @@ def test_nested_readonly_ephemeral_git_contexts(git_repo, clone_dir):
 
     assert "test_context_inner_1.txt" in os.listdir(remote_dir)
 
+# Test nested readonly context, where outer context is read-only
+def test_nested_readonly_ephemeral_git_contexts(git_repo, clone_dir):
 
-# Test that reusing the current ephemeral git context works without opening a new state
-
-def test_reuse_ephemeral_git_context(git_repo, clone_dir):
     remote_dir, git_repo = git_repo
-    git_manager = GitManager(url=remote_dir, directory=clone_dir)
-    with EphemeralGitContext(git_manager=git_manager, branch="test", commit_message="Test commit") as ctx:
-        with EphemeralGitContext() as reused_ctx:
-            # Create a new file and add it to the index within the context
-            with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
-                f.write("Test")
-            reused_ctx.add_files(["test_context.txt"])
+    git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir)
+
+    with EphemeralGitContext(git_manager=git_manager, branch="outer", readonly=True, commit_message="Test commit") as ctx:
         
-        # files added in original contaxt
-        assert ctx.state.files_to_add == ["test_context.txt"]
+        # context is readonly, which allows us to switch branches
+        
+        assert git_manager.branch == "outer"
 
-        # reused context should not have committed and pushed anything
-        assert not git_manager.remote_branch_reference("test")
+        # Create a new file and add it to the index within the context
+        with open(os.path.join(clone_dir, "test_context_outer_1.txt"), "w") as f:
+            f.write("Test")
 
-    # assert test branch now exists remotely
+        ctx.add_files(["test_context_outer_1.txt"])
 
-    assert git_manager.remote_branch_reference("test")
+        # also change existing "README.md" file
+
+        with open(os.path.join(clone_dir, "README.md"), "w") as f:
+            f.write("Test outer")
+
+        ctx.add_files(["README.md"])
+
+        # context is readonly, files can be added to the context, but in the end
+        # should not be committed or pushed
+
+        assert len(ctx.state.files_to_add) == 2
+        
+        with EphemeralGitContext(git_manager=git_manager, branch="inner", commit_message="Nested Test commit") as ctx2:
+
+            # nested context is writable, so branch should be "inner"            
+            
+            assert git_manager.branch == "inner"
+
+            # Create a new file and add it to the index within the context
+            with open(os.path.join(clone_dir, "test_context_inner_1.txt"), "w") as f:
+                f.write("Test")
+
+            ctx2.add_files(["test_context_inner_1.txt"])
+        
+        # test that branch is back to "outer"
+        assert git_manager.branch == "outer"
+
+        # Create a new file and add it to the index within the context
+        with open(os.path.join(clone_dir, "test_context_outer_2.txt"), "w") as f:
+            f.write("Test")
+
+        ctx.add_files(["test_context_outer_2.txt"])
+
+        # context is readonly, files can be added to the context, but in the end
+        # should not be committed or pushed
+
+        assert len(ctx.state.files_to_add) == 3
+
+    # back to default branch
+    assert git_manager.branch == git_manager.default_branch
+
+    # "outer" branch should not exist in remote repo
+
+    assert not git_manager.remote_branch_reference("outer")
 
     # "inner" branch should exist and have the file
 
-    git_repo.git.checkout("test")
+    git_repo.git.checkout("inner")
 
-    assert "test_context.txt" in os.listdir(remote_dir)
+    assert "test_context_inner_1.txt" in os.listdir(remote_dir)
+
+    # finally we we open another local context to outer, and it should be reset from main
+    # since it was never committed
+
+    with EphemeralGitContext(git_manager=git_manager, branch="outer", commit_message="Test commit", readonly=True) as ctx:
+
+        # check that test_context_outer_1.txt are not tracked
+        # since they were never committed but still exist in the working tree
+
+        assert "test_context_outer_1.txt" in git_manager.repo.untracked_files
+        assert "test_context_outer_2.txt" in git_manager.repo.untracked_files
+
+        # check that README.md has been reset
+
+        assert open(os.path.join(clone_dir, "README.md"), "r").read() == ""
+
+
+
 
 
 # Test that ephemeral context deletes local branch before switching to it
@@ -810,7 +919,7 @@ def test_ephemeral_git_context_delete_local_branch(git_repo, clone_dir):
         assert open(os.path.join(clone_dir, "README.md"), "r").read() == orig_readme_content
 
 # Test that ephemeral context deletes local branch before switching to it
-def test_ephemeral_git_context_delete_local_branch_readonly(git_repo, clone_dir):
+def test_ephemeral_git_context_delete_local_branch_inactive(git_repo, clone_dir):
 
     remote_dir, git_repo = git_repo
 
@@ -831,11 +940,11 @@ def test_ephemeral_git_context_delete_local_branch_readonly(git_repo, clone_dir)
 
     git_manager.switch_branch("main")
    
-    with EphemeralGitContext(git_manager=git_manager, branch="test", commit_message="Test commit", readonly=True) as ctx:
+    with EphemeralGitContext(git_manager=git_manager, branch="test", commit_message="Test commit", inactive=True) as ctx:
 
         # check that README.md has NOT been reset
 
-        assert open(os.path.join(clone_dir, "README.md"), "r").read() == "Testing"
+        assert open(os.path.join(clone_dir, "README.md"), "r").read() == orig_readme_content
 
 
 # Test that ephemeral context deletes local branch before switching to it
@@ -903,10 +1012,6 @@ def test_context_vars(git_repo, clone_dir):
     with EphemeralGitContext(git_manager=git_manager, branch="test", commit_message="Test commit") as ctx:
         assert current_ephemeral_git_context.get() == ctx
         assert ephemeral_git_context_state.get() == ctx.state
-        with EphemeralGitContext() as reused_ctx:
-            assert current_ephemeral_git_context.get() == reused_ctx
-            assert ephemeral_git_context_state.get() == reused_ctx.state
-            assert reused_ctx.state == ctx.state
         with EphemeralGitContext(git_manager=git_manager, branch="inner", commit_message="Nested Test commit") as ctx2:
             assert current_ephemeral_git_context.get() == ctx2
             assert ephemeral_git_context_state.get() == ctx2.state
@@ -927,7 +1032,7 @@ def test_stash_between_contexts(git_repo, clone_dir):
     with EphemeralGitContext(git_manager=git_manager, branch="outer", commit_message="Test commit") as ctx:
         
         # assert stashes
-        assert ctx.stash_pushed
+        assert ctx.state.stash_pushed
         assert git_manager.repo.git.stash("list")
 
         assert git_manager.branch == "outer"
@@ -939,7 +1044,7 @@ def test_stash_between_contexts(git_repo, clone_dir):
         assert git_manager.is_dirty
         
         with EphemeralGitContext(git_manager=git_manager, branch="inner", commit_message="Nested Test commit") as ctx2:
-            assert ctx2.stash_pushed
+            assert ctx2.state.stash_pushed
             assert git_manager.branch == "inner"
 
             # Create a new file and add it to the index within the context
@@ -947,7 +1052,7 @@ def test_stash_between_contexts(git_repo, clone_dir):
                 f.write("Test")
             ctx2.add_files(["test_context_inner_1.txt"])
         
-        assert ctx2.stash_popped
+        assert ctx2.state.stash_popped
 
         # test that branch is "outer"
         assert git_manager.branch == "outer"
