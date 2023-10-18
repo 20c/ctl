@@ -198,7 +198,6 @@ class GitManager:
 
         try:
             self.repo = git.Repo(self.directory)
-            self.switch_branch(self.default_branch)
         except git.exc.InvalidGitRepositoryError:
             self.repo = git.Repo.clone_from(
                 self.url, self.directory, branch=self.default_branch, progress=None
