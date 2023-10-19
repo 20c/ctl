@@ -202,6 +202,7 @@ class GitManager:
             self.repo = git.Repo.clone_from(
                 self.url, self.directory, branch=self.default_branch, progress=None
             )
+            self.init_submodules()
 
         self.index = self.repo.index
 
@@ -215,7 +216,6 @@ class GitManager:
 
         self.init_services(self.repository_config)
 
-        self.init_submodules()
 
     def init_submodules(self):
         """
@@ -227,6 +227,14 @@ class GitManager:
 
         self.log.debug("Initializing submodules")
         self.repo.git.submodule("init")
+        self.repo.git.submodule("update")
+
+    def update_submodules(self):
+
+        if not self.submodules:
+            return
+
+        self.log.debug("Updating submodules")
         self.repo.git.submodule("update")
 
     def load_repository_config(self, config_filename: str):
@@ -757,6 +765,8 @@ class EphemeralGitContext:
             self.git_manager.set_tracking_branch(self.state.branch)
             # pull
             self.git_manager.pull()
+            # update submodules
+            self.git_manager.update_submodules()
 
         return self
 
@@ -794,16 +804,26 @@ class EphemeralGitContext:
 
             
         finally:
+
+            # always reset the context state
+            ephemeral_git_context_state.reset(self.state_token)
+
+
             # always pop stash
             if self.state.stash_pushed:
                 # can_read implied
                 self.log.info(f"Popping stash")
                 self.reset()
-                self.git_manager.repo.git.stash("pop")
+                try:
+                    self.git_manager.repo.git.stash("pop")
+                except GitCommandError as e:
+                    # ignore "No stash entries found.", raise others
+                    # TODO: how does this even happen?
+                    if "No stash entries found." not in e.stderr:
+                        raise
+                
                 self.state.stash_popped = True
 
-            # always reset the context state
-            ephemeral_git_context_state.reset(self.state_token)
 
         return False  # re-raise any exception
 
