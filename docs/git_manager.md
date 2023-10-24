@@ -1,24 +1,6 @@
-Sure, here's a quickstart guide in Markdown format:
-
-```markdown
 # Git Manager Utility Quickstart Guide
 
 This Python utility provides functionalities for managing Git repositories, including operations on Github and Gitlab.
-
-## Prerequisites
-
-Ensure you have the following Python libraries installed:
-
-- git
-- contextvars
-- logging
-- os
-- functools
-- uuid
-- munge
-- pydantic
-- urllib
-- ogr
 
 ## Basic Usage
 
@@ -32,9 +14,9 @@ from git_manager import GitManager, EphemeralGitContext
 
 ```python
 git_manager = GitManager(
-url="https://github.com/username/repo.git",
-directory="/path/to/local/repo",
-default_branch="main"
+  url="https://github.com/username/repo.git",
+  directory="/path/to/local/repo",
+  default_branch="main"
 )
 ```
 
@@ -71,21 +53,20 @@ The `EphemeralGitContext` class provides a context manager for Git operations. I
 
 ```python
 with EphemeralGitContext(git_manager=git_manager, branch="new-branch", commit_message="Commit changes"):
-# Perform operations within the context
-pass
+  # Perform operations within the context
+  pass
 ```
 
 ## Creating a Merge Request
 
 ```python
 git_manager.create_change_request(
-title="Merge Request Title",
-description="Merge Request Description",
-target_branch="main",
-source_branch="new-branch"
+  title="Merge Request Title",
+  description="Merge Request Description",
+  target_branch="main",
+  source_branch="new-branch"
 )
 ```
 
 Please refer to the source code for more detailed usage and additional functionalities.
-```
 Please note that this is a basic guide and the actual usage may vary depending on the specific requirements of your project.
