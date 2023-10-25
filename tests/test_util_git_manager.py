@@ -180,6 +180,7 @@ def test_git_manager_force_push(git_repo, clone_dir):
     # Create a new branch for this test
     branch_name = "test_branch"
     git_manager.switch_branch(branch_name, create=True)
+    git_manager.require_remote_branch()
     # Make a change to the local repository
     with open(os.path.join(clone_dir, "test.txt"), "w") as f:
         f.write("Test")
@@ -187,16 +188,19 @@ def test_git_manager_force_push(git_repo, clone_dir):
     git_manager.repo.index.commit("Test commit")
 
     # make a change to the remote repository
+    git_repo.git.checkout(branch_name)
     with open(os.path.join(remote_dir, "test.txt"), "w") as f:
         f.write("Test in remote")
     git_repo.git.add("test.txt")
-    git_repo.git.commit("-m", "Test commit")
+    git_repo.git.commit("-m", "Test commit")#
+    git_repo.git.checkout("main")
 
     # Push the change to the "remote" repository
-    git_manager.push(force=False)
+    git_manager.push(force=True)
     # Switch to the new branch on the remote repository and check that the change was pushed
     git_repo.git.checkout(branch_name)
-    assert "test.txt" in os.listdir(remote_dir)    
+    assert "test.txt" in os.listdir(remote_dir)
+
 
 # Test that the GitManager changed_files method correctly returns a list of changed files
 # and unttracked files
