@@ -330,12 +330,12 @@ class GitManager:
         self.log.info(f"Pulling from {self.origin.name}")
         self.repo.git.pull(self.origin.name, self.branch)
 
-    def push(self):
+    def push(self, force:bool=False):
         """
         Push the current branch to origin
         """
         self.log.info(f"Pushing {self.repo.head.ref.name} to {self.origin.name}")
-        self.repo.git.push(self.origin.name, self.repo.head.ref.name)
+        self.repo.git.push(self.origin.name, self.repo.head.ref.name, force=force)
 
     def sync(self):
         """
@@ -671,6 +671,7 @@ class EphemeralGitContextState(pydantic.BaseModel):
     commit_message: str = "Commit changes"
     readonly: bool = False
     inactive: bool = False
+    force_push: bool = False
 
     context_id: str = pydantic.Field(default_factory=lambda: str(uuid.uuid4())[:8])
 
@@ -708,6 +709,7 @@ class EphemeralGitContext:
         - validate_clean (Callable, optional): A callable that will be called with the GitManager instance as argument.
         - readonly (bool, optional): Whether to only allow reading from the repository. Defaults to False.
         - inactive (bool, optional): Whether to deactivate the context. Defaults to False.
+        - force_push (bool, optional): Whether to force push. Defaults to False.
         """
 
         # these should not be set directly
@@ -894,7 +896,7 @@ class EphemeralGitContext:
                 self.git_manager.add(self.git_manager.changed_files(self.state.files_to_add))
                 self.git_manager.commit(self.state.commit_message)
                 # Attempt to push
-                self.git_manager.push()
+                self.git_manager.push(force=self.state.force_push)
 
                 self.create_change_request()
 

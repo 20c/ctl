@@ -173,6 +173,30 @@ def test_git_manager_push(git_repo, clone_dir):
     git_repo.git.checkout(branch_name)
     assert "test.txt" in os.listdir(remote_dir)
 
+# Test that a GitManger instance can --force push to a "remote" repository
+def test_git_manager_force_push(git_repo, clone_dir):
+    remote_dir, git_repo = git_repo
+    git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir)
+    # Create a new branch for this test
+    branch_name = "test_branch"
+    git_manager.switch_branch(branch_name, create=True)
+    # Make a change to the local repository
+    with open(os.path.join(clone_dir, "test.txt"), "w") as f:
+        f.write("Test")
+    git_manager.repo.index.add(["test.txt"])
+    git_manager.repo.index.commit("Test commit")
+
+    # make a change to the remote repository
+    with open(os.path.join(remote_dir, "test.txt"), "w") as f:
+        f.write("Test in remote")
+    git_repo.git.add("test.txt")
+    git_repo.git.commit("-m", "Test commit")
+
+    # Push the change to the "remote" repository
+    git_manager.push(force=False)
+    # Switch to the new branch on the remote repository and check that the change was pushed
+    git_repo.git.checkout(branch_name)
+    assert "test.txt" in os.listdir(remote_dir)    
 
 # Test that the GitManager changed_files method correctly returns a list of changed files
 # and unttracked files
@@ -491,7 +515,7 @@ def test_git_manager_create_merge_request_existing(
 # Test that EphemeralGitContext correctly sets up and tears down the repository
 def test_ephemeral_git_context_success(git_repo, clone_dir):
     remote_dir, git_repo = git_repo
-    git_manager = GitManager(url=remote_dir, directory=clone_dir)
+    git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir)
 
     # outside of context, currently in branch `main`
     
@@ -499,6 +523,59 @@ def test_ephemeral_git_context_success(git_repo, clone_dir):
 
     with EphemeralGitContext(git_manager=git_manager, branch="test", commit_message="Test commit") as ctx:
         
+        # inside context, currently in branch `test`
+
+        assert git_manager.branch == "test"
+        
+        # Create a new file and add it to the index within the context
+        with open(os.path.join(clone_dir, "test_context.txt"), "w") as f:
+            f.write("Test")
+        ctx.add_files(["test_context.txt"])
+
+    # outside of context, currently in branch `main`
+
+    assert git_manager.branch == git_manager.default_branch
+
+    # assert new file not in main branch
+
+    commit_tree = git_manager.repo.head.commit.tree
+    file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
+    assert "test_context.txt" not in file_paths
+
+    # switch to test branch
+
+    git_manager.switch_branch("test")
+
+    # asset files were committed
+
+    commit_tree = git_manager.repo.head.commit.tree
+    file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
+    assert "test_context.txt" in file_paths
+
+    # assert test branch now exists remotely
+
+    assert git_manager.remote_branch_reference("test") is not None
+
+# Test that EphemeralGitContext uses force push if force_push is set to True
+def test_ephemeral_git_context_success_with_force_push(git_repo, clone_dir):
+    remote_dir, git_repo = git_repo
+    git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir)
+
+    # outside of context, currently in branch `main`
+    
+    assert git_manager.branch == git_manager.default_branch
+
+    with EphemeralGitContext(git_manager=git_manager, branch="test", force_push=True, commit_message="Test commit") as ctx:
+
+        # make changes to remote branch to cause a conflict
+
+        with open(os.path.join(remote_dir, "test_context.txt"), "w") as f:
+            f.write("Test")
+        git_repo.git.checkout("-b", "test")
+        git_repo.git.add("test_context.txt")
+        git_repo.git.commit("-m", "Test commit")
+        git_repo.git.checkout("main")
+
         # inside context, currently in branch `test`
 
         assert git_manager.branch == "test"
