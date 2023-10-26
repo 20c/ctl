@@ -7,7 +7,7 @@ def init_tmp_repo(tmpdir):
     repo_path = str(tmpdir.mkdir("git_repo_src.git"))
     repo_path_clone = str(tmpdir.mkdir("git_repo_clone"))
 
-    subprocess.call([f"cd {repo_path}; git init --bare;"], shell=True)
+    subprocess.call([f"cd {repo_path}; git config --global init.defaultBranch main; git init --bare;"], shell=True)
     subprocess.call(
         [f"git clone {repo_path} {repo_path_clone}"],
         shell=True,
@@ -23,7 +23,7 @@ def init_tmp_repo(tmpdir):
         shell=True,
     )
     subprocess.call(
-        [f"cd {repo_path_clone}; git push -u origin master;"],
+        [f"cd {repo_path_clone}; git push -u origin main;"],
         shell=True,
     )
 
@@ -60,7 +60,7 @@ def test_init_and_clone(tmpdir, ctlr):
     plugin, repo_path = instantiate(tmpdir, ctlr)
     assert plugin.is_cloned
     assert plugin.is_clean
-    assert plugin.branch == "master"
+    assert plugin.branch == "main"
     assert len(plugin.uuid) > 0
 
 
@@ -69,7 +69,7 @@ def test_pull(tmpdir, ctlr):
     subprocess.call(
         [
             "echo changed > {path}/README.md; cd {path}; "
-            "git commit -am 'update'; git push -u origin master".format(path=repo_path)
+            "git commit -am 'update'; git push -u origin main".format(path=repo_path)
         ],
         shell=True,
     )
@@ -113,15 +113,15 @@ def test_branch_and_merge(tmpdir, ctlr):
     )
     plugin.commit(files=["README.md"], message="test")
 
-    # switch back to master and check file was reverted
-    plugin.checkout("master")
+    # switch back to main and check file was reverted
+    plugin.checkout("main")
     with open(f"{plugin.checkout_path}/README.md") as fh:
         assert fh.read() == "empty\n"
 
     # merge test
-    plugin.merge("test", "master")
-    assert plugin.branch == "master"
+    plugin.merge("test", "main")
+    assert plugin.branch == "main"
 
-    # check that master is now on the new file
+    # check that main is now on the new file
     with open(f"{plugin.checkout_path}/README.md") as fh:
         assert fh.read() == "abcdeftest\n"

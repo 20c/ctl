@@ -9,7 +9,7 @@ def instantiate_version(tmpdir, ctlr=None):
     dummy_repo = ctl.plugin._instance["dummy_repo"] = DummyRepositoryPlugin(
         {"config": {"checkout_path": str(tmpdir.mkdir("repo"))}}, ctlr
     )
-    config = {"config": {"branch_dev": "master", "branch_release": "release"}}
+    config = {"config": {"branch_dev": "main", "branch_release": "release"}}
     plugin = instantiate_test_plugin("version", "test_version", _ctl=ctlr, **config)
     plugin.init_version = True
     plugin.no_auto_dev = True
@@ -56,7 +56,7 @@ class DummyRepositoryPlugin(RepositoryPlugin):
         self._pushed = False
         self._merged = None
         self._tag = None
-        self._branch = "master"
+        self._branch = "main"
 
     @property
     def uuid(self):
