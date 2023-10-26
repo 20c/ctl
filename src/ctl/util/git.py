@@ -11,12 +11,14 @@ import uuid
 import git
 import munge
 import pydantic
+import tempfile
+import shutil
 import urllib
 from typing import Callable, Union
 from git import GitCommandError
 from ogr.services.github import GithubService
 from ogr.services.gitlab import GitlabService
-from ogr.abstract import PRStatus
+from ogr.abstract import PRStatus, MergeCommitStatus
 
 __all__ = [
     "GitManager",
@@ -29,6 +31,21 @@ __all__ = [
 # A context variable to hold the GitManager instance
 ephemeral_git_context_state = contextvars.ContextVar("ephemeral_git_context_state")
 current_ephemeral_git_context = contextvars.ContextVar("current_ephemeral_git_context")
+
+
+
+def ephemeral_git_context(**init_kwargs):
+    """
+    Decorator for the EphemeralGitContext class.
+    This decorator allows the use of EphemeralGitContext as a decorator itself.
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            with EphemeralGitContext(**init_kwargs):
+                return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 class MergeNotPossible(OSError):
@@ -107,7 +124,7 @@ class GitManager:
 
     def __init__(
         self,
-        url: str,
+        url: Union[str, None],
         directory: str,
         default_branch: str = "main",
         default_service: str = None,
@@ -115,6 +132,7 @@ class GitManager:
         repository_config_filename="config",
         allow_unsafe: bool = True,
         submodules: bool = True,
+        repository_config: RepositoryConfig = None,
     ):
         self.url = url
         self.directory = directory
@@ -131,7 +149,7 @@ class GitManager:
         self.log = log if log else logging.getLogger(__name__)
 
         self.repository_config_filename = repository_config_filename
-        self.repository_config = RepositoryConfig()
+        self.repository_config = repository_config if repository_config else RepositoryConfig()
 
         self.init_repository()
 
@@ -198,7 +216,26 @@ class GitManager:
 
         try:
             self.repo = git.Repo(self.directory)
+
+            # if url is not set we can get a list of remotes
+            # and take the first one as origin
+            
+            if not self.url and self.repo.remotes:
+                self.url = self.repo.remotes[0].url
+            elif not self.url:
+                
+                # TODO: do we want a flag here? There might be use cases where
+                # we want to operate on a local-only repository
+                raise ValueError("No url specified and the repository has no remotes")
+
         except git.exc.InvalidGitRepositoryError:
+
+            # if url is not specified now, we cannot clone
+            # so we raise
+
+            if not self.url:
+                raise ValueError("No url specified and specified directory is not a git repository")
+
             self.repo = git.Repo.clone_from(
                 self.url, self.directory, branch=self.default_branch, progress=None
             )
@@ -256,7 +293,7 @@ class GitManager:
             self.log.debug(
                 f"Loaded repository config from {config_filename} - {self.repository_config}"
             )
-        else:
+        elif not self.repository_config:
             self.log.warning(f"Could not find repository config file: `{config_filename}`")
 
     def set_origin(self):
@@ -620,6 +657,18 @@ class GitManager:
             source_branch=source_branch,
         )
 
+    def list_change_requests(self):
+        """
+        List all open change requests
+        """
+
+        if not self.service:
+            raise ValueError("No service configured")
+
+        _project = self.service_project()
+
+        return _project.get_pr_list()
+
     def get_open_change_request(self, target_branch:str, source_branch:str):
 
         """
@@ -633,8 +682,6 @@ class GitManager:
 
         for mr in _project.get_pr_list():
 
-            # skip closed/merged MRs
-
             if mr.status != PRStatus.open:
                 continue
 
@@ -643,6 +690,23 @@ class GitManager:
 
         return None
 
+    def rename_change_request(self, target_branch:str, source_branch:str, title:str):
+        """
+        Rename an existing change request
+        
+        **Arguments**
+
+        - source_branch (`str`): branch name
+        - target_branch (`str`): branch name
+        - title (`str`): new title
+        """
+
+        change_request = self.get_open_change_request(target_branch, source_branch)
+
+        if not change_request:
+            raise ValueError(f"Could not find change request for branch {source_branch}")
+    
+        change_request.update_info(title=title, description=change_request.description or "")
 
     def create_merge_request(self, title: str):
         """
@@ -658,6 +722,53 @@ class GitManager:
 
         return self.create_change_request(title)
 
+
+    def merge_change_request(self, target_branch: str, source_branch: str, squash: bool = False):
+
+        """
+        Merge the change request
+
+        **Arguments**
+
+        - target_branch: The target branch of the merge request
+        - source_branch: The source branch of the merge request
+        - squash: Whether to squash the merge request
+
+        **Token Permissions**
+
+        GitLab: 
+        - Role: >= Maintainer
+        - api
+        - read_api
+        - read_repository
+        - write_repository
+
+
+        GitHub:
+        - Contents: read and write
+        - Pull requests: read and write
+        - Metadata: read
+        """
+
+        if not self.service:
+            raise ValueError("No service configured")
+
+        _project = self.service_project()
+
+        mr = self.get_open_change_request(target_branch, source_branch)
+
+        if not mr:
+            raise ValueError(f"No open merge request found for branch {source_branch}")
+
+        if mr.merge_commit_status != MergeCommitStatus.can_be_merged:
+            raise ValueError(f"Merge request for branch {source_branch} cannot be merged")
+
+        self.log.info(f"Merging change request for branch {source_branch}")
+
+        if self.service == self.services.github:
+            return mr._raw_pr.merge(merge_method="squash" if squash else "merge")
+        else:
+            return mr._raw_pr.merge(squash=squash)
 
 class ChangeRequest(pydantic.BaseModel):
     title: str
@@ -956,15 +1067,46 @@ class EphemeralGitContext:
 
 
 
-def ephemeral_git_context(**init_kwargs):
+
+class TemporaryGitContext:
     """
-    Decorator for the EphemeralGitContext class.
-    This decorator allows the use of EphemeralGitContext as a decorator itself.
+    Will re-clone the repository into a temporary directory and run the context manager in that directory.
+
+    This is mostly useful when you want to ensure a clean state for read operations without
+    affecting the original repository via a hard reset or deleting of local branchesoh. (as EphmeralGitContext does)
     """
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            with EphemeralGitContext(**init_kwargs):
-                return func(*args, **kwargs)
-        return wrapper
-    return decorator
+
+    def __init__(self, git_manager: GitManager, **kwargs):
+        """
+        Initializes the context manager with a GitManager instance.
+
+        **Arguments**
+
+        - git_manager (GitManager): The GitManager instance to use.
+        """
+
+        self._initial_git_manager = git_manager
+
+    def __enter__(self):
+
+        self.git_manager = GitManager(
+            self._initial_git_manager.url,
+            tempfile.mkdtemp(),
+            default_branch=self._initial_git_manager.default_branch,
+            default_service=self._initial_git_manager.default_service,
+            log=self._initial_git_manager.log,
+            repository_config_filename=self._initial_git_manager.repository_config_filename,
+            allow_unsafe=self._initial_git_manager.allow_unsafe,
+            submodules=self._initial_git_manager.submodules,
+            repository_config=self._initial_git_manager.repository_config,
+        )
+
+        self.git_manager.log.debug(f"Temporary repository cloned to {self.git_manager.directory}")
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+
+        self.git_manager.log.debug(f"Removing temporary repository {self.git_manager.directory}")
+        shutil.rmtree(self.git_manager.directory)
+        return False
