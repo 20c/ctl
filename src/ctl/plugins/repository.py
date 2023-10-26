@@ -5,11 +5,11 @@ Plugin interface for plugins that manage software repositories
 import os
 
 import confu.schema
+from ogr.parsing import parse_git_repo
 
 from ctl.docs import pymdgen_confu_types
 from ctl.plugins import ExecutablePlugin
 
-from ogr.parsing import parse_git_repo
 
 @pymdgen_confu_types()
 class PluginConfig(confu.schema.Schema):
@@ -148,15 +148,14 @@ class RepositoryPlugin(ExecutablePlugin):
         branch = self.get_config("branch")
 
         if not self.checkout_path:
-
             git_repo_parts = parse_git_repo(self.repo_url)
-            
+
             self.checkout_path = os.path.join(
-                self.ctl.cachedir, 
-                "repo", 
-                git_repo_parts.hostname, 
+                self.ctl.cachedir,
+                "repo",
+                git_repo_parts.hostname,
                 git_repo_parts.namespace,
-                git_repo_parts.repo
+                git_repo_parts.repo,
             )
 
         # while checkout patch can be relative in the config, we want

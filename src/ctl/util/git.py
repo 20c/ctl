@@ -4,28 +4,29 @@ repositories on Github and Gitlab.
 """
 
 import contextvars
+import functools
 import logging
 import os
-import functools
+import shutil
+import tempfile
+import urllib
 import uuid
+from typing import Callable, Union
+
 import git
 import munge
 import pydantic
-import tempfile
-import shutil
-import urllib
-from typing import Callable, Union
 from git import GitCommandError
+from ogr.abstract import MergeCommitStatus, PRStatus
 from ogr.services.github import GithubService
 from ogr.services.gitlab import GitlabService
-from ogr.abstract import PRStatus, MergeCommitStatus
 
 __all__ = [
     "GitManager",
-    "EphemeralGitContext", 
-    "MergeNotPossible", 
-    "ephemeral_git_context", 
-    "ephemeral_git_context_state"
+    "EphemeralGitContext",
+    "MergeNotPossible",
+    "ephemeral_git_context",
+    "ephemeral_git_context_state",
 ]
 
 # A context variable to hold the GitManager instance
@@ -33,18 +34,20 @@ ephemeral_git_context_state = contextvars.ContextVar("ephemeral_git_context_stat
 current_ephemeral_git_context = contextvars.ContextVar("current_ephemeral_git_context")
 
 
-
 def ephemeral_git_context(**init_kwargs):
     """
     Decorator for the EphemeralGitContext class.
     This decorator allows the use of EphemeralGitContext as a decorator itself.
     """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             with EphemeralGitContext(**init_kwargs):
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -149,7 +152,9 @@ class GitManager:
         self.log = log if log else logging.getLogger(__name__)
 
         self.repository_config_filename = repository_config_filename
-        self.repository_config = repository_config if repository_config else RepositoryConfig()
+        self.repository_config = (
+            repository_config if repository_config else RepositoryConfig()
+        )
 
         self.init_repository()
 
@@ -219,22 +224,22 @@ class GitManager:
 
             # if url is not set we can get a list of remotes
             # and take the first one as origin
-            
+
             if not self.url and self.repo.remotes:
                 self.url = self.repo.remotes[0].url
             elif not self.url:
-                
                 # TODO: do we want a flag here? There might be use cases where
                 # we want to operate on a local-only repository
                 raise ValueError("No url specified and the repository has no remotes")
 
         except git.exc.InvalidGitRepositoryError:
-
             # if url is not specified now, we cannot clone
             # so we raise
 
             if not self.url:
-                raise ValueError("No url specified and specified directory is not a git repository")
+                raise ValueError(
+                    "No url specified and specified directory is not a git repository"
+                )
 
             self.repo = git.Repo.clone_from(
                 self.url, self.directory, branch=self.default_branch, progress=None
@@ -253,7 +258,6 @@ class GitManager:
 
         self.init_services(self.repository_config)
 
-
     def init_submodules(self):
         """
         Initializes and updates existing submodules
@@ -267,7 +271,6 @@ class GitManager:
         self.repo.git.submodule("update")
 
     def update_submodules(self):
-
         if not self.submodules:
             return
 
@@ -294,7 +297,9 @@ class GitManager:
                 f"Loaded repository config from {config_filename} - {self.repository_config}"
             )
         elif not self.repository_config:
-            self.log.warning(f"Could not find repository config file: `{config_filename}`")
+            self.log.warning(
+                f"Could not find repository config file: `{config_filename}`"
+            )
 
     def set_origin(self):
         """
@@ -312,17 +317,15 @@ class GitManager:
         Initializes the services for the repository
         """
         if config.gitlab_url and not self.services.gitlab:
-            
             # instance_url wants only the scheme and host
             # so we need to parse it out of the full url
 
             self.services.gitlab = GitlabService(
-                token=config.gitlab_token, instance_url=self.repository_config.gitlab_url
+                token=config.gitlab_token,
+                instance_url=self.repository_config.gitlab_url,
             )
         if config.github_token and not self.services.github:
-            self.services.github = GithubService(
-                token=config.github_token
-            )
+            self.services.github = GithubService(token=config.github_token)
 
         if self.default_service and not getattr(self.services, self.default_service):
             raise ValueError(
@@ -348,7 +351,7 @@ class GitManager:
 
         return f"{_service.instance_url}/{_project.full_repo_name}/blob/{self.branch}/{file_path}"
 
-    def fetch(self, prune:bool=True):
+    def fetch(self, prune: bool = True):
         """
         Fetches the origin repository
         """
@@ -367,7 +370,7 @@ class GitManager:
         self.log.info(f"Pulling from {self.origin.name}")
         self.repo.git.pull(self.origin.name, self.branch)
 
-    def push(self, force:bool=False):
+    def push(self, force: bool = False):
         """
         Push the current branch to origin
         """
@@ -419,7 +422,7 @@ class GitManager:
             # set tracking branch
             local_branch.set_tracking_branch(self.origin.refs[self.branch])
             return True
-        
+
         if not local_branch.tracking_branch():
             # set tracking branch
             local_branch.set_tracking_branch(self.origin.refs[self.branch])
@@ -434,7 +437,9 @@ class GitManager:
             branch_name (str): The name of the branch to set as tracking branch
         """
         if self.remote_branch_reference(branch_name):
-            self.repo.heads[self.branch].set_tracking_branch(self.origin.refs[branch_name])
+            self.repo.heads[self.branch].set_tracking_branch(
+                self.origin.refs[branch_name]
+            )
 
     def create_branch(self, branch_name: str):
         """
@@ -502,7 +507,7 @@ class GitManager:
         self.repo.heads[branch_name].checkout()
         self.index = self.repo.index
 
-    def reset(self, hard: bool = False, from_origin:bool=True):
+    def reset(self, hard: bool = False, from_origin: bool = True):
         """
         Reset the current branch.
 
@@ -511,10 +516,13 @@ class GitManager:
         - hard: A boolean indicating whether to perform a hard reset from origin/branch
         """
         if self.allow_unsafe:
-
             self.log.info(f"Resetting {self.branch}{' hard' if hard else ''}")
 
-            if from_origin and self.origin and self.remote_branch_reference(self.branch):
+            if (
+                from_origin
+                and self.origin
+                and self.remote_branch_reference(self.branch)
+            ):
                 if hard:
                     self.repo.git.reset("--hard", f"{self.origin}/{self.branch}")
                 else:
@@ -524,7 +532,6 @@ class GitManager:
                     self.repo.git.reset("--hard")
                 else:
                     self.repo.git.reset()
-
 
     def add(self, file_paths: list[str]):
         """
@@ -606,7 +613,13 @@ class GitManager:
                 return ref
         return None
 
-    def create_change_request(self, title: str, description: str = "", target_branch: str = None, source_branch: str = None):
+    def create_change_request(
+        self,
+        title: str,
+        description: str = "",
+        target_branch: str = None,
+        source_branch: str = None,
+    ):
         """
         Create new MR/PR in Service from the current branch into default_branch
 
@@ -631,7 +644,7 @@ class GitManager:
 
         if not target_branch:
             target_branch = self.default_branch
-        
+
         if not source_branch:
             source_branch = self.branch
 
@@ -669,8 +682,7 @@ class GitManager:
 
         return _project.get_pr_list()
 
-    def get_open_change_request(self, target_branch:str, source_branch:str):
-
+    def get_open_change_request(self, target_branch: str, source_branch: str):
         """
         Checks if the merge request exists in an open state
         """
@@ -681,7 +693,6 @@ class GitManager:
         _project = self.service_project()
 
         for mr in _project.get_pr_list():
-
             if mr.status != PRStatus.open:
                 continue
 
@@ -690,10 +701,10 @@ class GitManager:
 
         return None
 
-    def rename_change_request(self, target_branch:str, source_branch:str, title:str):
+    def rename_change_request(self, target_branch: str, source_branch: str, title: str):
         """
         Rename an existing change request
-        
+
         **Arguments**
 
         - source_branch (`str`): branch name
@@ -704,9 +715,13 @@ class GitManager:
         change_request = self.get_open_change_request(target_branch, source_branch)
 
         if not change_request:
-            raise ValueError(f"Could not find change request for branch {source_branch}")
-    
-        change_request.update_info(title=title, description=change_request.description or "")
+            raise ValueError(
+                f"Could not find change request for branch {source_branch}"
+            )
+
+        change_request.update_info(
+            title=title, description=change_request.description or ""
+        )
 
     def create_merge_request(self, title: str):
         """
@@ -722,9 +737,9 @@ class GitManager:
 
         return self.create_change_request(title)
 
-
-    def merge_change_request(self, target_branch: str, source_branch: str, squash: bool = False):
-
+    def merge_change_request(
+        self, target_branch: str, source_branch: str, squash: bool = False
+    ):
         """
         Merge the change request
 
@@ -736,7 +751,7 @@ class GitManager:
 
         **Token Permissions**
 
-        GitLab: 
+        GitLab:
         - Role: >= Maintainer
         - api
         - read_api
@@ -761,7 +776,9 @@ class GitManager:
             raise ValueError(f"No open merge request found for branch {source_branch}")
 
         if mr.merge_commit_status != MergeCommitStatus.can_be_merged:
-            raise ValueError(f"Merge request for branch {source_branch} cannot be merged")
+            raise ValueError(
+                f"Merge request for branch {source_branch} cannot be merged"
+            )
 
         self.log.info(f"Merging change request for branch {source_branch}")
 
@@ -770,15 +787,17 @@ class GitManager:
         else:
             return mr._raw_pr.merge(squash=squash)
 
+
 class ChangeRequest(pydantic.BaseModel):
     title: str
     description: str = ""
     target_branch: str = None
     source_branch: str = None
 
+
 class EphemeralGitContextState(pydantic.BaseModel):
     git_manager: GitManager
-    branch: Union[str,None] = None
+    branch: Union[str, None] = None
     commit_message: str = "Commit changes"
     readonly: bool = False
     inactive: bool = False
@@ -857,20 +876,20 @@ class EphemeralGitContext:
         self.state.original_branch = self.git_manager.branch
 
         if self.state.branch and self.state.branch != self.git_manager.branch:
-
             # switch to branch
 
             # delete local branch if it exists
             if self.git_manager.branch_exists(self.state.branch):
                 # dont delete default branch
                 if self.state.branch != self.git_manager.default_branch:
-                    self.git_manager.log.info(f"Deleting local branch {self.state.branch}")
-                    self.git_manager.repo.git.branch("-D", self.state.branch)            
+                    self.git_manager.log.info(
+                        f"Deleting local branch {self.state.branch}"
+                    )
+                    self.git_manager.repo.git.branch("-D", self.state.branch)
 
             self.git_manager.switch_branch(self.state.branch)
             if self.git_manager.is_dirty:
                 self.reset()
-
 
         # if branch exists remotely
         if self.git_manager.remote_branch_reference(self.git_manager.branch):
@@ -894,7 +913,6 @@ class EphemeralGitContext:
             return False
 
         try:
-
             current_ephemeral_git_context.reset(self.context_token)
 
             if self.can_write:
@@ -903,24 +921,26 @@ class EphemeralGitContext:
             elif self.active:
                 # context is only allowed to read, but active, so we log
                 # what would have been committed / pushed
-                for changed_file in self.git_manager.changed_files(self.state.files_to_add):
-                    self.git_manager.log.info(f"[readonly] would commit changes: {changed_file}")
-            
+                for changed_file in self.git_manager.changed_files(
+                    self.state.files_to_add
+                ):
+                    self.git_manager.log.info(
+                        f"[readonly] would commit changes: {changed_file}"
+                    )
+
             # reset the context state
-            self.log.info(f"Resetting context state {self.state.original_branch}, {self.git_manager.branch}")
+            self.log.info(
+                f"Resetting context state {self.state.original_branch}, {self.git_manager.branch}"
+            )
             if self.state.original_branch != self.git_manager.branch:
-                
                 # return to previous branch
                 self.reset()
                 self.git_manager.switch_branch(self.state.original_branch)
                 self.reset()
 
-            
         finally:
-
             # always reset the context state
             ephemeral_git_context_state.reset(self.state_token)
-
 
             # always pop stash
             if self.state.stash_pushed:
@@ -934,9 +954,8 @@ class EphemeralGitContext:
                     # TODO: how does this even happen?
                     if "No stash entries found." not in e.stderr:
                         raise
-                
-                self.state.stash_popped = True
 
+                self.state.stash_popped = True
 
         return False  # re-raise any exception
 
@@ -951,7 +970,7 @@ class EphemeralGitContext:
     @property
     def can_write(self):
         return not self.state.readonly and self.active
-    
+
     @property
     def active(self):
         return not self.state.inactive
@@ -967,18 +986,16 @@ class EphemeralGitContext:
         self.git_manager.log.info(f"Resetting repository, {self.can_read}")
         if not self.can_read:
             return
-    
-        self.git_manager.reset(hard=True)
-    
-    def stash_current_context(self):
 
+        self.git_manager.reset(hard=True)
+
+    def stash_current_context(self):
         # stash current repo state if we are moving into a nested
         # context
 
         if not self.git_manager.is_dirty:
-
             # nothing to stash
-            
+
             return
 
         # stash
@@ -1004,7 +1021,9 @@ class EphemeralGitContext:
         if exc_type is None:
             try:
                 # Commit all changes
-                self.git_manager.add(self.git_manager.changed_files(self.state.files_to_add))
+                self.git_manager.add(
+                    self.git_manager.changed_files(self.state.files_to_add)
+                )
                 self.git_manager.commit(self.state.commit_message)
                 # Attempt to push
                 self.git_manager.push(force=self.state.force_push)
@@ -1020,7 +1039,6 @@ class EphemeralGitContext:
             self.reset()
             raise exc_val
 
-
     def create_change_request(self):
         """
         Create a change request if one is set in the state
@@ -1033,12 +1051,16 @@ class EphemeralGitContext:
             return
 
         if not self.can_write:
-            self.log.debug(f"Cannot create change request in readonly ephemeral git context")
-            return 
+            self.log.debug(
+                f"Cannot create change request in readonly ephemeral git context"
+            )
+            return
 
         # are there any differences between the current branch and the default branch?
         # to check this we diff the current branch against the default branch
-        diff = self.git_manager.repo.git.diff(f"{self.git_manager.default_branch}..HEAD")
+        diff = self.git_manager.repo.git.diff(
+            f"{self.git_manager.default_branch}..HEAD"
+        )
 
         if not diff:
             # no differences, nothing to do
@@ -1050,7 +1072,7 @@ class EphemeralGitContext:
         # create change request
         self.state.change_request.source_branch = self.git_manager.branch
         self.state.change_request.target_branch = self.git_manager.default_branch
-        self.git_manager.create_change_request(**self.state.change_request.model_dump())        
+        self.git_manager.create_change_request(**self.state.change_request.model_dump())
 
     def add_files(self, file_paths: list[str]):
         """
@@ -1064,8 +1086,6 @@ class EphemeralGitContext:
             return
 
         self.state.files_to_add.extend(file_paths)
-
-
 
 
 class TemporaryGitContext:
@@ -1088,7 +1108,6 @@ class TemporaryGitContext:
         self._initial_git_manager = git_manager
 
     def __enter__(self):
-
         self.git_manager = GitManager(
             self._initial_git_manager.url,
             tempfile.mkdtemp(),
@@ -1101,12 +1120,15 @@ class TemporaryGitContext:
             repository_config=self._initial_git_manager.repository_config,
         )
 
-        self.git_manager.log.debug(f"Temporary repository cloned to {self.git_manager.directory}")
+        self.git_manager.log.debug(
+            f"Temporary repository cloned to {self.git_manager.directory}"
+        )
 
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-
-        self.git_manager.log.debug(f"Removing temporary repository {self.git_manager.directory}")
+        self.git_manager.log.debug(
+            f"Removing temporary repository {self.git_manager.directory}"
+        )
         shutil.rmtree(self.git_manager.directory)
         return False

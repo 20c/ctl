@@ -82,8 +82,6 @@ class GitPlugin(RepositoryPlugin):
         result = self.run_git_command(get_branch)
         return result[0].strip()
 
-
-
     def branch_exists(self, name):
         """
         Return if a branch exists in the local repo or not
@@ -124,11 +122,17 @@ class GitPlugin(RepositoryPlugin):
 
         # operation `mergerelease`
         op_mergerelease_parser = sub.add_parser(
-            "merge_release", help="Will find chnage-request associated with the source/target branch and rename the change-request to v{{VERSION}} where VERSION comes from the Ctl/VERSION as it exists in the source branch. Once the change-request is renamed it will then be squashed and merged.", parents=[shared_parser]
+            "merge_release",
+            help="Will find chnage-request associated with the source/target branch and rename the change-request to v{{VERSION}} where VERSION comes from the Ctl/VERSION as it exists in the source branch. Once the change-request is renamed it will then be squashed and merged.",
+            parents=[shared_parser],
         )
 
-        op_mergerelease_parser.add_argument("source_branch", type=str, help="source branch")
-        op_mergerelease_parser.add_argument("target_branch", type=str, help="target branch")
+        op_mergerelease_parser.add_argument(
+            "source_branch", type=str, help="source branch"
+        )
+        op_mergerelease_parser.add_argument(
+            "target_branch", type=str, help="target branch"
+        )
 
         # operation `checkout`
         op_checkout_parser = sub.add_parser(
@@ -137,26 +141,38 @@ class GitPlugin(RepositoryPlugin):
         op_checkout_parser.add_argument("tag", nargs=1, help="tag or branch")
 
         # operation `list_change_requests`
-        sub.add_parser("list_change_requests", help="list open change requests", parents=[shared_parser])
+        sub.add_parser(
+            "list_change_requests",
+            help="list open change requests",
+            parents=[shared_parser],
+        )
 
         # operation `change_request_rename`
-        op_rename_change_request = sub.add_parser("rename_change_request", help="rename change request", parents=[shared_parser])
-        op_rename_change_request.add_argument("source_branch", type=str, help="source branch")
-        op_rename_change_request.add_argument("target_branch", type=str, help="target branch")
-        op_rename_change_request.add_argument("title",type=str, help="new title")
+        op_rename_change_request = sub.add_parser(
+            "rename_change_request",
+            help="rename change request",
+            parents=[shared_parser],
+        )
+        op_rename_change_request.add_argument(
+            "source_branch", type=str, help="source branch"
+        )
+        op_rename_change_request.add_argument(
+            "target_branch", type=str, help="target branch"
+        )
+        op_rename_change_request.add_argument("title", type=str, help="new title")
 
     @property
     def git_manager(self):
         return GitManager(
-            url=self.repo_url or None, 
-            directory=self.checkout_path, 
+            url=self.repo_url or None,
+            directory=self.checkout_path,
             default_branch=self.get_config("branch"),
             repository_config=RepositoryConfig(
-                gitlab_url=self.kwargs.get("gitlab_url", os.environ.get("GITLAB_URL")) or "",
+                gitlab_url=self.kwargs.get("gitlab_url", os.environ.get("GITLAB_URL"))
+                or "",
             ),
             log=self.log,
         )
-
 
     def execute(self, **kwargs):
         """
@@ -365,14 +381,17 @@ class GitPlugin(RepositoryPlugin):
         command_checkout = self.command("checkout", branch)
         self.run_git_command(command_checkout)
 
-
     @expose("ctl.{plugin_name}.list_change_requests")
     def list_change_requests(self, **kwargs):
         for cr in self.git_manager.list_change_requests():
-            self.log.info(f"#{cr.id} - {cr.title} - ({cr.source_branch} -> {cr.target_branch})")
+            self.log.info(
+                f"#{cr.id} - {cr.title} - ({cr.source_branch} -> {cr.target_branch})"
+            )
 
     @expose("ctl.{plugin_name}.change_request_rename")
-    def rename_change_request(self, source_branch:str, target_branch:str, title:str, **kwargs):
+    def rename_change_request(
+        self, source_branch: str, target_branch: str, title: str, **kwargs
+    ):
         """
         Rename a merge/pull request title
 
@@ -382,17 +401,19 @@ class GitPlugin(RepositoryPlugin):
         - target_branch (`str`): branch name
         - title (`str`): new title
         """
-        self.log.info(f"Renaming change request from {source_branch} to {target_branch} with title {title}")
+        self.log.info(
+            f"Renaming change request from {source_branch} to {target_branch} with title {title}"
+        )
         self.git_manager.rename_change_request(target_branch, source_branch, title)
-        self.log.info(f"Renamed change request from {source_branch} to {target_branch} with title {title}")
+        self.log.info(
+            f"Renamed change request from {source_branch} to {target_branch} with title {title}"
+        )
 
     @expose("ctl.{plugin_name}.merge_release")
-    def merge_release(self, source_branch:str, target_branch:str, **kwargs):
-
+    def merge_release(self, source_branch: str, target_branch: str, **kwargs):
         # Step 1 Open ephemeral context
 
         with TemporaryGitContext(git_manager=self.git_manager) as ctx:
-
             ctx.git_manager.switch_branch(source_branch)
 
             # Step 2 load contents of Ctl/VERSION file
@@ -403,22 +424,30 @@ class GitPlugin(RepositoryPlugin):
             except FileNotFoundError:
                 raise RuntimeError("No Ctl/VERSION file found in source branch")
 
-
         # Step 3 find change request associated with target_branch and source_branch
 
-        change_request = self.git_manager.get_open_change_request(target_branch, source_branch)
-        
+        change_request = self.git_manager.get_open_change_request(
+            target_branch, source_branch
+        )
+
         if not change_request:
-            raise RuntimeError(f"No change request found for {target_branch} and {source_branch}")
+            raise RuntimeError(
+                f"No change request found for {target_branch} and {source_branch}"
+            )
 
         # Step 4 rename change request
-        self.log.info(f"Renaming change request from {source_branch} to {target_branch} with title v{version}")
-        self.git_manager.rename_change_request(target_branch, source_branch, f"v{version}")
+        self.log.info(
+            f"Renaming change request from {source_branch} to {target_branch} with title v{version}"
+        )
+        self.git_manager.rename_change_request(
+            target_branch, source_branch, f"v{version}"
+        )
 
         # Step 5 squash and merge change request
-        self.log.info(f"Squashing and merging change request from {source_branch} to {target_branch}")
+        self.log.info(
+            f"Squashing and merging change request from {source_branch} to {target_branch}"
+        )
         self.git_manager.merge_change_request(target_branch, source_branch, squash=True)
-
 
     def merge(self, branch_a, branch_b, **kwargs):
         """
