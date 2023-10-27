@@ -161,17 +161,10 @@ class RepositoryPlugin(ExecutablePlugin):
     def init_repo(self):
         branch = self.get_config("branch")
 
-<<<<<<< HEAD
         if not self.checkout_path and self.repo_url:
             git_repo_parts = parse_git_repo(self.repo_url)
 
             self._checkout_path = os.path.join(
-=======
-        if not self.checkout_path:
-            git_repo_parts = parse_git_repo(self.repo_url)
-
-            self.checkout_path = os.path.join(
->>>>>>> origin/main
                 self.ctl.cachedir,
                 "repo",
                 git_repo_parts.hostname,
