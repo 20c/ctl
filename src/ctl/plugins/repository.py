@@ -9,6 +9,7 @@ from ogr.parsing import parse_git_repo
 
 from ctl.docs import pymdgen_confu_types
 from ctl.plugins import ExecutablePlugin
+from ctl.util.git import GitManager
 
 
 @pymdgen_confu_types()
@@ -17,7 +18,7 @@ class PluginConfig(confu.schema.Schema):
     Configuration schema for `RepositoryPlugin`
     """
 
-    repo_url = confu.schema.Str(cli=False)
+    repo_url = confu.schema.Str(cli=False, default="", blank=True)
     checkout_path = confu.schema.Directory(
         default="",
         blank=True,
@@ -95,6 +96,18 @@ class RepositoryPlugin(ExecutablePlugin):
         """
         raise NotImplementedError()
 
+    @property
+    def repo_url(self):
+        if hasattr(self, "_repo_url"):
+            return self._repo_url
+        return self.get_config("repo_url")
+
+    @property
+    def checkout_path(self):
+        if hasattr(self, "_checkout_path"):
+            return self._checkout_path
+        return self.get_config("checkout_path")
+
     def branch_exists(self, name):
         """
         Should return True if the branch with the name exists in
@@ -141,16 +154,17 @@ class RepositoryPlugin(ExecutablePlugin):
         """Should merge branch b into branch a"""
         raise NotImplementedError()
 
-    def init(self):
-        self.repo_url = self.get_config("repo_url")
-        self.checkout_path = self.get_config("checkout_path")
+    def execute(self, **kwargs):
+        self.kwargs = kwargs
+        self.init_repo()
 
+    def init_repo(self):
         branch = self.get_config("branch")
 
-        if not self.checkout_path:
+        if not self.checkout_path and self.repo_url:
             git_repo_parts = parse_git_repo(self.repo_url)
 
-            self.checkout_path = os.path.join(
+            self._checkout_path = os.path.join(
                 self.ctl.cachedir,
                 "repo",
                 git_repo_parts.hostname,
@@ -160,7 +174,7 @@ class RepositoryPlugin(ExecutablePlugin):
 
         # while checkout patch can be relative in the config, we want
         # it to be absolute from here on out
-        self.checkout_path = os.path.abspath(self.checkout_path)
+        self._checkout_path = os.path.abspath(self.checkout_path)
 
         self.clone()
         if branch != self.branch:
