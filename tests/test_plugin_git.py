@@ -7,7 +7,12 @@ def init_tmp_repo(tmpdir):
     repo_path = str(tmpdir.mkdir("git_repo_src.git"))
     repo_path_clone = str(tmpdir.mkdir("git_repo_clone"))
 
-    subprocess.call([f"cd {repo_path}; git config --global init.defaultBranch main; git init --bare;"], shell=True)
+    subprocess.call(
+        [
+            f"cd {repo_path}; git config --global init.defaultBranch main; git init --bare;"
+        ],
+        shell=True,
+    )
     subprocess.call(
         [f"git clone {repo_path} {repo_path_clone}"],
         shell=True,
