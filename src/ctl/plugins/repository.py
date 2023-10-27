@@ -9,8 +9,8 @@ from ogr.parsing import parse_git_repo
 
 from ctl.docs import pymdgen_confu_types
 from ctl.plugins import ExecutablePlugin
-
 from ctl.util.git import GitManager
+
 
 @pymdgen_confu_types()
 class PluginConfig(confu.schema.Schema):
@@ -95,7 +95,7 @@ class RepositoryPlugin(ExecutablePlugin):
         Should return the name of the current branch
         """
         raise NotImplementedError()
-        
+
     @property
     def repo_url(self):
         if hasattr(self, "_repo_url"):
@@ -160,7 +160,7 @@ class RepositoryPlugin(ExecutablePlugin):
 
     def init_repo(self):
         branch = self.get_config("branch")
-        
+
         if not self.checkout_path and self.repo_url:
             git_repo_parts = parse_git_repo(self.repo_url)
 

@@ -80,18 +80,23 @@ def default_config(requested_plugin=None):
                 "config": {},
             }
         ]
-    
-    return confu.config.Config(BaseSchema.config(), {
-        "ctl": {
-            "plugins": plugin_bootstrap if requested_plugin else [],
-            "permissions": [
-                {
-                    "namespace": "ctl",
-                    "permission": "r",
-                }
-            ]
-        }
-    }, {})
+
+    return confu.config.Config(
+        BaseSchema.config(),
+        {
+            "ctl": {
+                "plugins": plugin_bootstrap if requested_plugin else [],
+                "permissions": [
+                    {
+                        "namespace": "ctl",
+                        "permission": "r",
+                    }
+                ],
+            }
+        },
+        {},
+    )
+
 
 def read_config(schema, config_dir, config_name="config", ctx=None):
     """
@@ -205,7 +210,6 @@ class Context:
         elif not self.home:
             self.find_home()
 
-
         self.init()
 
     def __init__(self, **kwargs):
@@ -299,7 +303,9 @@ class Ctl:
     # things that could happen
     # def set_config_dir(self):
 
-    def __init__(self, ctx=None, config_dir=None, full_init=True, requested_plugin=None):
+    def __init__(
+        self, ctx=None, config_dir=None, full_init=True, requested_plugin=None
+    ):
         self.requested_plugin = requested_plugin
         self.init_context(ctx=ctx, config_dir=config_dir)
         self.init_logging()
@@ -320,7 +326,6 @@ class Ctl:
         # these requrie config
         self.init_plugin_manager()
         self.init_plugins()
-
 
     def init_context(self, ctx=None, config_dir=None):
         # TODO check for mutual exclusive

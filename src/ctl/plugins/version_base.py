@@ -9,10 +9,10 @@ import confu.schema
 import munge
 
 import ctl
+import ctl.plugins.git
 from ctl.docs import pymdgen_confu_types
 from ctl.exceptions import PluginOperationStopped, UsageError
 from ctl.plugins import ExecutablePlugin
-import ctl.plugins.git
 from ctl.plugins.changelog import ChangelogVersionMissing
 from ctl.plugins.changelog import temporary_plugin as temporary_changelog_plugin
 from ctl.plugins.repository import RepositoryPlugin
@@ -40,6 +40,7 @@ class VersionBasePluginConfig(confu.schema.Schema):
         default=True,
         help="If a changelog data file (CHANGELOG.yaml) exists, validate before tagging",
     )
+
 
 class VersionBasePlugin(ExecutablePlugin):
     """
@@ -172,9 +173,11 @@ class VersionBasePlugin(ExecutablePlugin):
                     "plugin nor a valid file path: "
                     "{}".format(target)
                 )
-            
+
             # pointed to a path, so we need to create a temporary git plugin
-            plugin = ctl.plugins.git.temporary_plugin(self.ctl, target, target, branch=self.kwargs.get("branch"))
+            plugin = ctl.plugins.git.temporary_plugin(
+                self.ctl, target, target, branch=self.kwargs.get("branch")
+            )
 
         if not self.init_version and not os.path.exists(plugin.version_file):
             raise UsageError(
