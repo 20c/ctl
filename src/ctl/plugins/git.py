@@ -189,6 +189,8 @@ class GitPlugin(RepositoryPlugin):
 
         super().execute(**kwargs)
 
+        print("kwargs")
+
         op = kwargs.get("op")
 
         if not op:

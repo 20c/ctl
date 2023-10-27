@@ -178,6 +178,7 @@ class ChangeLogPlugin(ExecutablePlugin):
         - version (`str`): version mame (eg. tag name)
         - data_file (`str`): file path to a CHANGELOG.(yaml|json) file
         """
+        print("LOADING", data_file)
         changelog = self.load(data_file)
         if version in changelog:
             raise ValueError(f"Release {version} already exists in {data_file}")
