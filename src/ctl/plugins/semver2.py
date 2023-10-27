@@ -55,6 +55,7 @@ class Semver2Plugin(VersionBasePlugin):
             parents=[shared_parser, release_parser],
         )
         confu_cli_args.add(op_release_parser, "changelog_validate")
+        confu_cli_args.add(op_release_parser, "branch")
         cls.add_repo_argument(op_release_parser, plugin_config)
 
     def execute(self, **kwargs):

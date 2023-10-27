@@ -102,9 +102,8 @@ def main(argv=sys.argv, run=True):
 
     # update cli context with options/arguments before
     # using it to instantiate Ctl instance
-    ctx = Context()
+    ctx = Context(**args.__dict__)
     ctx.tmpl["env"].update(input={"ctl": args.__dict__})
-    ctx.update_options(args.__dict__)
 
     ctlr = Ctl(ctx, full_init=False)
 

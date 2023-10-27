@@ -12,6 +12,7 @@ import ctl
 from ctl.docs import pymdgen_confu_types
 from ctl.exceptions import PluginOperationStopped, UsageError
 from ctl.plugins import ExecutablePlugin
+import ctl.plugins.git
 from ctl.plugins.changelog import ChangelogVersionMissing
 from ctl.plugins.changelog import temporary_plugin as temporary_changelog_plugin
 from ctl.plugins.repository import RepositoryPlugin
@@ -25,16 +26,20 @@ class VersionBasePluginConfig(confu.schema.Schema):
     """
 
     repository = confu.schema.Str(
-        help="name of repository type plugin or path " "to a repository checkout",
+        help="name of repository type plugin or path to a repository checkout",
         default=None,
         cli=False,
+    )
+
+    branch = confu.schema.Str(
+        default="main",
+        help="Checkout this branch (this is only relevant when tagging a path instead of a configured repository)",
     )
 
     changelog_validate = confu.schema.Bool(
         default=True,
         help="If a changelog data file (CHANGELOG.yaml) exists, validate before tagging",
     )
-
 
 class VersionBasePlugin(ExecutablePlugin):
     """
@@ -95,6 +100,7 @@ class VersionBasePlugin(ExecutablePlugin):
         )
 
         confu_cli_args.add(op_tag_parser, "changelog_validate")
+        confu_cli_args.add(op_tag_parser, "branch")
         cls.add_repo_argument(op_tag_parser, plugin_config)
 
         # operation `bump`
@@ -112,6 +118,7 @@ class VersionBasePlugin(ExecutablePlugin):
         )
 
         confu_cli_args.add(op_bump_parser, "changelog_validate")
+        confu_cli_args.add(op_bump_parser, "branch")
         cls.add_repo_argument(op_bump_parser, plugin_config)
 
         return {
@@ -165,8 +172,9 @@ class VersionBasePlugin(ExecutablePlugin):
                     "plugin nor a valid file path: "
                     "{}".format(target)
                 )
-
-            plugin = ctl.plugins.git.temporary_plugin(self.ctl, target, target)
+            
+            # pointed to a path, so we need to create a temporary git plugin
+            plugin = ctl.plugins.git.temporary_plugin(self.ctl, target, target, branch=self.kwargs.get("branch"))
 
         if not self.init_version and not os.path.exists(plugin.version_file):
             raise UsageError(
