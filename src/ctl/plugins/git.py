@@ -189,17 +189,7 @@ class GitPlugin(RepositoryPlugin):
 
         super().execute(**kwargs)
 
-        print("kwargs")
-
         op = kwargs.get("op")
-
-        if kwargs.get("checkout_path"):
-            # checkout path was overwritten via input
-            self.checkout_path = os.path.abspath(kwargs.get("checkout_path"))
-
-        if kwargs.get("repo_url"):
-            # repo url was overwritten via input
-            self.repo_url = kwargs.get("repo_url")
 
         if not op:
             # TODO UsageError

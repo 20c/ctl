@@ -48,6 +48,7 @@ def instantiate(tmpdir, ctlr=None, **kwargs):
     }
     config["config"].update(**kwargs)
     plugin = instantiate_test_plugin("git", "test_git", _ctl=ctlr, **config)
+    plugin.init_repo()
 
     subprocess.call(
         [

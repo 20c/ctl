@@ -47,8 +47,8 @@ class DummyRepositoryPlugin(RepositoryPlugin):
     """
 
     def init(self):
-        self.repo_url = self.config.get("repo_url")
-        self.checkout_path = self.config.get("checkout_path")
+        self._repo_url = self.config.get("repo_url")
+        self._checkout_path = self.config.get("checkout_path")
         self._clean = True
         self._cloned = False
         self._committed = False
