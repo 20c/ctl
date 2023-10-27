@@ -22,12 +22,12 @@ class VersionPluginConfig(VersionBasePluginConfig):
     """
 
     branch_dev = confu.schema.Str(
-        default="master",
+        default="main",
         help="the branch to merge from when the " "--merge-release flag is present",
     )
 
     branch_release = confu.schema.Str(
-        default="master",
+        default="main",
         help="the breanch to merge to when " "the --merge-release flag is present",
     )
 
@@ -125,7 +125,7 @@ class VersionPlugin(VersionBasePlugin):
 
         if kwargs.get("release"):
             self.merge_release(repo=repo)
-            repo_plugin.checkout(self.get_config("branch_release") or "master")
+            repo_plugin.checkout(self.get_config("branch_release") or "main")
 
         self.log.info(f"Preparing to tag {repo_plugin.checkout_path} as {version}")
         if not os.path.exists(repo_plugin.repo_ctl_dir):
