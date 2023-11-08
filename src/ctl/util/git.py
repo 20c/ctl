@@ -934,9 +934,11 @@ class EphemeralGitContext:
             )
             if self.state.original_branch != self.git_manager.branch:
                 # return to previous branch
-                self.reset()
+                if self.git_manager.is_dirty:
+                    self.reset()
                 self.git_manager.switch_branch(self.state.original_branch)
-                self.reset()
+                if self.git_manager.is_dirty:
+                    self.reset()
 
         finally:
             # always reset the context state
@@ -946,7 +948,8 @@ class EphemeralGitContext:
             if self.state.stash_pushed:
                 # can_read implied
                 self.log.info(f"Popping stash")
-                self.reset()
+                if self.git_manager.is_dirty:
+                    self.reset()
                 try:
                     self.git_manager.repo.git.stash("pop")
                 except GitCommandError as e:
