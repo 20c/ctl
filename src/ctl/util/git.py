@@ -312,6 +312,12 @@ class GitManager:
                 self.origin = remote
                 break
 
+        if not self.origin:
+            remote = next(iter(self.repo.remotes or []), None)
+            raise ValueError(
+                f"Could not find origin for repository {self.url} (first is {remote.url})"
+            )
+
     def init_services(self, config: RepositoryConfig):
         """
         Initializes the services for the repository
