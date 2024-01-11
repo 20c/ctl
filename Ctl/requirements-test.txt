@@ -2,7 +2,7 @@ codecov>=2.0.5
 coverage>=4.1
 pytest-cov>=2.3,<3
 tox>=3,<4
-Jinja2>=2.10,<3
+Jinja2>=2.10,<4
 tmpl>=0.3,<1
 pytest-filedata<1
 pytest>=6,<7
