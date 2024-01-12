@@ -524,6 +524,8 @@ class GitManager:
         """
 
         self.log.info(f"Switching to branch {branch_name}")
+        # fetch to make sure we have the latest refs
+        self.fetch()
 
         try:
             branch_exists_locally = self.repo.heads[branch_name]
@@ -687,12 +689,16 @@ class GitManager:
         repo = self.repo
         remote_name = self.origin.name
 
-        repo.git.push(
-            remote_name, f"{remote_name}/{branch}:refs/heads/{new_name}", f":{branch}"
-        )
-        # repo.delete_head(branch, "-D")
-        repo.delete_head(branch, force=True)
+        # not sure if pushing the remote ref is actually working
+        repo.git.push(remote_name, f"{remote_name}/{branch}:refs/heads/{new_name}")
 
+        # if old remote branch is still there, delete it
+        # this can depend on if the merge option to delete branch was checked
+        if branch in repo.git.branch("-r").split():
+            repo.git.push(remote_name, "--delete", branch)
+
+        # delete local branch if it exists
+        repo.delete_head(branch, force=True)
 
     def create_change_request(
         self,
