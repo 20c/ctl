@@ -210,6 +210,13 @@ class GitManager:
         """
         return self.repo.head.commit.hexsha
 
+    def get_hash(self, **kwargs):
+        """
+        Returns the current commit hash
+        pass short=True for short
+        """
+        return self.repo.git.rev_parse("HEAD", **kwargs)
+
     def init_repository(self):
         """
         Clones the repository if it does not exist
@@ -218,6 +225,9 @@ class GitManager:
         # ensure directory exists
         if not os.path.exists(self.directory):
             os.makedirs(self.directory)
+
+        # init services first to setup auth
+        self.init_services(self.repository_config)
 
         try:
             self.repo = git.Repo(self.directory)
@@ -241,8 +251,14 @@ class GitManager:
                     "No url specified and specified directory is not a git repository"
                 )
 
+            env = os.environ.copy()
+            self.log.debug(f"Cloning repository from {self.url}: {self.directory}")
             self.repo = git.Repo.clone_from(
-                self.url, self.directory, branch=self.default_branch, progress=None
+                self.url,
+                self.directory,
+                branch=self.default_branch,
+                progress=None,
+                env=env,
             )
             self.init_submodules()
 
@@ -255,8 +271,6 @@ class GitManager:
         )
 
         self.load_repository_config(self.repository_config_filename)
-
-        self.init_services(self.repository_config)
 
     def init_submodules(self):
         """
@@ -316,13 +330,29 @@ class GitManager:
         """
         Initializes the services for the repository
         """
-        if config.gitlab_url and not self.services.gitlab:
+        # why do we have 2 configs?
+        if config.gitlab_url != self.repository_config.gitlab_url:
+            raise ValueError("config passed is not repo config")
+
+        # argparse seems to be interfering with the GITLAB_URL var
+        gitlab_url = os.getenv("GITLAB_URL") or config.gitlab_url
+        gitlab_token = os.getenv("GITLAB_TOKEN") or config.gitlab_token
+        # update repo config
+        self.repository_config.gitlab_token = gitlab_token
+        self.repository_config.gitlab_url = gitlab_url
+
+        if gitlab_url and not self.services.gitlab:
             # instance_url wants only the scheme and host
             # so we need to parse it out of the full url
+            instance_url = (
+                urllib.parse.urlparse(gitlab_url).scheme
+                + "://"
+                + urllib.parse.urlparse(gitlab_url).netloc
+            )
 
             self.services.gitlab = GitlabService(
                 token=config.gitlab_token,
-                instance_url=self.repository_config.gitlab_url,
+                instance_url=instance_url,
             )
         if config.github_token and not self.services.github:
             self.services.github = GithubService(token=config.github_token)
@@ -361,14 +391,28 @@ class GitManager:
             fetch_args.append("--prune")
 
         self.log.info(f"Fetching from {self.origin.name}")
-        self.repo.git.fetch(*fetch_args)
+        fetch_info = self.repo.git.fetch(*fetch_args)
+
+        if not fetch_info:
+            self.log.info("No changes pulled")
+        else:
+            self.log.info("Changes pulled")
+
+        return fetch_info
 
     def pull(self):
         """
         Pulls the origin repository
         """
         self.log.info(f"Pulling from {self.origin.name}")
-        self.repo.git.pull(self.origin.name, self.branch)
+        fetch_info = self.repo.git.pull(self.origin.name, self.branch)
+
+        if fetch_info is None:
+            self.log.info("No changes pulled")
+        else:
+            self.log.info("Changes pulled")
+
+        return fetch_info
 
     def push(self, force: bool = False):
         """
@@ -613,6 +657,43 @@ class GitManager:
                 return ref
         return None
 
+    def archive_branch(self, new_name: str, branch: str = None):
+        """
+        Rename the remote branch and delete the local
+
+        This renames remote and doesn't check out to local
+
+        **Arguments**
+
+        - branch_name: The new name of the branch
+        """
+
+        if not branch:
+            branch = self.branch
+
+        if branch == self.default_branch:
+            raise ValueError(f"Cannot rename default branch {self.default_branch}")
+
+        if branch == self.branch:
+            # cannot rename current branch
+            self.switch_branch(self.default_branch)
+
+        self.log.info(f"Renaming branch {self.branch} to {new_name}")
+
+        # this doesn't rename remote
+        # self.repo.heads[self.branch].rename(new_name)
+
+        # Push the archive branch and delete the merge branch both locally and remotely
+        repo = self.repo
+        remote_name = self.origin.name
+
+        repo.git.push(
+            remote_name, f"{remote_name}/{branch}:refs/heads/{new_name}", f":{branch}"
+        )
+        # repo.delete_head(branch, "-D")
+        repo.delete_head(branch, force=True)
+
+
     def create_change_request(
         self,
         title: str,
@@ -738,7 +819,7 @@ class GitManager:
         return self.create_change_request(title)
 
     def merge_change_request(
-        self, target_branch: str, source_branch: str, squash: bool = False
+        self, target_branch: str, source_branch: str, squash: bool = True
     ):
         """
         Merge the change request
@@ -764,6 +845,7 @@ class GitManager:
         - Pull requests: read and write
         - Metadata: read
         """
+        self.log.info(f"Merging change request for branch {source_branch} {squash}")
 
         if not self.service:
             raise ValueError("No service configured")
