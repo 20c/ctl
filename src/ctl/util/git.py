@@ -398,12 +398,7 @@ class GitManager:
 
         self.log.info(f"Fetching from {self.origin.name}")
         fetch_info = self.repo.git.fetch(*fetch_args)
-
-        if not fetch_info:
-            self.log.info("No changes pulled")
-        else:
-            self.log.info("Changes pulled")
-
+        self.log.debug(f"Fetch info: {fetch_info}")
         return fetch_info
 
     def pull(self):
@@ -412,12 +407,7 @@ class GitManager:
         """
         self.log.info(f"Pulling from {self.origin.name}")
         fetch_info = self.repo.git.pull(self.origin.name, self.branch)
-
-        if fetch_info is None:
-            self.log.info("No changes pulled")
-        else:
-            self.log.info("Changes pulled")
-
+        self.log.debug(f"Fetch info: {fetch_info}")
         return fetch_info
 
     def push(self, force: bool = False):
