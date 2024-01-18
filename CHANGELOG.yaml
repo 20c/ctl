@@ -1,7 +1,12 @@
 Unreleased:
-  added: []
-  fixed: []
-  changed: []
+  added:
+  - py3.12
+  - archive branch
+  fixed:
+  - fetch remote before branch remake
+  - throw if remotes don't match url (#69)
+  changed:
+  - git service init changes
   deprecated: []
   removed: []
   security: []

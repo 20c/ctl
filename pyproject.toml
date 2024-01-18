@@ -18,14 +18,13 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Software Development",
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Documentation",
 ]
 
-packages = [
-    { include = "ctl", from = "src" },
-]
+packages = [{ include = "ctl", from = "src" }]
 
 
 [tool.poetry.scripts]
@@ -49,7 +48,7 @@ pydantic = ">=2.3.0"
 # testing
 coverage = ">=5"
 pytest = ">=6"
-pytest-cov = "^2.10.1"
+pytest-cov = ">=2.10.1"
 pytest-filedata = "^0.4.0"
 tox = ">=3"
 tox-gh-actions = ">=2"
