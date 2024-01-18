@@ -4,6 +4,20 @@
 ## Unreleased
 
 
+## 1.2.0
+### Added
+- configless execution
+- new git plugin with support for gitlab, github
+- new git with support for ephemeral repos
+- archive branch
+- py3.12
+### Fixed
+- fetch remote before branch remake
+- throw if remotes don't match url (#69)
+### Changed
+- git service init changes
+
+
 ## 1.1.0
 ### Added
 - `pypi release` support for poetry based projects (#27)

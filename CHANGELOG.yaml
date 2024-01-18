@@ -1,4 +1,11 @@
 Unreleased:
+  added: []
+  fixed: []
+  changed: []
+  deprecated: []
+  removed: []
+  security: []
+1.2.0:
   added:
   - configless execution
   - new git plugin with support for gitlab, github
@@ -10,9 +17,6 @@ Unreleased:
   - throw if remotes don't match url (#69)
   changed:
   - git service init changes
-  deprecated: []
-  removed: []
-  security: []
 1.1.0:
   added:
   - '`pypi release` support for poetry based projects (#27)'
