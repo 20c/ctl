@@ -227,6 +227,7 @@ class GitManager:
             os.makedirs(self.directory)
 
         # init services first to setup auth
+        # repo config will not have been loaded yet, but we might need a service to clone the repo
         self.init_services(self.repository_config)
 
         try:
@@ -270,7 +271,11 @@ class GitManager:
             f"Repository initialized at {self.directory} from {self.url} - origin set to {self.origin.name if self.origin else None}"
         )
 
+        # load the real repo config from the cloned repo
         self.load_repository_config(self.repository_config_filename)
+
+        # re-init services with the newly loaded config
+        self.init_services(self.repository_config)
 
     def init_submodules(self):
         """
@@ -373,6 +378,8 @@ class GitManager:
         Returns the service project for the service
         """
         _service = getattr(self.services, service) if service else self.service
+        if not _service:
+            raise ValueError("No service configured, cannot get project")
         return _service.get_project_from_url(self.url)
 
     def service_file_url(self, file_path: str, service: str = None):
