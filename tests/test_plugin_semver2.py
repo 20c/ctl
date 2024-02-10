@@ -2,7 +2,7 @@ import os
 import shutil
 
 import pytest
-import toml
+import tomlkit
 from util import instantiate_semver2 as instantiate
 
 import ctl
@@ -50,7 +50,7 @@ def test_tag_pyproject(tmpdir, ctlr):
 
     plugin.tag(version="2.0.0", repo="dummy_repo", prerelease="rc")
 
-    pyproject = toml.load(pyproject_path)
+    pyproject = tomlkit.load(pyproject_path)
     assert pyproject["tool"]["poetry"]["version"] == "2.0.0-rc.1"
 
 
