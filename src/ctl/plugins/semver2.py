@@ -123,8 +123,8 @@ class Semver2Plugin(VersionBasePlugin):
         self.update_version_files(repo_plugin, version_tag, files)
 
         repo_plugin.commit(files=files, message=f"Version {version_tag}", push=True)
-        no_git = kwargs.pop("no_git", False)
-        if not no_git:
+        nogit = kwargs.pop("nogit", False)
+        if not nogit:
             repo_plugin.tag(version_tag, message=version_tag, push=True)
 
     @expose("ctl.{plugin_name}.bump")

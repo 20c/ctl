@@ -31,7 +31,7 @@ def test_tag(tmpdir, ctlr):
     assert dummy_repo.version == "1.0.2"
     assert dummy_repo.has_tag("1.0.2")
 
-    plugin.tag(version="1.0.3", repo="dummy_repo", no_git=True)
+    plugin.tag(version="1.0.3", repo="dummy_repo", nogit=True)
     assert dummy_repo.version == "1.0.3"
     assert not dummy_repo.has_tag("1.0.3")
 
@@ -43,7 +43,7 @@ def test_tag_prerelease(tmpdir, ctlr):
     assert dummy_repo.version == "1.0.0-beta.1"
     assert dummy_repo.has_tag("1.0.0-beta.1")
 
-    plugin.tag(version="1.0.0", repo="dummy_repo", prerelease="rc", no_git=True)
+    plugin.tag(version="1.0.0", repo="dummy_repo", prerelease="rc", nogit=True)
     assert dummy_repo.version == "1.0.0-rc.1"
     assert not dummy_repo.has_tag("1.0.0-rc.1")
 
@@ -59,7 +59,8 @@ def test_tag_pyproject(tmpdir, ctlr):
 
     plugin.tag(version="2.0.0", repo="dummy_repo", prerelease="rc")
 
-    pyproject = tomlkit.load(pyproject_path)
+    with open(pyproject_path, "r") as f:
+        pyproject = tomlkit.load(f)
     assert pyproject["tool"]["poetry"]["version"] == "2.0.0-rc.1"
 
 
@@ -80,7 +81,7 @@ def test_bump(tmpdir, ctlr):
     with pytest.raises(ValueError):
         plugin.bump(version="invalid", repo="dummy_repo")
     
-    plugin.bump(version="patch", repo="dummy_repo", no_git=True)
+    plugin.bump(version="patch", repo="dummy_repo", nogit=True)
     assert dummy_repo.version == "2.0.1"
     assert not dummy_repo.has_tag("2.0.1")
 
@@ -93,7 +94,7 @@ def test_bump_w_prerelease_flag(tmpdir, ctlr):
     assert dummy_repo.version == "1.0.1-rc.1"
     assert dummy_repo.has_tag("1.0.1-rc.1")
 
-    plugin.bump(version="patch", repo="dummy_repo", prerelease="beta", no_git=True)
+    plugin.bump(version="patch", repo="dummy_repo", prerelease="beta", nogit=True)
     assert dummy_repo.version == "1.0.2-beta.1"
     assert not dummy_repo.has_tag("1.0.2-beta.1")
 
@@ -109,7 +110,7 @@ def test_bump_prerelease_version(tmpdir, ctlr):
     assert dummy_repo.version == "1.0.0-rc.3"
     assert dummy_repo.has_tag("1.0.0-rc.3")
 
-    plugin.bump(version="prerelease", repo="dummy_repo", no_git=True)
+    plugin.bump(version="prerelease", repo="dummy_repo", nogit=True)
     assert dummy_repo.version == "1.0.0-rc.4"
     assert not dummy_repo.has_tag("1.0.0-rc.4")
 
@@ -124,7 +125,7 @@ def test_release(tmpdir, ctlr):
 
     plugin.tag(version="1.1.0", repo="dummy_repo", prerelease="rc")
     assert dummy_repo.version == "1.1.0-rc.1"
-    plugin.release(repo="dummy_repo", no_git=True)
+    plugin.release(repo="dummy_repo", nogit=True)
     assert dummy_repo.version == "1.1.0"
     assert not dummy_repo.has_tag("1.1.0")
 

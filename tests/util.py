@@ -90,9 +90,9 @@ class DummyRepositoryPlugin(RepositoryPlugin):
 
     def tag(self, version, **kwargs):
         self._tag = version
-        no_git = kwargs.get("no_git", False)
+        nogit = kwargs.get("nogit", False)
 
-        if not no_git:
+        if not nogit:
             self._tags.add(version)
 
     def checkout(self, branch, **kwargs):
