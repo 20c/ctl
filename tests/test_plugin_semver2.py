@@ -47,6 +47,7 @@ def test_tag_prerelease(tmpdir, ctlr):
     assert dummy_repo.version == "1.0.0-rc.1"
     assert not dummy_repo.has_tag("1.0.0-rc.1")
 
+
 def test_tag_pyproject(tmpdir, ctlr):
     plugin, dummy_repo = instantiate(tmpdir, ctlr)
 
@@ -80,7 +81,7 @@ def test_bump(tmpdir, ctlr):
 
     with pytest.raises(ValueError):
         plugin.bump(version="invalid", repo="dummy_repo")
-    
+
     plugin.bump(version="patch", repo="dummy_repo", nogit=True)
     assert dummy_repo.version == "2.0.1"
     assert not dummy_repo.has_tag("2.0.1")

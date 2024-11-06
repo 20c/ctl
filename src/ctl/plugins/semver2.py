@@ -36,7 +36,7 @@ class Semver2Plugin(VersionBasePlugin):
             "--no-git",
             action="store_true",
             help="Skip git tagging operations",
-            default=False
+            default=False,
         )
 
         # operation `tag`

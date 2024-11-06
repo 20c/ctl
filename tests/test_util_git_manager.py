@@ -111,7 +111,7 @@ def clone_dir():
 # Test that a GitManager instance can be created
 def test_git_manager_init(git_repo):
     tmp_dir, repo = git_repo
-    repo.create_remote('origin', url="http://localhost")
+    repo.create_remote("origin", url="http://localhost")
     git_manager = GitManager(url="http://localhost", directory=tmp_dir)
     assert git_manager is not None
     assert git_manager.url == "http://localhost"
@@ -121,7 +121,7 @@ def test_git_manager_init(git_repo):
 # Test that a GitManager instance correctly identifies a clean repository
 def test_git_manager_is_clean(git_repo):
     tmp_dir, repo = git_repo
-    repo.create_remote('origin', url="http://localhost")
+    repo.create_remote("origin", url="http://localhost")
     git_manager = GitManager(url="http://localhost", directory=tmp_dir)
     assert git_manager.is_clean
 
@@ -129,7 +129,7 @@ def test_git_manager_is_clean(git_repo):
 # Test that a GitManager instance correctly identifies a dirty repository
 def test_git_manager_is_dirty(git_repo):
     tmp_dir, repo = git_repo
-    repo.create_remote('origin', url="http://localhost")
+    repo.create_remote("origin", url="http://localhost")
     git_manager = GitManager(url="http://localhost", directory=tmp_dir)
     # Make a change to the repository
     with open(os.path.join(tmp_dir, "test.txt"), "w") as f:
@@ -141,10 +141,11 @@ def test_git_manager_is_dirty(git_repo):
 # Test that a GitManager instance can correctly switch branches
 def test_git_manager_switch_branch(git_repo):
     tmp_dir, repo = git_repo
-    repo.create_remote('origin', url="file://" + tmp_dir)
+    repo.create_remote("origin", url="file://" + tmp_dir)
     git_manager = GitManager(url="file://" + tmp_dir, directory=tmp_dir)
     git_manager.switch_branch("test", create=True)
     assert git_manager.repo.active_branch.name == "test"
+
 
 # Test that a GitManager instance can pull from a "remote" repository
 def test_git_manager_pull(git_repo, clone_dir):
@@ -214,7 +215,7 @@ def test_git_manager_force_push(git_repo, clone_dir):
 
 def test_git_manager_changed_files(git_repo):
     tmp_dir, repo = git_repo
-    repo.create_remote('origin', url="http://localhost")
+    repo.create_remote("origin", url="http://localhost")
     git_manager = GitManager(url="http://localhost", directory=tmp_dir)
 
     # Create a new file and add it to the index
@@ -269,7 +270,7 @@ def test_git_manager_reset(git_repo, clone_dir, allow_unsafe, expected):
 
 def test_git_manager_add_and_commit(git_repo):
     tmp_dir, repo = git_repo
-    repo.create_remote('origin', url="http://localhost")
+    repo.create_remote("origin", url="http://localhost")
     git_manager = GitManager(url="http://localhost", directory=tmp_dir)
     # Create a new file and add it to the index
     with open(os.path.join(tmp_dir, "test_commit.txt"), "w") as f:
@@ -288,7 +289,7 @@ def test_git_manager_load_repository_config(
     mock_gitlab_service, mock_github_service, git_repo_with_config
 ):
     tmp_dir, repo = git_repo_with_config
-    repo.create_remote('origin', url="http://localhost")
+    repo.create_remote("origin", url="http://localhost")
     git_manager = GitManager(url="http://localhost", directory=tmp_dir)
 
     # Mock the GithubService and GitlabService instances
@@ -318,7 +319,7 @@ def test_git_manager_default_service(
     mock_repo_config.return_value = mock_config
 
     tmp_dir, repo = git_repo_with_config
-    repo.create_remote('origin', url="http://localhost")
+    repo.create_remote("origin", url="http://localhost")
     git_manager = GitManager(
         url="http://localhost", directory=tmp_dir, default_service="github"
     )
@@ -347,7 +348,7 @@ def test_git_manager_service(
     mock_repo_config.return_value = mock_config
 
     tmp_dir, repo = git_repo_with_config
-    repo.create_remote('origin', url="http://localhost")
+    repo.create_remote("origin", url="http://localhost")
     git_manager = GitManager(
         url="http://localhost", directory=tmp_dir, default_service="github"
     )
@@ -358,7 +359,7 @@ def test_git_manager_service(
 
     git_manager.load_repository_config("config.yaml")
     assert git_manager.service == git_manager.services.github
-    assert mock_github_service.call_count == 1  
+    assert mock_github_service.call_count == 1
     mock_github_service.assert_called_once_with(token="fake-github-token")
 
     # Remove the default service and check that a value error is raised since both services
@@ -458,7 +459,11 @@ def test_submodule_init_disabled(git_repo_with_submodule, clone_dir):
 @patch.object(GitManager, "service_project")
 @patch("ctl.util.git.RepositoryConfig")
 def test_git_manager_create_merge_request(
-    mock_repo_config, mock_service_project, mock_gitlab_service, mock_github_service, git_repo_with_config
+    mock_repo_config,
+    mock_service_project,
+    mock_gitlab_service,
+    mock_github_service,
+    git_repo_with_config,
 ):
     """
     Test that the GitManager.create_merge_request method correctly creates a merge request
@@ -477,14 +482,14 @@ def test_git_manager_create_merge_request(
     mock_gitlab_instance = MagicMock()
     mock_gitlab_service.return_value = mock_gitlab_instance
 
-    repo.create_remote('origin', url="http://localhost")
+    repo.create_remote("origin", url="http://localhost")
     git_manager = GitManager(
         url="http://localhost", directory=tmp_dir, default_service="gitlab"
     )
     try:
-        repo.git.checkout('test')
+        repo.git.checkout("test")
     except GitCommandError:
-        repo.git.checkout('-b', 'test')
+        repo.git.checkout("-b", "test")
 
     # Mock the service_project method to return a mock project
     mock_project = MagicMock()
@@ -503,8 +508,11 @@ def test_git_manager_create_merge_request(
         source_branch=git_manager.branch,
     )
 
-    assert mock_gitlab_service.call_count == 1  
-    mock_gitlab_service.assert_called_once_with(token="fake-gitlab-token", instance_url="http://localhost")
+    assert mock_gitlab_service.call_count == 1
+    mock_gitlab_service.assert_called_once_with(
+        token="fake-gitlab-token", instance_url="http://localhost"
+    )
+
 
 @pytest.mark.parametrize(
     "source_branch, target_branch, status, expected",
@@ -547,14 +555,14 @@ def test_git_manager_create_merge_request_existing(
     mock_gitlab_instance = MagicMock()
     mock_gitlab_service.return_value = mock_gitlab_instance
 
-    repo.create_remote('origin', url="http://localhost")
+    repo.create_remote("origin", url="http://localhost")
     git_manager = GitManager(
         url="http://localhost", directory=tmp_dir, default_service="gitlab"
     )
     try:
         repo.git.checkout(source_branch)
     except GitCommandError:
-        repo.git.checkout('-b', source_branch)
+        repo.git.checkout("-b", source_branch)
 
     # Mock the service_project method to return a mock project
     mock_project = MagicMock()
@@ -571,8 +579,10 @@ def test_git_manager_create_merge_request_existing(
     title = "Test Merge Request"
     git_manager.create_merge_request(title)
 
-    assert mock_gitlab_service.call_count == 1  
-    mock_gitlab_service.assert_called_once_with(token="fake-gitlab-token", instance_url="http://localhost")
+    assert mock_gitlab_service.call_count == 1
+    mock_gitlab_service.assert_called_once_with(
+        token="fake-gitlab-token", instance_url="http://localhost"
+    )
 
     # Check that the update_info method of the merge request was called with the correct arguments
     if expected:
@@ -749,7 +759,7 @@ def test_ephemeral_git_context_success_with_change_request(
     # Mock the service_project method to return a mock project
     mock_project = MagicMock()
     mock_service_project.return_value = mock_project
-    git_repo.create_remote('origin', url=f"file://{remote_dir}")
+    git_repo.create_remote("origin", url=f"file://{remote_dir}")
     git_manager = GitManager(
         url=f"file://{remote_dir}", directory=clone_dir, default_service="gitlab"
     )
@@ -798,9 +808,10 @@ def test_ephemeral_git_context_success_with_change_request(
     commit_tree = git_manager.repo.head.commit.tree
     file_paths = [blob.path for blob in commit_tree.traverse() if blob.type == "blob"]
     assert "test_context.txt" in file_paths
-    assert mock_gitlab_service.call_count == 1  
-    mock_gitlab_service.assert_called_once_with(token="fake-gitlab-token", instance_url="http://localhost")
-
+    assert mock_gitlab_service.call_count == 1
+    mock_gitlab_service.assert_called_once_with(
+        token="fake-gitlab-token", instance_url="http://localhost"
+    )
 
 
 # Test that EphemeralGitContext correctly handles exceptions and resets the repository

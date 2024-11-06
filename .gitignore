@@ -13,4 +13,3 @@ coverage.xml
 dist/
 build/
 site/
-venv/
