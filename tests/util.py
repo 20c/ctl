@@ -57,6 +57,7 @@ class DummyRepositoryPlugin(RepositoryPlugin):
         self._merged = None
         self._tag = None
         self._branch = "main"
+        self._tags = set()
 
     @property
     def uuid(self):
@@ -89,6 +90,10 @@ class DummyRepositoryPlugin(RepositoryPlugin):
 
     def tag(self, version, **kwargs):
         self._tag = version
+        nogit = kwargs.get("nogit", False)
+
+        if not nogit:
+            self._tags.add(version)
 
     def checkout(self, branch, **kwargs):
         print(("SETTING BRANCH", branch))
@@ -97,3 +102,6 @@ class DummyRepositoryPlugin(RepositoryPlugin):
     def merge(self, a, b, **kwargs):
         self.checkout(b)
         self._merged = b
+
+    def has_tag(self, tag):
+        return tag in self._tags

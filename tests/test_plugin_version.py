@@ -48,7 +48,8 @@ def test_tag_pyproject(tmpdir, ctlr):
 
     plugin.tag(version="2.0.0", repo="dummy_repo")
 
-    pyproject = tomlkit.load(pyproject_path)
+    with open(pyproject_path, "r") as f:
+        pyproject = tomlkit.load(f)
     assert pyproject["tool"]["poetry"]["version"] == "2.0.0"
 
 
