@@ -25,6 +25,8 @@ class DummyException(Exception):
 def git_repo():
     with tempfile.TemporaryDirectory() as tmp_dir:
         repo = Repo.init(tmp_dir, initial_branch="main")
+        repo.git.config("user.email", "test@example.com")
+        repo.git.config("user.name", "Test User")
 
         assert repo.active_branch.name == "main"
 
@@ -42,6 +44,8 @@ def git_repo():
 def git_repo_with_config():
     with tempfile.TemporaryDirectory() as tmp_dir:
         repo = Repo.init(tmp_dir, initial_branch="main")
+        repo.git.config("user.email", "test@example.com")
+        repo.git.config("user.name", "Test User")
         assert repo.active_branch.name == "main"
 
         # create an empty README file and commit it
@@ -85,6 +89,8 @@ def git_repo_with_submodule():
         main_repo = Repo.init(main_dir, initial_branch="main")
         assert main_repo.active_branch.name == "main"
         open(os.path.join(main_dir, "README.md"), "w").close()
+        main_repo.git.config("user.email", "test@example.com")
+        main_repo.git.config("user.name", "Test User")
         main_repo.index.add(["README.md"])
         main_repo.index.commit("Initial commit")
 
