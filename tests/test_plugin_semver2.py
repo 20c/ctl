@@ -35,6 +35,10 @@ def test_tag(tmpdir, ctlr):
     assert dummy_repo.version == "1.0.3"
     assert not dummy_repo.has_tag("1.0.3")
 
+    plugin.tag(version="1.0.4", repo="dummy_repo", prefix="v")
+    assert dummy_repo.version == "1.0.4"
+    assert dummy_repo.has_tag("v1.0.4")
+
 
 def test_tag_prerelease(tmpdir, ctlr):
     plugin, dummy_repo = instantiate(tmpdir, ctlr)
@@ -60,7 +64,7 @@ def test_tag_pyproject(tmpdir, ctlr):
 
     plugin.tag(version="2.0.0", repo="dummy_repo", prerelease="rc")
 
-    with open(pyproject_path, "r") as f:
+    with open(pyproject_path) as f:
         pyproject = tomlkit.load(f)
     assert pyproject["tool"]["poetry"]["version"] == "2.0.0-rc.1"
 
@@ -85,6 +89,10 @@ def test_bump(tmpdir, ctlr):
     plugin.bump(version="patch", repo="dummy_repo", nogit=True)
     assert dummy_repo.version == "2.0.1"
     assert not dummy_repo.has_tag("2.0.1")
+
+    plugin.bump(version="patch", repo="dummy_repo", do_tag=False)
+    assert dummy_repo.version == "2.0.1"
+    assert not dummy_repo.has_tag("2.0.2")
 
 
 def test_bump_w_prerelease_flag(tmpdir, ctlr):
