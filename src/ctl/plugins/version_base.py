@@ -124,10 +124,9 @@ class VersionBasePlugin(ExecutablePlugin):
             help="bumps the specified version segment by 1",
         )
         op_bump_parser.add_argument(
-            "do_tag",
-            nargs=1,
-            type=bool,
-            help="whether to tag or not to tag",
+            "--do_not_tag",
+            action="store_true",
+            help="whether to tag or not to tag (default: False)",
         )
 
         confu_cli_args.add(op_bump_parser, "changelog_validate")

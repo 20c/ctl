@@ -90,7 +90,7 @@ def test_bump(tmpdir, ctlr):
     assert dummy_repo.version == "2.0.1"
     assert not dummy_repo.has_tag("2.0.1")
 
-    plugin.bump(version="patch", repo="dummy_repo", do_tag=False)
+    plugin.bump(version="patch", repo="dummy_repo", do_not_tag=True)
     assert dummy_repo.version == "2.0.1"
     assert not dummy_repo.has_tag("2.0.2")
 
