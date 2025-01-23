@@ -124,7 +124,7 @@ class VersionBasePlugin(ExecutablePlugin):
             help="bumps the specified version segment by 1",
         )
         op_bump_parser.add_argument(
-            "--do_not_tag",
+            "--no-tag",
             action="store_true",
             help="whether to tag or not to tag (default: False)",
         )
