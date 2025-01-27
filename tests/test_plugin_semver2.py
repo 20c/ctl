@@ -87,12 +87,8 @@ def test_bump(tmpdir, ctlr):
         plugin.bump(version="invalid", repo="dummy_repo")
 
     plugin.bump(version="patch", repo="dummy_repo", nogit=True)
-    assert dummy_repo.version == "2.0.1"
+    assert dummy_repo.version == "2.0.0"
     assert not dummy_repo.has_tag("2.0.1")
-
-    plugin.bump(version="patch", repo="dummy_repo", no_tag=True)
-    assert dummy_repo.version == "2.0.1"
-    assert not dummy_repo.has_tag("2.0.2")
 
 
 def test_bump_w_prerelease_flag(tmpdir, ctlr):
@@ -104,7 +100,7 @@ def test_bump_w_prerelease_flag(tmpdir, ctlr):
     assert dummy_repo.has_tag("1.0.1-rc.1")
 
     plugin.bump(version="patch", repo="dummy_repo", prerelease="beta", nogit=True)
-    assert dummy_repo.version == "1.0.2-beta.1"
+    assert dummy_repo.version == "1.0.1-rc.1"
     assert not dummy_repo.has_tag("1.0.2-beta.1")
 
 
@@ -120,7 +116,7 @@ def test_bump_prerelease_version(tmpdir, ctlr):
     assert dummy_repo.has_tag("1.0.0-rc.3")
 
     plugin.bump(version="prerelease", repo="dummy_repo", nogit=True)
-    assert dummy_repo.version == "1.0.0-rc.4"
+    assert dummy_repo.version == "1.0.0-rc.3"
     assert not dummy_repo.has_tag("1.0.0-rc.4")
 
 

@@ -167,8 +167,8 @@ class Semver2Plugin(VersionBasePlugin):
 
         self.log.info(f"Bumping semantic version: {current} to {new_version}")
 
-        no_tag = kwargs.pop("no_tag", False)
-        if not no_tag:
+        nogit = kwargs.pop("nogit", False)
+        if not nogit:
             self.tag(version=str(new_version), repo=repo, **kwargs)
 
     @expose("ctl.{plugin_name}.release")
