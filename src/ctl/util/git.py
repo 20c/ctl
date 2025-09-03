@@ -1051,11 +1051,11 @@ class EphemeralGitContext:
 
                 self.state.stash_popped = True
 
-        # ensure GitPython releases any persistent processes and resources
-        try:
-            self.git_manager.repo.close()
-        except Exception:
-            pass
+            # ensure GitPython releases any persistent processes and resources
+            try:
+                self.git_manager.repo.close()
+            except Exception:
+                pass
 
         return False  # re-raise any exception
 
