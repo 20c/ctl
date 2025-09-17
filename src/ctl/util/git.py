@@ -950,6 +950,7 @@ class EphemeralGitContext:
         Sets up the repository, fetches and pulls.
         """
 
+
         self.context_token = current_ephemeral_git_context.set(self)
         self.state_token = ephemeral_git_context_state.set(self.state)
 
@@ -958,40 +959,49 @@ class EphemeralGitContext:
             return self
 
         # reset the current branch
-        self.stash_current_context()
-        self.git_manager.fetch()
-        if self.git_manager.is_dirty:
-            self.reset()
-
-        # track what branch we were on before switching
-        self.state.original_branch = self.git_manager.branch
-
-        if self.state.branch and self.state.branch != self.git_manager.branch:
-            # switch to branch
-
-            # delete local branch if it exists
-            if self.git_manager.branch_exists(self.state.branch):
-                # dont delete default branch
-                if self.state.branch != self.git_manager.default_branch:
-                    self.git_manager.log.info(
-                        f"Deleting local branch {self.state.branch}"
-                    )
-                    self.git_manager.repo.git.branch("-D", self.state.branch)
-
-            self.git_manager.switch_branch(self.state.branch)
+        try:
+            self.stash_current_context()
+            self.git_manager.fetch()
             if self.git_manager.is_dirty:
                 self.reset()
 
-        # if branch exists remotely
-        if self.git_manager.remote_branch_reference(self.git_manager.branch):
-            # set tracking branch
-            self.git_manager.set_tracking_branch(self.state.branch)
-            # pull
-            self.git_manager.pull()
-            # update submodules
-            self.git_manager.update_submodules()
+            # track what branch we were on before switching
+            self.state.original_branch = self.git_manager.branch
 
-        return self
+            if self.state.branch and self.state.branch != self.git_manager.branch:
+                # switch to branch
+
+                # delete local branch if it exists
+                if self.git_manager.branch_exists(self.state.branch):
+                    # dont delete default branch
+                    if self.state.branch != self.git_manager.default_branch:
+                        self.git_manager.log.info(
+                            f"Deleting local branch {self.state.branch}"
+                        )
+                        self.git_manager.repo.git.branch("-D", self.state.branch)
+
+                self.git_manager.switch_branch(self.state.branch)
+                if self.git_manager.is_dirty:
+                    self.reset()
+
+            # if branch exists remotely
+            if self.git_manager.remote_branch_reference(self.git_manager.branch):
+                # set tracking branch
+                self.git_manager.set_tracking_branch(self.state.branch)
+                # pull
+                self.git_manager.pull()
+                # update submodules
+                self.git_manager.update_submodules()
+
+            return self
+        except Exception as e:
+            # errors during __enter__ dont get caught in __exit__
+            # always reset the context state
+            ephemeral_git_context_state.reset(self.state_token)
+            current_ephemeral_git_context.reset(self.context_token)
+            self.reset_context_state()
+            self.reset_stash()
+            raise e
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
@@ -1020,38 +1030,16 @@ class EphemeralGitContext:
                     )
 
             # reset the context state
-            self.log.info(
-                f"Resetting context state {self.state.original_branch}, {self.git_manager.branch}"
-            )
-            if self.state.original_branch != self.git_manager.branch:
-                # return to previous branch
-                if self.git_manager.is_dirty:
-                    self.reset(from_origin=False)
-                self.git_manager.switch_branch(self.state.original_branch)
-                if self.git_manager.is_dirty:
-                    self.reset(from_origin=False)
+            self.reset_context_state()
 
         finally:
             # always reset the context state
             ephemeral_git_context_state.reset(self.state_token)
-
-            # always pop stash
-            if self.state.stash_pushed:
-                # can_read implied
-                self.log.info(f"Popping stash")
-                if self.git_manager.is_dirty:
-                    self.reset(from_origin=False)
-                try:
-                    self.git_manager.repo.git.stash("pop")
-                except GitCommandError as e:
-                    # ignore "No stash entries found.", raise others
-                    # TODO: how does this even happen?
-                    if "No stash entries found." not in e.stderr:
-                        raise
-
-                self.state.stash_popped = True
+            self.reset_stash()
 
         return False  # re-raise any exception
+
+
 
     @property
     def git_manager(self):
@@ -1073,6 +1061,7 @@ class EphemeralGitContext:
     def log(self):
         return self.git_manager.log
 
+
     def reset(self, from_origin: bool = True):
         """
         Resets the repository
@@ -1082,6 +1071,40 @@ class EphemeralGitContext:
             return
 
         self.git_manager.reset(hard=True, from_origin=from_origin)
+
+    def reset_context_state(self):
+        """
+        Resets the context state
+        """
+
+        # reset the context state
+        self.log.info(
+            f"Resetting context state {self.state.original_branch}, {self.git_manager.branch}"
+        )
+        if self.state.original_branch != self.git_manager.branch:
+            # return to previous branch
+            if self.git_manager.is_dirty:
+                self.reset(from_origin=False)
+            self.git_manager.switch_branch(self.state.original_branch)
+            if self.git_manager.is_dirty:
+                self.reset(from_origin=False)
+
+    def reset_stash(self):
+        # always pop stash
+        if self.state.stash_pushed:
+            # can_read implied
+            self.log.info(f"Popping stash")
+            if self.git_manager.is_dirty:
+                self.reset(from_origin=False)
+            try:
+                self.git_manager.repo.git.stash("pop")
+            except GitCommandError as e:
+                # ignore "No stash entries found.", raise others
+                # TODO: how does this even happen?
+                if "No stash entries found." not in e.stderr:
+                    raise
+
+            self.state.stash_popped = True
 
     def stash_current_context(self):
         # stash current repo state if we are moving into a nested
