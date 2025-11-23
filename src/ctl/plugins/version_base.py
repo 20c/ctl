@@ -174,9 +174,9 @@ class VersionBasePlugin(ExecutablePlugin):
             plugin = self.other_plugin(target)
             if not isinstance(plugin, RepositoryPlugin):
                 raise TypeError(
-                    "The plugin with the name `{}` is not a "
+                    f"The plugin with the name `{target}` is not a "
                     "repository type plugin and cannot be used "
-                    "as a target".format(target)
+                    "as a target"
                 )
         except KeyError:
             if target:
@@ -185,7 +185,7 @@ class VersionBasePlugin(ExecutablePlugin):
                 raise OSError(
                     "Target is neither a configured repository "
                     "plugin nor a valid file path: "
-                    "{}".format(target)
+                    f"{target}"
                 )
 
             # pointed to a path, so we need to create a temporary git plugin
@@ -282,7 +282,5 @@ class VersionBasePlugin(ExecutablePlugin):
         except ChangelogVersionMissing as exc:
             raise PluginOperationStopped(
                 self,
-                "{}\nYou can set the --no-changelog-validate flag to skip this check".format(
-                    exc
-                ),
+                f"{exc}\nYou can set the --no-changelog-validate flag to skip this check",
             )

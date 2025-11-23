@@ -56,6 +56,4 @@ class LogGitPlugin(LogUserPlugin):
         - level (`str`): log severity level
         """
         message = super().apply(message)
-        return "{uuid}:{version} {message}".format(
-            uuid=self.git.uuid, version=self.git.version, message=message
-        )
+        return f"{self.git.uuid}:{self.git.version} {message}"

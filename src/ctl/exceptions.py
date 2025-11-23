@@ -2,9 +2,7 @@
 class PermissionDenied(Exception):
     def __init__(self, grainy_namespace, level):
         super().__init__(
-            "You do not have '{}' permission to this namespace: {}".format(
-                level, grainy_namespace
-            )
+            f"You do not have '{level}' permission to this namespace: {grainy_namespace}"
         )
 
 

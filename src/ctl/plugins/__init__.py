@@ -186,9 +186,7 @@ class PluginBase(pluginmgr.config.PluginBase):
 
             if not handler:
                 raise ValueError(
-                    "Tried to attach unknown plugin method `{}` to event `{}`".format(
-                        handler_name, name
-                    )
+                    f"Tried to attach unknown plugin method `{handler_name}` to event `{name}`"
                 )
 
             def callback(events, handler=handler, *args, **kwargs):
