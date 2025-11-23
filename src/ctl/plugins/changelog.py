@@ -57,9 +57,7 @@ class ChangelogVersionMissing(KeyError):
         """
 
         super().__init__(
-            "Version {} does not exist in changelog located at {}".format(
-                version, data_file
-            )
+            f"Version {version} does not exist in changelog located at {data_file}"
         )
 
 

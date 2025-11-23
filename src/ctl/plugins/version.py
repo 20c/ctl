@@ -161,9 +161,7 @@ class VersionPlugin(VersionBasePlugin):
         version = bump_semantic(current, version)
 
         self.log.info(
-            "Bumping semantic version: {} to {}".format(
-                version_string(current), version_string(version)
-            )
+            f"Bumping semantic version: {version_string(current)} to {version_string(version)}"
         )
 
         if self.get_config("changelog_validate") and not is_dev:

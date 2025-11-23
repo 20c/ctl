@@ -313,7 +313,7 @@ class GitPlugin(RepositoryPlugin):
 
         self.run_git_command(command)
 
-        self.log.debug("Cloned {s.repo_url} in {s.checkout_path}".format(s=self))
+        self.log.debug(f"Cloned {self.repo_url} in {self.checkout_path}")
 
     @expose("ctl.{plugin_name}.pull")
     def pull(self, **kwargs):

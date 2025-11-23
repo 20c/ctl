@@ -140,7 +140,7 @@ class Context:
     @classmethod
     def search_path(cls):
         return [
-            "$%s_HOME" % cls.app_name.upper(),
+            f"${cls.app_name.upper()}_HOME",
             os.path.join(".", cls.app_name.capitalize()),
             os.path.expanduser(os.path.join("~", "." + cls.app_name)),
         ]

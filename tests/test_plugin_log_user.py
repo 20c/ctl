@@ -12,6 +12,4 @@ def test_apply():
 
     assert plugin.username == username
 
-    assert plugin.apply("this is a test") == "{username} - this is a test".format(
-        username=username
-    )
+    assert plugin.apply("this is a test") == f"{username} - this is a test"
