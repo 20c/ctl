@@ -99,6 +99,14 @@ class VersionBasePlugin(ExecutablePlugin):
         op_tag_parser.add_argument(
             "version", nargs=1, type=str, help="version string to tag with"
         )
+        op_tag_parser.add_argument(
+            "prefix",
+            nargs=1,
+            type=str,
+            help="prefix string to tag with i.e. {v}1.0.1 - v being the prefix",
+            required=False,
+            default=None,
+        )
 
         confu_cli_args.add(op_tag_parser, "changelog_validate")
         confu_cli_args.add(op_tag_parser, "branch")
@@ -116,6 +124,12 @@ class VersionBasePlugin(ExecutablePlugin):
             type=str,
             choices=["major", "minor", "patch", "prerelease"],
             help="bumps the specified version segment by 1",
+        )
+        op_bump_parser.add_argument(
+            "--nogit",
+            action="store_true",
+            help="whether to tag or not to tag (default: False)",
+            default=False,
         )
 
         confu_cli_args.add(op_bump_parser, "changelog_validate")

@@ -102,7 +102,6 @@ class Semver2Plugin(VersionBasePlugin):
             raise UsageError("Currently checked out branch is not clean")
 
         version = semver.VersionInfo.parse(version)
-
         if prerelease:
             version = version.bump_prerelease(prerelease)
 
@@ -125,7 +124,9 @@ class Semver2Plugin(VersionBasePlugin):
         repo_plugin.commit(files=files, message=f"Version {version_tag}", push=True)
         nogit = kwargs.pop("nogit", False)
         if not nogit:
-            repo_plugin.tag(version_tag, message=version_tag, push=True)
+            prefix = kwargs.pop("prefix", None)
+            version_tag = f"{prefix}{version_tag}" if prefix else version_tag
+            repo_plugin.tag(version_tag, message=version_tag, push=True, prefix=prefix)
 
     @expose("ctl.{plugin_name}.bump")
     def bump(self, version, repo, **kwargs):
@@ -166,7 +167,9 @@ class Semver2Plugin(VersionBasePlugin):
 
         self.log.info(f"Bumping semantic version: {current} to {new_version}")
 
-        self.tag(version=str(new_version), repo=repo, **kwargs)
+        nogit = kwargs.pop("nogit", False)
+        if not nogit:
+            self.tag(version=str(new_version), repo=repo, **kwargs)
 
     @expose("ctl.{plugin_name}.release")
     def release(self, repo, **kwargs):

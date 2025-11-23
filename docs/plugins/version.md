@@ -32,6 +32,15 @@ If you're using the version plugin for the first time on a repo and a `Ctl/VERSI
 ctl version tag 1.0.0 --init
 ```
 
+You may also choose to add a prefix to the tag
+
+```sh
+# update Ctl/VERSION to 1.1.0
+# tag v1.1.0
+# push tag
+ctl version tag 1.0.0 prefix v
+```
+
 You may also chose to bump a semantic version
 
 ```sh
@@ -39,6 +48,15 @@ You may also chose to bump a semantic version
 # tag 1.1.0
 # push tag
 ctl version bump minor
+```
+
+You may also choose to bump but not tag in git
+
+```sh
+# update Ctl/VERSION to 1.1.0
+# tag v1.1.0
+# push tag
+ctl version bump --nogit
 ```
 
 ### Use existing repository checkout
