@@ -73,4 +73,3 @@ ctl changelog release 1.0.0
 #### release
 
 {pymdgen-cmd:ctl --home=docs changelog release --help}
-

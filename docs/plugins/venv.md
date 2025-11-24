@@ -1,6 +1,6 @@
 # Venv Plugin
 
-Manages a python virtualenv 
+Manages a python virtualenv
 
 ## Requirements
 
