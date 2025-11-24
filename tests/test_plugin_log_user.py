@@ -3,8 +3,6 @@ import pwd
 
 from util import instantiate_test_plugin
 
-from ctl.plugins.log_user import LogUserPlugin
-
 
 def test_apply():
     username = pwd.getpwuid(os.getuid()).pw_name

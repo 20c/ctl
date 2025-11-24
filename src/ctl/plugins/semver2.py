@@ -2,7 +2,6 @@
 Plugin that allows you to handle repository versioning
 """
 
-import argparse
 import os
 
 import semver
@@ -11,7 +10,6 @@ import ctl
 from ctl.auth import expose
 from ctl.exceptions import OperationNotExposed, UsageError
 from ctl.plugins.version_base import VersionBasePlugin, VersionBasePluginConfig
-from ctl.util.versioning import validate_prerelease
 
 
 @ctl.plugin.register("semver2")

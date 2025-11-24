@@ -12,11 +12,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install virtualenv from poetry
-        uses: 20c/workflows/poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: uv sync --all-extras
       - name: Run linters
         run: |
-            poetry run black --check .
+            uv run ruff check .
+            uv run ruff format --check .
 
   test:
     needs: linting
@@ -24,21 +31,24 @@ jobs:
       fail-fast: false
       matrix:
         os: [ "ubuntu-latest", "macos-latest" ]
-        python-version: [ "3.8", "3.9", "3.10", "3.11", "3.12" ]
+        python-version: [ "3.9", "3.10", "3.11", "3.12" ]
         exclude:
           - os: "macos-latest"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Install virtualenv from poetry
-        uses: 20c/workflows/poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: uv sync --all-extras
       - name: Run tests
         run: |
-          poetry run tox
-          poetry run coverage report
+          uv run pytest --cov=src --cov-report=xml --cov-report=term-missing
       # upload coverage stats
       - name: Upload coverage
         uses: codecov/codecov-action@v3

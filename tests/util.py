@@ -37,7 +37,6 @@ def instantiate_test_plugin(typ, name, _ctl=None, **extra):
 
 
 class DummyRepositoryPlugin(RepositoryPlugin):
-
     """
     In order to test the versioning plugin we need a dummy
     repository plugin - so we can test that actions are properly

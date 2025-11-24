@@ -2,7 +2,6 @@
 Plugin that allows you to manage a git repository
 """
 
-
 import argparse
 import os
 import re
@@ -42,7 +41,6 @@ def temporary_plugin(ctl, name, path, **config):
 
 @ctl.plugin.register("git")
 class GitPlugin(RepositoryPlugin):
-
     """
     manage a git repository
 

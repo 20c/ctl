@@ -41,7 +41,6 @@ def temporary_plugin(ctl, name, **config):
 
 
 class ChangelogVersionMissing(KeyError):
-
     """
     Raised when a changlog data file is validated
     to contain a specific version but that version

@@ -1,6 +1,7 @@
 """
 Plugin that allows you to append user information to log messages
 """
+
 import os
 import pwd
 
@@ -10,7 +11,6 @@ from ctl.plugins.log import LogPlugin
 
 @ctl.plugin.register("log_user")
 class LogUserPlugin(LogPlugin):
-
     """
     append user information to log messages
 

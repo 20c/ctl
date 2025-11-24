@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
-from git import Repo, GitCommandError
+from git import GitCommandError, Repo
 from ogr.abstract import PRStatus
 
 from ctl.util.git import (

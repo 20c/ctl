@@ -8,7 +8,6 @@ Plugin that allows you to manage a python virtual env
 
 """
 
-
 import argparse
 import os
 
@@ -39,7 +38,6 @@ class VenvPluginConfig(confu.schema.Schema):
 
 @ctl.plugin.register("venv")
 class VenvPlugin(command.CommandPlugin):
-
     """
     manage a virtual python envinronment
 

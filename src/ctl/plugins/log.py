@@ -2,7 +2,6 @@
 Plugin that allows you to manipulate logging functionality
 """
 
-
 import logging
 
 import confu.generator
@@ -39,7 +38,6 @@ class LogPluginConfig(ctl.plugins.PluginBase.ConfigSchema):
 
 @ctl.plugin.register("log")
 class LogPlugin(ctl.plugins.PluginBase):
-
     """
     manipulate message logging
 

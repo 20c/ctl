@@ -1,9 +1,18 @@
 Unreleased:
-  added: []
-  fixed: []
-  changed: []
+  added:
+  - py.typed marker file for type checking support
+  fixed:
+  - replaced deprecated pkg_resources with importlib.metadata
+  changed:
+  - migrated from Poetry to modern pyproject.toml with hatchling build backend
+  - migrated from black/isort/flake8/pyupgrade to ruff for linting and formatting
+  - updated CI workflows to use uv instead of poetry/tox
+  - updated pre-commit hooks to use ruff and mypy
+  - upgraded all dependencies to latest versions
   deprecated: []
-  removed: []
+  removed:
+  - python 3.8 support (EOL)
+  - poetry.lock (replaced with uv.lock)
   security: []
 1.2.0:
   added:

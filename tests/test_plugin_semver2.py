@@ -3,10 +3,10 @@ import shutil
 
 import pytest
 import tomlkit
-from util import instantiate_semver2 as instantiate
 
 import ctl
 from ctl.exceptions import PermissionDenied
+from util import instantiate_semver2 as instantiate
 
 
 def test_init():

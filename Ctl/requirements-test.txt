@@ -9,4 +9,3 @@ pytest>=6,<7
 twine>=2,<3
 pipenv-setup>=2,<4
 pyyaml>=4,<6
-
