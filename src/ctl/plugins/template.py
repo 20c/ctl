@@ -6,7 +6,6 @@ Plugin that allows you to render templates
 `pip install tmpl jinja`
 """
 
-
 import collections
 import os
 
@@ -36,7 +35,7 @@ class TemplatePluginConfig(CopyPluginConfig):
     vars = confu.schema.List(
         item=confu.schema.Str(),
         cli=False,
-        help="list of files containing template " "variables to import",
+        help="list of files containing template variables to import",
     )
 
 
@@ -51,7 +50,6 @@ def update(a, b):
 
 @ctl.plugin.register("template")
 class TemplatePlugin(CopyPlugin):
-
     """
     render all template files from a source director into an output
     directory

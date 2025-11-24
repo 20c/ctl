@@ -3,10 +3,10 @@ import shutil
 
 import pytest
 import tomlkit
-from util import instantiate_version as instantiate
 
 import ctl
 from ctl.exceptions import PermissionDenied
+from util import instantiate_version as instantiate
 
 
 def test_init():

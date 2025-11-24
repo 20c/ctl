@@ -2,7 +2,6 @@
 Base classes for ctl plugins
 """
 
-
 import collections
 
 import confu.schema
@@ -76,7 +75,6 @@ class PluginConfigSchema(confu.schema.Schema):
 
 
 class PluginBase(pluginmgr.config.PluginBase):
-
     """
     Base plugin class
 
@@ -254,7 +252,6 @@ class PluginBase(pluginmgr.config.PluginBase):
 
 
 class ExecutablePlugin(PluginBase):
-
     """
     Base plugin class for CLI executable plugins
     """

@@ -1,6 +1,7 @@
 """
 Plugin that appends git reposity commit hash and tag version to log messages
 """
+
 import os
 
 import confu.schema
@@ -24,7 +25,6 @@ class LogGitConfig(LogUserPlugin.ConfigSchema.config.__class__):
 
 @ctl.plugin.register("log_git")
 class LogGitPlugin(LogUserPlugin):
-
     """
     Augment log message with git information
 

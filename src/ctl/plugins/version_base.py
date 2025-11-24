@@ -84,7 +84,7 @@ class VersionBasePlugin(ExecutablePlugin):
         group.add_argument(
             "--init",
             action="store_true",
-            help="automatically create " "Ctl/VERSION file if it does not exist",
+            help="automatically create Ctl/VERSION file if it does not exist",
         )
 
         # subparser that routes operation

@@ -61,7 +61,6 @@ class MergeNotPossible(OSError):
 
 
 class RepositoryConfig(pydantic.BaseModel):
-
     """
     Repository config model
     """
@@ -81,7 +80,6 @@ class Services:
 
 
 class GitManager:
-
     """
     Git manager utility that allows management of git repositories as well as remote repositories on Github and Gitlab.
 
@@ -1125,7 +1123,7 @@ class EphemeralGitContext:
         # always pop stash
         if self.state.stash_pushed:
             # can_read implied
-            self.log.info(f"Popping stash")
+            self.log.info("Popping stash")
             if self.git_manager.is_dirty:
                 self.reset(from_origin=False)
             try:
@@ -1151,7 +1149,7 @@ class EphemeralGitContext:
 
         self.git_manager.repo.git.stash("push")
         self.state.stash_pushed = True
-        self.log.info(f"Stashed current context")
+        self.log.info("Stashed current context")
 
     def finalize(self, exc_type, exc_val, exc_tb):
         if not self.can_write:
@@ -1207,7 +1205,7 @@ class EphemeralGitContext:
 
         if not self.can_write:
             self.log.debug(
-                f"Cannot create change request in readonly ephemeral git context"
+                "Cannot create change request in readonly ephemeral git context"
             )
             return
 

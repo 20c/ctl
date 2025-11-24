@@ -2,7 +2,6 @@
 A plugin that allows you to copy files
 """
 
-
 import os
 import shutil
 
@@ -22,7 +21,6 @@ class CopyPluginConfig(WalkDirPluginConfig):
 
 @ctl.plugin.register("copy")
 class CopyPlugin(WalkDirPlugin):
-
     """
     copy files
     """

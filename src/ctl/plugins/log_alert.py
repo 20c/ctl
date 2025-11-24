@@ -8,7 +8,6 @@ from ctl.plugins.log import LogPlugin
 
 @ctl.plugin.register("log_alert")
 class LogAlertPlugin(LogPlugin):
-
     """
     send notifications on log events
 

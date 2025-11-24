@@ -2,7 +2,6 @@
 A plugin that allows you to execute other plugins in a chain
 """
 
-
 import collections
 
 import confu.schema
@@ -52,7 +51,6 @@ class ChainPluginConfig(confu.schema.Schema):
 
 @ctl.plugin.register("chain")
 class ChainPlugin(ctl.plugins.ExecutablePlugin):
-
     """
     chain execute other plugins
 

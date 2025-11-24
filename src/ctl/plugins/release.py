@@ -2,7 +2,6 @@
 Plugin interface for plugins that handle software releases
 """
 
-
 import argparse
 import os
 
@@ -33,7 +32,6 @@ class ReleasePluginConfig(confu.schema.Schema):
 
 
 class ReleasePlugin(command.CommandPlugin):
-
     """
     base plugin interface for releasing / packaging software
     """
