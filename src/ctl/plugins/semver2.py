@@ -120,8 +120,8 @@ class Semver2Plugin(VersionBasePlugin):
         self.update_version_files(repo_plugin, version_tag, files)
 
         repo_plugin.commit(files=files, message=f"Version {version_tag}", push=True)
-        nogit = kwargs.pop("nogit", False)
-        if not nogit:
+        no_git_tag = kwargs.pop("no_git_tag", False)
+        if not no_git_tag:
             prefix = kwargs.pop("prefix", None)
             version_tag = f"{prefix}{version_tag}" if prefix else version_tag
             repo_plugin.tag(version_tag, message=version_tag, push=True, prefix=prefix)
@@ -165,8 +165,8 @@ class Semver2Plugin(VersionBasePlugin):
 
         self.log.info(f"Bumping semantic version: {current} to {new_version}")
 
-        nogit = kwargs.pop("nogit", False)
-        if not nogit:
+        no_git_tag = kwargs.pop("no_git_tag", False)
+        if not no_git_tag:
             self.tag(version=str(new_version), repo=repo, **kwargs)
 
     @expose("ctl.{plugin_name}.release")
