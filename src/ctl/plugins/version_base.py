@@ -127,7 +127,7 @@ class VersionBasePlugin(ExecutablePlugin):
         )
         op_bump_parser.add_argument(
             "--no-git-tag",
-            dest="nogit",
+            dest="no_git_tag",
             action="store_true",
             help="skip creating a git tag (default: False)",
             default=False,
