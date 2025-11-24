@@ -54,9 +54,8 @@ You may also choose to bump but not tag in git
 
 ```sh
 # update Ctl/VERSION to 1.1.0
-# tag v1.1.0
-# push tag
-ctl version bump --nogit
+# skip creating git tag
+ctl version bump --no-git-tag
 ```
 
 ### Use existing repository checkout
