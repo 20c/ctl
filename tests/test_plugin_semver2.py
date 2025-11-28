@@ -143,6 +143,11 @@ def test_execute(tmpdir, ctlr):
     plugin.execute(op="bump", version="patch", repository="dummy_repo", init=True)
     assert dummy_repo.version == "1.0.1"
 
+    # Regression test for prefix parameter (was incorrectly defined as positional with required=False)
+    plugin.execute(op="tag", version="2.0.0", repository="dummy_repo", prefix="v")
+    assert dummy_repo.version == "2.0.0"
+    assert dummy_repo.has_tag("v2.0.0")
+
     with pytest.raises(ValueError, match="operation not defined"):
         plugin.execute(op=None)
 
