@@ -100,8 +100,7 @@ class VersionBasePlugin(ExecutablePlugin):
             "version", nargs=1, type=str, help="version string to tag with"
         )
         op_tag_parser.add_argument(
-            "prefix",
-            nargs=1,
+            "--prefix",
             type=str,
             help="prefix string to tag with i.e. {v}1.0.1 - v being the prefix",
             required=False,
