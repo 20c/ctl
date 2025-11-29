@@ -92,12 +92,16 @@ class Semver2Plugin(VersionBasePlugin):
         **Keyword Arguments**
         - prerelease (`str`): identifier if this is a prerelease version
         - release (`bool`): if `True` also run `merge_release`
+        - no_git (`bool`): if `True` skip all git operations
         """
+        no_git = kwargs.get("no_git", False)
         repo_plugin = self.repository(repo)
-        repo_plugin.pull()
 
-        if not repo_plugin.is_clean:
-            raise UsageError("Currently checked out branch is not clean")
+        if not no_git:
+            repo_plugin.pull()
+
+            if not repo_plugin.is_clean:
+                raise UsageError("Currently checked out branch is not clean")
 
         version = semver.VersionInfo.parse(version)
         if prerelease:
@@ -119,12 +123,15 @@ class Semver2Plugin(VersionBasePlugin):
 
         self.update_version_files(repo_plugin, version_tag, files)
 
-        repo_plugin.commit(files=files, message=f"Version {version_tag}", push=True)
-        no_git_tag = kwargs.pop("no_git_tag", False)
-        if not no_git_tag:
-            prefix = kwargs.pop("prefix", None)
-            version_tag = f"{prefix}{version_tag}" if prefix else version_tag
-            repo_plugin.tag(version_tag, message=version_tag, push=True, prefix=prefix)
+        if not no_git:
+            repo_plugin.commit(files=files, message=f"Version {version_tag}", push=True)
+            no_git_tag = kwargs.pop("no_git_tag", False)
+            if not no_git_tag:
+                prefix = kwargs.pop("prefix", None)
+                version_tag = f"{prefix}{version_tag}" if prefix else version_tag
+                repo_plugin.tag(
+                    version_tag, message=version_tag, push=True, prefix=prefix
+                )
 
     @expose("ctl.{plugin_name}.bump")
     def bump(self, version, repo, **kwargs):
@@ -136,9 +143,11 @@ class Semver2Plugin(VersionBasePlugin):
         - version (`str`): major, minor, patch or dev
         - repo (`str`): name of existing repository type plugin instance
         """
-
+        no_git = kwargs.get("no_git", False)
         repo_plugin = self.repository(repo)
-        repo_plugin.pull()
+
+        if not no_git:
+            repo_plugin.pull()
 
         if version not in ["major", "minor", "patch", "prerelease"]:
             raise ValueError(f"Invalid semantic version: {version}")
@@ -180,8 +189,11 @@ class Semver2Plugin(VersionBasePlugin):
 
         - repo (`str`): name of existing repository type plugin instance
         """
+        no_git = kwargs.get("no_git", False)
         repo_plugin = self.repository(repo)
-        repo_plugin.pull()
+
+        if not no_git:
+            repo_plugin.pull()
 
         version = repo_plugin.version
 
