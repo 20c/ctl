@@ -2,7 +2,6 @@
 Base classes for ctl plugins
 """
 
-
 import collections
 
 import confu.schema
@@ -76,7 +75,6 @@ class PluginConfigSchema(confu.schema.Schema):
 
 
 class PluginBase(pluginmgr.config.PluginBase):
-
     """
     Base plugin class
 
@@ -186,9 +184,7 @@ class PluginBase(pluginmgr.config.PluginBase):
 
             if not handler:
                 raise ValueError(
-                    "Tried to attach unknown plugin method `{}` to event `{}`".format(
-                        handler_name, name
-                    )
+                    f"Tried to attach unknown plugin method `{handler_name}` to event `{name}`"
                 )
 
             def callback(events, handler=handler, *args, **kwargs):
@@ -256,7 +252,6 @@ class PluginBase(pluginmgr.config.PluginBase):
 
 
 class ExecutablePlugin(PluginBase):
-
     """
     Base plugin class for CLI executable plugins
     """

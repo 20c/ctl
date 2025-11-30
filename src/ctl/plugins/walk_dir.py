@@ -3,7 +3,6 @@ A plugin that lets you traverse a directory and process it's files
 and sub-directories
 """
 
-
 import os
 import re
 
@@ -15,7 +14,6 @@ from ctl.docs import pymdgen_confu_types
 
 @pymdgen_confu_types()
 class MatchConfig(confu.schema.Schema):
-
     """
     Configuration schema that maps a plugin
     action to a regex pattern
@@ -28,7 +26,6 @@ class MatchConfig(confu.schema.Schema):
 
 @pymdgen_confu_types()
 class WalkDirPluginConfig(confu.schema.Schema):
-
     """
     Configuration schema for the walkdir plugin
     """

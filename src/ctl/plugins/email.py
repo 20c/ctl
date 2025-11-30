@@ -2,7 +2,6 @@
 A plugin for sending emails
 """
 
-
 import smtplib
 from email.mime.text import MIMEText
 
@@ -30,7 +29,6 @@ class EmailPluginConfig(confu.schema.Schema):
 
 @ctl.plugin.register("email")
 class EmailPlugin(PluginBase):
-
     """
     send emails
 

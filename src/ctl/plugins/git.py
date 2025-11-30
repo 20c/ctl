@@ -2,7 +2,6 @@
 Plugin that allows you to manage a git repository
 """
 
-
 import argparse
 import os
 import re
@@ -42,7 +41,6 @@ def temporary_plugin(ctl, name, path, **config):
 
 @ctl.plugin.register("git")
 class GitPlugin(RepositoryPlugin):
-
     """
     manage a git repository
 
@@ -206,6 +204,25 @@ class GitPlugin(RepositoryPlugin):
 
         fn(**kwargs)
 
+    def find_git_root(self, start_path=None):
+        """
+        Find git root by walking up from start_path or checkout_path.
+
+        **Arguments**
+
+        - start_path (`str`): path to start searching from (default: checkout_path)
+
+        **Returns**
+
+        git root path (`str`) or `None` if not found
+        """
+        path = os.path.abspath(start_path or self.checkout_path)
+        while path != "/":
+            if os.path.exists(os.path.join(path, ".git")):
+                return path
+            path = os.path.dirname(path)
+        return None
+
     def command(self, *command):
         """
         Prepare git command to use with `run_git_command`
@@ -220,12 +237,15 @@ class GitPlugin(RepositoryPlugin):
 
         prepared command (`list`)
         """
+        git_root = self.find_git_root()
+        if git_root is None:
+            git_root = self.checkout_path  # fallback
         return [
             "git",
             "--git-dir",
-            os.path.join(self.checkout_path, ".git"),
+            os.path.join(git_root, ".git"),
             "--work-tree",
-            self.checkout_path,
+            git_root,
         ] + list(command)
 
     def run_git_command(self, command):
@@ -313,7 +333,7 @@ class GitPlugin(RepositoryPlugin):
 
         self.run_git_command(command)
 
-        self.log.debug("Cloned {s.repo_url} in {s.checkout_path}".format(s=self))
+        self.log.debug(f"Cloned {self.repo_url} in {self.checkout_path}")
 
     @expose("ctl.{plugin_name}.pull")
     def pull(self, **kwargs):

@@ -3,10 +3,10 @@ import shutil
 
 import pytest
 import tomlkit
-from util import instantiate_version as instantiate
 
 import ctl
 from ctl.exceptions import PermissionDenied
+from util import instantiate_version as instantiate
 
 
 def test_init():
@@ -48,7 +48,7 @@ def test_tag_pyproject(tmpdir, ctlr):
 
     plugin.tag(version="2.0.0", repo="dummy_repo")
 
-    with open(pyproject_path, "r") as f:
+    with open(pyproject_path) as f:
         pyproject = tomlkit.load(f)
     assert pyproject["tool"]["poetry"]["version"] == "2.0.0"
 

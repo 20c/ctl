@@ -1,10 +1,9 @@
 import os
 import pwd
 
-from util import instantiate_test_plugin
-
 import ctl
 from ctl.plugins import PluginBase
+from util import instantiate_test_plugin
 
 
 class GitDummy(PluginBase):

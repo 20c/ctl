@@ -6,7 +6,6 @@ Plugin that allows you to release a python package to pypi
 `pip install twine`
 """
 
-
 import os.path
 
 import confu.schema
@@ -29,7 +28,6 @@ except ImportError:
 
 @pymdgen_confu_types()
 class PyPIPluginConfig(release.ReleasePluginConfig):
-
     """
     Configuration schema for `PyPIPlugin`
     """
@@ -42,7 +40,7 @@ class PyPIPluginConfig(release.ReleasePluginConfig):
 
     # PyPI repository name, needs to exist in your pypi config file
     pypi_repository = confu.schema.Str(
-        help="PyPI repository name - needs to exist " "in your pypi config file",
+        help="PyPI repository name - needs to exist in your pypi config file",
         default="pypi",
     )
 
@@ -54,7 +52,6 @@ class PyPIPluginConfig(release.ReleasePluginConfig):
 
 @ctl.plugin.register("pypi")
 class PyPIPlugin(release.ReleasePlugin):
-
     """
     facilitate a PyPI package release
 

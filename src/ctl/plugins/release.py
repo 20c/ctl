@@ -2,7 +2,6 @@
 Plugin interface for plugins that handle software releases
 """
 
-
 import argparse
 import os
 
@@ -33,7 +32,6 @@ class ReleasePluginConfig(confu.schema.Schema):
 
 
 class ReleasePlugin(command.CommandPlugin):
-
     """
     base plugin interface for releasing / packaging software
     """
@@ -123,9 +121,9 @@ class ReleasePlugin(command.CommandPlugin):
             self.repository = self.other_plugin(repository)
             if not isinstance(self.repository, ctl.plugins.repository.RepositoryPlugin):
                 raise TypeError(
-                    "The plugin with the name `{}` is not a "
+                    f"The plugin with the name `{repository}` is not a "
                     "repository type plugin and cannot be used "
-                    "as a repository".format(repository)
+                    "as a repository"
                 )
         except KeyError:
             self.repository = os.path.abspath(repository)
@@ -133,7 +131,7 @@ class ReleasePlugin(command.CommandPlugin):
                 raise OSError(
                     "Target is neither a configured repository "
                     "plugin nor a valid file path: "
-                    "{}".format(self.repository)
+                    f"{self.repository}"
                 )
 
             self.repository = ctl.plugins.git.temporary_plugin(

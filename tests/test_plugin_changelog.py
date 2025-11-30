@@ -2,10 +2,10 @@ import os
 import shutil
 
 import pytest
-from util import instantiate_test_plugin
 
 import ctl
 from ctl.plugins.changelog import ChangelogVersionMissing
+from util import instantiate_test_plugin
 
 
 def instantiate(tmpdir, ctlr=None, **kwargs):

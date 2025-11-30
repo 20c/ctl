@@ -5,10 +5,10 @@ import subprocess
 import sys
 
 import pytest
-from util import instantiate_test_plugin
 
 import ctl
 from ctl.exceptions import UsageError
+from util import instantiate_test_plugin
 
 
 def instantiate(tmpdir, ctlr=None, **kwargs):

@@ -84,7 +84,7 @@ class VersionBasePlugin(ExecutablePlugin):
         group.add_argument(
             "--init",
             action="store_true",
-            help="automatically create " "Ctl/VERSION file if it does not exist",
+            help="automatically create Ctl/VERSION file if it does not exist",
         )
 
         # subparser that routes operation
@@ -98,6 +98,13 @@ class VersionBasePlugin(ExecutablePlugin):
         )
         op_tag_parser.add_argument(
             "version", nargs=1, type=str, help="version string to tag with"
+        )
+        op_tag_parser.add_argument(
+            "--prefix",
+            type=str,
+            help="prefix string to tag with i.e. {v}1.0.1 - v being the prefix",
+            required=False,
+            default=None,
         )
 
         confu_cli_args.add(op_tag_parser, "changelog_validate")
@@ -116,6 +123,13 @@ class VersionBasePlugin(ExecutablePlugin):
             type=str,
             choices=["major", "minor", "patch", "prerelease"],
             help="bumps the specified version segment by 1",
+        )
+        op_bump_parser.add_argument(
+            "--no-git-tag",
+            dest="no_git_tag",
+            action="store_true",
+            help="skip creating a git tag (default: False)",
+            default=False,
         )
 
         confu_cli_args.add(op_bump_parser, "changelog_validate")
@@ -160,9 +174,9 @@ class VersionBasePlugin(ExecutablePlugin):
             plugin = self.other_plugin(target)
             if not isinstance(plugin, RepositoryPlugin):
                 raise TypeError(
-                    "The plugin with the name `{}` is not a "
+                    f"The plugin with the name `{target}` is not a "
                     "repository type plugin and cannot be used "
-                    "as a target".format(target)
+                    "as a target"
                 )
         except KeyError:
             if target:
@@ -171,7 +185,7 @@ class VersionBasePlugin(ExecutablePlugin):
                 raise OSError(
                     "Target is neither a configured repository "
                     "plugin nor a valid file path: "
-                    "{}".format(target)
+                    f"{target}"
                 )
 
             # pointed to a path, so we need to create a temporary git plugin
@@ -214,7 +228,8 @@ class VersionBasePlugin(ExecutablePlugin):
     def update_pyproject_version(self, repo_plugin, version):
         """
         Writes a new version to the pyproject.toml file
-        if it exists
+        if it exists. Supports both Poetry format ([tool.poetry].version)
+        and PEP 621 format ([project].version).
         """
 
         try:
@@ -222,7 +237,22 @@ class VersionBasePlugin(ExecutablePlugin):
             pyproject = munge.load_datafile(
                 "pyproject.toml", search_path=(repo_plugin.checkout_path)
             )
-            pyproject["tool"]["poetry"]["version"] = version
+
+            updated = False
+
+            # Check for Poetry format: [tool.poetry].version
+            if "tool" in pyproject and "poetry" in pyproject["tool"]:
+                if "version" in pyproject["tool"]["poetry"]:
+                    pyproject["tool"]["poetry"]["version"] = version
+                    updated = True
+
+            # Check for PEP 621 format: [project].version
+            if "project" in pyproject and "version" in pyproject["project"]:
+                pyproject["project"]["version"] = version
+                updated = True
+
+            if not updated:
+                return None
 
             codec = munge.get_codec("toml")
 
@@ -232,7 +262,8 @@ class VersionBasePlugin(ExecutablePlugin):
 
         except OSError as exc:
             if "not found" in str(exc):
-                return
+                return None
+            raise
 
     def validate_changelog(self, repo, version, data_file="CHANGELOG.yaml"):
         """
@@ -268,7 +299,5 @@ class VersionBasePlugin(ExecutablePlugin):
         except ChangelogVersionMissing as exc:
             raise PluginOperationStopped(
                 self,
-                "{}\nYou can set the --no-changelog-validate flag to skip this check".format(
-                    exc
-                ),
+                f"{exc}\nYou can set the --no-changelog-validate flag to skip this check",
             )

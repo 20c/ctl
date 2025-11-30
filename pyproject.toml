@@ -1,20 +1,19 @@
-# Cannot use this for packaging: see https://github.com/20c/ctl/issues/24
-# currently used only for linting
-
-[tool.poetry]
+[project]
 name = "ctl"
-repository = "https://github.com/20c/ctl"
 version = "1.2.0"
 description = "Full control of your environment"
-authors = ["20C <code@20c.com>"]
 readme = "README.md"
-license = "Apache-2.0"
-
+license = { text = "Apache-2.0" }
+requires-python = ">=3.9"
+authors = [
+    { name = "20C", email = "code@20c.com" }
+]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Developers",
-    "Programming Language :: Python :: 3.8",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -23,65 +22,140 @@ classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Documentation",
 ]
+dependencies = [
+    "confu>=1.4",
+    "grainy>=1.4",
+    "munge>=1",
+    "natsort>=8",
+    "pluginmgr>=1.2.1",
+    "semver<=3",
+    "GitPython>=3.1.36",
+    "ogr>=0.46.0",
+    "pydantic>=2.3.0",
+]
 
-packages = [{ include = "ctl", from = "src" }]
+[project.optional-dependencies]
+dev = [
+    # testing
+    "coverage>=5",
+    "pytest>=6",
+    "pytest-cov>=2.10.1",
+    "pytest-filedata>=1.0.0",
+    "tox>=3",
+    "tox-gh-actions>=2",
+    # utilities
+    "jinja2>=2",
+    "tmpl>=1",
+    "twine>=3",
+    "PyYAML>1",
+    "tomlkit<1",
+    "setuptools>=65",
+    # linting and formatting
+    "ruff>=0.1.0",
+    "mypy>=0.950",
+    "pre-commit>=2.13",
+]
+docs = [
+    "markdown",
+    "markdown-include>=0.5,<1",
+    "mkdocs>=1.2.3",
+]
 
-
-[tool.poetry.scripts]
+[project.scripts]
 ctl = "ctl.cli:main"
 
-[tool.poetry.dependencies]
-python = "^3.9"
-
-confu = ">=1.4"
-grainy = ">=1.4"
-munge = ">=1"
-natsort = ">=8"
-pluginmgr = ">=1.2.1"
-semver = "<=3"
-
-GitPython = ">=3.1.36"
-ogr = ">=0.46.0"
-pydantic = ">=2.3.0"
-
-[tool.poetry.dev-dependencies]
-# testing
-coverage = ">=5"
-pytest = ">=6"
-pytest-cov = ">=2.10.1"
-pytest-filedata = "^1.0.0"
-tox = ">=3"
-tox-gh-actions = ">=2"
-
-jinja2 = ">=2"
-tmpl = ">=1"
-twine = ">=3"
-PyYAML = ">1"
-tomlkit = "<1"
-
-# linting
-# bandit = ">=1.6.2"
-black = ">=20"
-isort = ">=5.7"
-flake8 = ">=3.8"
-mypy = ">=0.950"
-pre-commit = ">=2.13"
-pyupgrade = ">=2.19"
-
-# docs
-markdown = "*"
-markdown-include = ">=0.5,<1"
-mkdocs = ">=1.2.3"
-
-
-[tool.poetry.plugins."markdown.extensions"]
-pymdgen = "pymdgen.md:Extension"
-
+[project.urls]
+Homepage = "https://github.com/20c/ctl"
+Repository = "https://github.com/20c/ctl"
+Documentation = "https://ctl.readthedocs.io/en/latest"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
+[tool.hatch.build.targets.wheel]
+packages = ["src/ctl"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+src = ["src", "tests"]
+extend-exclude = [
+    ".git",
+    ".venv",
+    ".tox",
+    "__pycache__",
+    "build",
+    "dist",
+    "tests/data",
+]
+
+[tool.ruff.lint]
+extend-select = [
+    "UP",  # pyupgrade
+    "I",   # isort
+    "F",   # pyflakes
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "C90", # mccabe complexity
+    "N",   # pep8-naming
+    "B",   # flake8-bugbear
+    "T20", # flake8-print
+]
+ignore = [
+    "E203",  # whitespace before ':'
+    "E266",  # too many leading '#' for block comment
+    "E501",  # line too long (handled by formatter)
+    "N818",  # Exception naming (can be fixed incrementally)
+    "F841",  # Unused local variables (can be fixed incrementally)
+    "T201",  # Print statements (can be fixed incrementally)
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 18
+
+[tool.ruff.lint.per-file-ignores]
+"src/ctl/plugins/__init__.py" = ["F401", "B023"]
+"src/ctl/plugins/all.py" = ["F401", "F403"]
+"src/ctl/config/__init__.py" = ["F403"]
+"tests/**/*.py" = ["T201", "F841"]  # Allow print and unused variables in tests
+# Pre-existing code style issues to be fixed incrementally
+"src/ctl/__init__.py" = ["B006"]
+"src/ctl/auth.py" = ["N801"]
+"src/ctl/cli.py" = ["F821"]
+"src/ctl/config/schema.py" = ["N801"]
+"src/ctl/docs.py" = ["N801"]
+"src/ctl/plugins/git.py" = ["B904"]
+"src/ctl/plugins/log_alert.py" = ["B007"]
+"src/ctl/plugins/release.py" = ["B904"]
+"src/ctl/plugins/version_base.py" = ["B904"]
+"src/ctl/plugins/walk_dir.py" = ["B007"]
+"src/ctl/util/git.py" = ["B904"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+ignore_missing_imports = true
+# Disable strict checks until type annotations are added
+disable_error_code = ["var-annotated", "no-redef", "attr-defined", "arg-type", "assignment", "misc", "str-bytes-safe", "union-attr", "index", "name-defined", "valid-type"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [".ctl", ".tox", ".venv", "data", "gen"]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

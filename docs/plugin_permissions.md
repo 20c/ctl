@@ -24,9 +24,9 @@ This allows for very granular namespaced based permissions
 | `ctl.my_plugin` | `ctl.other_plugin.do_something` | no |
 | `ctl.my_plugin.do_this` | `ctl.other_plugin.do_something` | no |
 
-## Control permission requirements 
+## Control permission requirements
 
-By default permission requirement for any plugin operation is `r` (unless 
+By default permission requirement for any plugin operation is `r` (unless
 specifically overwritten in the `expose` decorator that's exposing the operation)
 
 You can specify different permission requirements in the config
@@ -60,7 +60,7 @@ You can specify different permission requirements in the config
 
 ## Development
 
-### Expose plugin operations 
+### Expose plugin operations
 
 You can use the `expose` dectorator from `ctl.auth` to expose methods on a plugin as an operation to be available on the ctl cli.
 
@@ -71,7 +71,7 @@ from ctl.auth import expose
 
 class VersionPlugion(ExecutablePlugin):
     ...
-   
+
     @expose("ctl.{plugin_name}.tag")
     def tag(self, version, repo, **kwargs):
         ...

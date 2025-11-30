@@ -1,5 +1,6 @@
 import copy
 import os
+from importlib.metadata import version
 
 import confu.config
 import confu.exceptions
@@ -7,7 +8,6 @@ import grainy.core
 import munge
 import pluginmgr.config
 from grainy.core import PermissionSet, int_flags
-from pkg_resources import get_distribution
 
 # import to namespace
 from ctl.config import BaseSchema
@@ -15,7 +15,7 @@ from ctl.exceptions import ConfigError, PermissionDenied
 from ctl.log import Log, set_pylogger_config
 from ctl.util.template import IgnoreUndefined, filter_escape_regex
 
-__version__ = get_distribution("ctl").version
+__version__ = version("ctl")
 
 try:
     import tmpl
@@ -140,7 +140,7 @@ class Context:
     @classmethod
     def search_path(cls):
         return [
-            "$%s_HOME" % cls.app_name.upper(),
+            f"${cls.app_name.upper()}_HOME",
             os.path.join(".", cls.app_name.capitalize()),
             os.path.expanduser(os.path.join("~", "." + cls.app_name)),
         ]

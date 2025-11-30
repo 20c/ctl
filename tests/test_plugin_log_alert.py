@@ -1,11 +1,9 @@
-import logging
-
 import pytest
-from util import instantiate_test_plugin
 
 import ctl
 from ctl.log import Log
 from ctl.plugins import PluginBase
+from util import instantiate_test_plugin
 
 
 class DummyAlert(PluginBase):
