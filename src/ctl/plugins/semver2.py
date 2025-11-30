@@ -44,6 +44,13 @@ class Semver2Plugin(VersionBasePlugin):
             type=str,
             help="tag a prerelease with the specified prerlease name",
         )
+        op_tag_parser.add_argument(
+            "--no-git-tag",
+            dest="no_git_tag",
+            action="store_true",
+            help="Skip creating git tag (still commits version file changes)",
+            default=False,
+        )
 
         # operation `bump`
         op_bump_parser = parsers.get("op_bump_parser")
@@ -174,9 +181,7 @@ class Semver2Plugin(VersionBasePlugin):
 
         self.log.info(f"Bumping semantic version: {current} to {new_version}")
 
-        no_git_tag = kwargs.pop("no_git_tag", False)
-        if not no_git_tag:
-            self.tag(version=str(new_version), repo=repo, **kwargs)
+        self.tag(version=str(new_version), repo=repo, **kwargs)
 
     @expose("ctl.{plugin_name}.release")
     def release(self, repo, **kwargs):
