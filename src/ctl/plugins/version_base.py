@@ -228,7 +228,8 @@ class VersionBasePlugin(ExecutablePlugin):
     def update_pyproject_version(self, repo_plugin, version):
         """
         Writes a new version to the pyproject.toml file
-        if it exists
+        if it exists. Supports both Poetry format ([tool.poetry].version)
+        and PEP 621 format ([project].version).
         """
 
         try:
@@ -236,7 +237,22 @@ class VersionBasePlugin(ExecutablePlugin):
             pyproject = munge.load_datafile(
                 "pyproject.toml", search_path=(repo_plugin.checkout_path)
             )
-            pyproject["tool"]["poetry"]["version"] = version
+
+            updated = False
+
+            # Check for Poetry format: [tool.poetry].version
+            if "tool" in pyproject and "poetry" in pyproject["tool"]:
+                if "version" in pyproject["tool"]["poetry"]:
+                    pyproject["tool"]["poetry"]["version"] = version
+                    updated = True
+
+            # Check for PEP 621 format: [project].version
+            if "project" in pyproject and "version" in pyproject["project"]:
+                pyproject["project"]["version"] = version
+                updated = True
+
+            if not updated:
+                return None
 
             codec = munge.get_codec("toml")
 
@@ -246,7 +262,8 @@ class VersionBasePlugin(ExecutablePlugin):
 
         except OSError as exc:
             if "not found" in str(exc):
-                return
+                return None
+            raise
 
     def validate_changelog(self, repo, version, data_file="CHANGELOG.yaml"):
         """
