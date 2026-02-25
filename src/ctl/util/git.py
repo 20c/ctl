@@ -9,6 +9,7 @@ import logging
 import os
 import shutil
 import tempfile
+import time
 import urllib
 import uuid
 from typing import Callable, Union
@@ -148,6 +149,7 @@ class GitManager:
         self.submodules = submodules
 
         self.services = Services()
+        self._last_fetch_time = 0
 
         self.log = log if log else logging.getLogger(__name__)
 
@@ -394,10 +396,35 @@ class GitManager:
 
         return f"{_service.instance_url}/{_project.full_repo_name}/blob/{self.branch}/{file_path}"
 
-    def fetch(self, prune: bool = True):
+    def fetch(self, prune: bool = True, force: bool = False):
         """
-        Fetches the origin repository
+        Fetches the origin repository.
+
+        Respects a cooldown period to avoid hammering the remote with
+        redundant fetches (e.g. multiple fetches within a single
+        EphemeralGitContext entry). The cooldown is controlled by the
+        GIT_FETCH_COOLDOWN environment variable (seconds, default 30).
+
+        Args:
+            prune: Whether to prune deleted remote branches
+            force: If True, bypass the cooldown and always fetch
         """
+
+        try:
+            cooldown = int(os.environ.get("GIT_FETCH_COOLDOWN", 30))
+        except (ValueError, TypeError):
+            self.log.error(f"Invalid GIT_FETCH_COOLDOWN value: {os.environ.get('GIT_FETCH_COOLDOWN')!r}, using default 30s")
+            cooldown = 30
+
+        if not force and cooldown > 0:
+            now = time.time()
+            elapsed = now - self._last_fetch_time
+            if elapsed < cooldown:
+                self.log.debug(
+                    f"Skipping fetch, last fetch was {elapsed:.1f}s ago "
+                    f"(cooldown={cooldown}s)"
+                )
+                return
 
         fetch_args = ["--all"]
         if prune:
@@ -406,6 +433,7 @@ class GitManager:
         self.log.info(f"Fetching from {self.origin.name}")
         fetch_info = self.repo.git.fetch(*fetch_args)
         self.log.debug(f"Fetch info: {fetch_info}")
+        self._last_fetch_time = time.time()
         return fetch_info
 
     def pull(self):
