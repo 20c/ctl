@@ -2,6 +2,8 @@
 
 
 ## Unreleased
+### Added
+- GitManager.fetch() cooldown to avoid redundant remote fetches, controlled by GIT_FETCH_COOLDOWN env var (default 30s)
 
 
 ## 1.2.0
