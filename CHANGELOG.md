@@ -2,6 +2,8 @@
 
 
 ## Unreleased
+### Fixed
+- ephemeral git context push rejection when concurrent processes push to the same branch - pull before push to integrate remote changes
 
 
 ## 1.2.0

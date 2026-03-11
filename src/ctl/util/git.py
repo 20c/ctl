@@ -1148,6 +1148,12 @@ class EphemeralGitContext:
                     self.git_manager.changed_files(self.state.files_to_add)
                 )
                 self.git_manager.commit(self.state.commit_message)
+                # Pull to integrate any remote changes before pushing,
+                # avoiding rejection when concurrent processes have
+                # pushed to the same branch
+                # If this fails due to conflicts, push would have also failed.
+                if not self.state.force_push:
+                    self.git_manager.pull()
                 # Attempt to push
                 self.git_manager.push(force=self.state.force_push)
 
