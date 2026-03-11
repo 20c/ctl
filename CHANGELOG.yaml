@@ -1,6 +1,7 @@
 Unreleased:
   added: []
-  fixed: []
+  fixed:
+  - ephemeral git context push rejection when concurrent processes push to the same branch - pull before push to integrate remote changes
   changed: []
   deprecated: []
   removed: []
