@@ -950,7 +950,6 @@ class EphemeralGitContext:
         Sets up the repository, fetches and pulls.
         """
 
-
         self.context_token = current_ephemeral_git_context.set(self)
         self.state_token = ephemeral_git_context_state.set(self.state)
 
@@ -1045,8 +1044,6 @@ class EphemeralGitContext:
 
         return False  # re-raise any exception
 
-
-
     @property
     def git_manager(self):
         return self.state.git_manager
@@ -1066,7 +1063,6 @@ class EphemeralGitContext:
     @property
     def log(self):
         return self.git_manager.log
-
 
     def reset(self, from_origin: bool = True):
         """
