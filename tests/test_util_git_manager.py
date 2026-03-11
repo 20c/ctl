@@ -418,6 +418,8 @@ def test_git_manager_sync_with_new_branch(git_repo, clone_dir):
 def test_git_manager_sync_with_merge(git_repo, clone_dir):
     remote_dir, git_repo = git_repo
     git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir)
+    git_manager.repo.git.config("user.email", "test@example.com")
+    git_manager.repo.git.config("user.name", "Test User")
     git_manager.switch_branch("test", create=True)
     git_manager.require_remote_branch()
 
