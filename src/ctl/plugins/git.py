@@ -60,8 +60,19 @@ class GitPlugin(RepositoryPlugin):
         returns whether or not the checkout_path location is inside a
         valid git repo (uses the same root resolution as git commands,
         see `find_git_root`)
+
+        a missing or empty checkout_path is not considered cloned even
+        when it is nested inside an enclosing repository, so `clone`
+        can still create a nested repository there
         """
-        return self.find_git_root() is not None
+        git_root = self.find_git_root()
+        if git_root is None:
+            return False
+        if os.path.abspath(git_root) == os.path.abspath(self.checkout_path):
+            return True
+        return os.path.isdir(self.checkout_path) and bool(
+            os.listdir(self.checkout_path)
+        )
 
     @property
     def is_clean(self):
@@ -340,6 +351,18 @@ class GitPlugin(RepositoryPlugin):
         """
 
         if self.is_cloned:
+            git_root = self.find_git_root()
+            if os.path.abspath(git_root) != os.path.abspath(self.checkout_path):
+                # checkout_path is a content-bearing subdirectory of an
+                # enclosing repository - cloning into it would fail, but the
+                # skip needs to be visible since subsequent git operations
+                # will target the enclosing repo
+                self.log.warning(
+                    f"skipping clone: checkout_path {self.checkout_path} is not "
+                    f"a repository root but has content and is inside the "
+                    f"repository at {git_root}; git operations will target "
+                    f"that repository"
+                )
             return
 
         self.log.debug(f"Cloning {self.repo_url}")

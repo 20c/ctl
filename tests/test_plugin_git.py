@@ -151,3 +151,46 @@ def test_find_git_root(tmpdir, ctlr):
 
     # is_cloned uses the same resolution as git command targeting
     assert plugin.is_cloned
+
+
+def test_clone_nested_in_enclosing_repo(tmpdir, ctlr):
+    # a not-yet-cloned checkout_path nested inside another repository
+    # must still be cloned (is_cloned must not report the enclosing repo)
+    outer, repo_path = instantiate(tmpdir, ctlr)
+
+    nested_path = os.path.join(outer.checkout_path, "nested", "repo")
+    config = {"config": {"repo_url": outer.repo_url, "checkout_path": nested_path}}
+    nested = instantiate_test_plugin("git", "test_git_nested", _ctl=ctlr, **config)
+
+    # checkout_path is missing - resolution finds the enclosing repo but
+    # the plugin must not consider itself cloned
+    assert nested.find_git_root() == os.path.abspath(outer.checkout_path)
+    assert not nested.is_cloned
+
+    nested.clone()
+
+    # a proper nested repository now exists and resolution targets it
+    assert os.path.isdir(os.path.join(nested_path, ".git"))
+    assert nested.find_git_root() == os.path.abspath(nested_path)
+    assert nested.is_cloned
+
+
+def test_clone_skips_content_bearing_subdir(tmpdir, ctlr):
+    # a content-bearing subdirectory of an enclosing repository is
+    # treated as cloned (monorepo intent) and clone() skips
+    outer, repo_path = instantiate(tmpdir, ctlr)
+
+    subdir = os.path.join(outer.checkout_path, "sub")
+    os.makedirs(subdir)
+    with open(os.path.join(subdir, "content.txt"), "w") as fh:
+        fh.write("content\n")
+
+    config = {"config": {"repo_url": outer.repo_url, "checkout_path": subdir}}
+    plugin = instantiate_test_plugin("git", "test_git_subdir", _ctl=ctlr, **config)
+
+    assert plugin.is_cloned
+    plugin.clone()
+
+    # no nested repo was created, operations target the enclosing repo
+    assert not os.path.isdir(os.path.join(subdir, ".git"))
+    assert plugin.find_git_root() == os.path.abspath(outer.checkout_path)

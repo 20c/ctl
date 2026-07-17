@@ -22,6 +22,12 @@ Unreleased:
     ignored)'
   - remote branch lookups now match branch names containing slashes
     (e.g. `feature/x`)
+  - git plugin clone() no longer silently skips a not-yet-cloned checkout_path
+    nested inside an enclosing repository (a missing or empty checkout_path is
+    not considered cloned; skipping due to a content-bearing subdirectory now
+    warns loudly)
+  - Log gained a `warning` level; the git plugin retargeting warning previously
+    crashed with AttributeError
   changed:
   - migrated from Poetry to modern pyproject.toml with hatchling build backend
   - migrated from black/isort/flake8/pyupgrade to ruff for linting and formatting
