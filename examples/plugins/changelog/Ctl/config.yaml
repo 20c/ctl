@@ -8,6 +8,7 @@ ctl:
         # these are also exposed to the CLI
         # data_file: CHANGELOG.yaml
         # md_file: CHANGELOG.md
+        # fragments_dir: changelog.d
 
 
   permissions:
