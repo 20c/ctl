@@ -1,0 +1,6 @@
+added:
+- changelog.d fragment support - unreleased changes can be written as fragment
+  files in changelog.d/ and are collected into the release section by `ctl
+  changelog release`, eliminating CHANGELOG merge conflicts
+- '`ctl changelog check` operation - checks that the current branch touches the
+  changelog (fragments or data file) for use as a CI gate'
