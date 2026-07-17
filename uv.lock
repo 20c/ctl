@@ -462,6 +462,7 @@ docs = [
     { name = "markdown" },
     { name = "markdown-include" },
     { name = "mkdocs" },
+    { name = "pymdgen" },
 ]
 
 [package.metadata]
@@ -481,6 +482,7 @@ requires-dist = [
     { name = "pluginmgr", specifier = ">=1.2.1" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=2.13" },
     { name = "pydantic", specifier = ">=2.3.0" },
+    { name = "pymdgen", marker = "extra == 'docs'", specifier = "<2" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=6" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=2.10.1" },
     { name = "pytest-filedata", marker = "extra == 'dev'", specifier = ">=1.0.0" },
@@ -1344,6 +1346,19 @@ wheels = [
 [package.optional-dependencies]
 crypto = [
     { name = "cryptography" },
+]
+
+[[package]]
+name = "pymdgen"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pluggy" },
+    { name = "pre-commit" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5b/c1/4b9e72e6e6614edb4c8b400b0fc3b714a0b6e64824c56d56211ee46ea19d/pymdgen-1.1.0.tar.gz", hash = "sha256:b171fc1b627ba780245255eb022613f46557e8186c73eae31a55c7acdacbaa24", size = 56251, upload-time = "2024-11-12T20:59:55.427Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/27/ba/bee81472b3e1a841b4ce0203b843fb54e5ed1bf37c33f49d6b077ea699da/pymdgen-1.1.0-py3-none-any.whl", hash = "sha256:c8d165c8db0be119c4e0a6d8a6fa5abe3cf530c73353081571db0f4c66922898", size = 10672, upload-time = "2024-11-12T20:59:53.922Z" },
 ]
 
 [[package]]

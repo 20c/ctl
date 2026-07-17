@@ -58,6 +58,7 @@ docs = [
     "markdown",
     "markdown-include>=0.5,<1",
     "mkdocs>=1.2.3",
+    "pymdgen<2",
 ]
 
 [project.scripts]

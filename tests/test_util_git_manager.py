@@ -1349,3 +1349,18 @@ def test_stash_between_contexts(git_repo, clone_dir):
     # assert all stashes have been popped
 
     assert not git_manager.repo.git.stash("list")
+
+
+def test_remote_branch_reference_slashed_branch(git_repo, clone_dir):
+    # branch names containing "/" must match their own remote ref -
+    # naive splitting on "/" only compared the last segment
+    remote_dir, repo = git_repo
+    git_manager = GitManager(url=f"file://{remote_dir}", directory=clone_dir)
+    git_manager.switch_branch("feature/nested-name", create=True)
+    git_manager.require_remote_branch()
+
+    ref = git_manager.remote_branch_reference("feature/nested-name")
+    assert ref is not None
+    assert ref.name == "origin/feature/nested-name"
+
+    assert git_manager.remote_branch_reference("nested-name") is None

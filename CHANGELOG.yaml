@@ -13,6 +13,15 @@ Unreleased:
     branch (pull-before-push is skipped when the branch has no remote ref yet)
   - GitManager.sync() bypasses the fetch cooldown so it always integrates the
     current remote state before merging and pushing
+  - '`ctl semver2 tag/bump --no-git` was not recognized by the CLI (the flag
+    only reached the `release` operation due to argparse parent timing)'
+  - docs deploy no longer fails on the pymdgen markdown extension (added to
+    the docs extra)
+  - '`--prefix` and `--no-git-tag` no longer parse on the `version` plugin,
+    which never implemented them (they are semver2-only and were silently
+    ignored)'
+  - remote branch lookups now match branch names containing slashes
+    (e.g. `feature/x`)
   changed:
   - migrated from Poetry to modern pyproject.toml with hatchling build backend
   - migrated from black/isort/flake8/pyupgrade to ruff for linting and formatting
@@ -20,6 +29,8 @@ Unreleased:
   - migrated the docs deploy workflow (gh-pages) from poetry to uv
   - updated pre-commit hooks to use ruff and mypy
   - upgraded all dependencies to latest versions
+  - git plugin warns loudly when git operations retarget an enclosing
+    repository because checkout_path is not itself a repository root
   deprecated: []
   removed:
   - python 3.8 and 3.9 support (EOL)

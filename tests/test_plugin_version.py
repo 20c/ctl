@@ -1,3 +1,4 @@
+import argparse
 import os
 import shutil
 
@@ -123,3 +124,22 @@ def test_execute_permissions(tmpdir, ctldeny):
 
     with pytest.raises(PermissionDenied):
         plugin.execute(op="bump", version="patch", repo="dummy_repo", init=True)
+
+
+def test_cli_rejects_semver2_only_flags(ctlr):
+    # --prefix and --no-git-tag are implemented by the semver2 plugin only;
+    # the version plugin must reject them instead of parsing and silently
+    # ignoring them
+    parser = argparse.ArgumentParser()
+    ctl.plugin_cli_arguments(
+        ctlr, parser, {"type": "version", "name": "version", "config": {}}
+    )
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["tag", "--prefix", "v", "1.0.0"])
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["bump", "--no-git-tag", "minor"])
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["tag", "--no-git", "1.0.0"])

@@ -57,10 +57,11 @@ class GitPlugin(RepositoryPlugin):
     @property
     def is_cloned(self):
         """
-        returns whether or not the checkout_path location is a valid
-        git repo or not
+        returns whether or not the checkout_path location is inside a
+        valid git repo (uses the same root resolution as git commands,
+        see `find_git_root`)
         """
-        return os.path.exists(os.path.join(self.checkout_path, ".git"))
+        return self.find_git_root() is not None
 
     @property
     def is_clean(self):
@@ -217,11 +218,15 @@ class GitPlugin(RepositoryPlugin):
         git root path (`str`) or `None` if not found
         """
         path = os.path.abspath(start_path or self.checkout_path)
-        while path != "/":
+        while True:
             if os.path.exists(os.path.join(path, ".git")):
                 return path
-            path = os.path.dirname(path)
-        return None
+            parent = os.path.dirname(path)
+            if parent == path:
+                # filesystem root reached (works for windows drive roots
+                # too, where dirname returns the path itself)
+                return None
+            path = parent
 
     def command(self, *command):
         """
@@ -239,7 +244,16 @@ class GitPlugin(RepositoryPlugin):
         """
         git_root = self.find_git_root()
         if git_root is None:
-            git_root = self.checkout_path  # fallback
+            git_root = self.checkout_path  # fallback (not yet cloned)
+        elif os.path.abspath(git_root) != os.path.abspath(self.checkout_path):
+            # operating on an enclosing repository (e.g. a monorepo
+            # subdirectory) - make the retargeting visible since commit/push
+            # will affect the whole enclosing repo, not just checkout_path
+            self.log.warning(
+                f"checkout_path {self.checkout_path} is not a git repository "
+                f"root; git operations will target the enclosing repository "
+                f"at {git_root}"
+            )
         return [
             "git",
             "--git-dir",

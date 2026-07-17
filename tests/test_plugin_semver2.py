@@ -1,3 +1,4 @@
+import argparse
 import os
 import shutil
 
@@ -162,3 +163,57 @@ def test_execute_permissions(tmpdir, ctldeny):
 
     with pytest.raises(PermissionDenied):
         plugin.execute(op="bump", version="patch", repo="dummy_repo", init=True)
+
+
+def test_tag_no_git(tmpdir, ctlr):
+    plugin, dummy_repo = instantiate(tmpdir, ctlr)
+    # a dirty tree would normally raise UsageError; --no-git skips all git
+    # operations, including the clean-tree check that guards them
+    dummy_repo._clean = False
+    plugin.tag(version="1.0.0", repo="dummy_repo", no_git=True)
+    assert dummy_repo.version == "1.0.0"
+    assert not dummy_repo.has_tag("1.0.0")
+    assert dummy_repo._pulled is False
+    assert dummy_repo._committed is False
+    assert dummy_repo._pushed is False
+
+
+def test_bump_no_git(tmpdir, ctlr):
+    plugin, dummy_repo = instantiate(tmpdir, ctlr)
+    plugin.tag(version="1.0.0", repo="dummy_repo")
+    dummy_repo._pulled = False
+    plugin.bump(version="minor", repo="dummy_repo", no_git=True)
+    assert dummy_repo.version == "1.1.0"
+    assert not dummy_repo.has_tag("1.1.0")
+    assert dummy_repo._pulled is False
+
+
+def _cli_parser(ctlr, plugin_type):
+    parser = argparse.ArgumentParser()
+    ctl.plugin_cli_arguments(
+        ctlr, parser, {"type": plugin_type, "name": plugin_type, "config": {}}
+    )
+    return parser
+
+
+def test_cli_flags_parse(ctlr):
+    # --no-git/--no-git-tag/--prefix must be wired onto each operation
+    # parser directly: argparse copies parent actions at add_parser() time,
+    # so flags added to a shared parent afterwards never reach tag/bump
+    parser = _cli_parser(ctlr, "semver2")
+
+    args = parser.parse_args(["tag", "--no-git", "--prefix", "v", "1.0.0"])
+    assert args.no_git is True
+    assert args.prefix == "v"
+
+    args = parser.parse_args(["tag", "--no-git-tag", "1.0.0"])
+    assert args.no_git_tag is True
+
+    args = parser.parse_args(["bump", "--no-git", "minor"])
+    assert args.no_git is True
+
+    args = parser.parse_args(["bump", "--no-git-tag", "minor"])
+    assert args.no_git_tag is True
+
+    args = parser.parse_args(["release", "--no-git"])
+    assert args.no_git is True

@@ -32,15 +32,6 @@ If you're using the version plugin for the first time on a repo and a `Ctl/VERSI
 ctl version tag 1.0.0 --init
 ```
 
-You may also choose to add a prefix to the tag
-
-```sh
-# update Ctl/VERSION to 1.1.0
-# tag v1.1.0
-# push tag
-ctl version tag 1.0.0 prefix v
-```
-
 You may also chose to bump a semantic version
 
 ```sh
@@ -50,13 +41,12 @@ You may also chose to bump a semantic version
 ctl version bump minor
 ```
 
-You may also choose to bump but not tag in git
-
-```sh
-# update Ctl/VERSION to 1.1.0
-# skip creating git tag
-ctl version bump --no-git-tag
-```
+!!! note "semver2 plugin"
+    The `semver2` plugin supports additional flags on these operations:
+    `--prefix v` (tag as `v1.0.0`), `--no-git-tag` (commit version files
+    but skip the git tag) and `--no-git` (skip all git operations). For
+    example `ctl semver2 bump minor --no-git-tag`. The `version` plugin
+    does not implement these flags and will reject them.
 
 ### Use existing repository checkout
 

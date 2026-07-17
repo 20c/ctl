@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 from util import instantiate_test_plugin
@@ -127,3 +128,26 @@ def test_branch_and_merge(tmpdir, ctlr):
     # check that main is now on the new file
     with open(f"{plugin.checkout_path}/README.md") as fh:
         assert fh.read() == "abcdeftest\n"
+
+
+def test_find_git_root(tmpdir, ctlr):
+    plugin, repo_path = instantiate(tmpdir, ctlr)
+
+    # checkout_path itself is a repo root
+    assert os.path.abspath(plugin.find_git_root()) == os.path.abspath(
+        plugin.checkout_path
+    )
+
+    # from a subdirectory the enclosing repository root is found
+    subdir = os.path.join(plugin.checkout_path, "sub", "dir")
+    os.makedirs(subdir)
+    assert os.path.abspath(plugin.find_git_root(subdir)) == os.path.abspath(
+        plugin.checkout_path
+    )
+
+    # outside any repository resolution terminates and returns None
+    outside = str(tmpdir.mkdir("no_repo_here"))
+    assert plugin.find_git_root(outside) is None
+
+    # is_cloned uses the same resolution as git command targeting
+    assert plugin.is_cloned

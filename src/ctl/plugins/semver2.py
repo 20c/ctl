@@ -30,10 +30,17 @@ class Semver2Plugin(VersionBasePlugin):
         release_parser = parsers.get("release_parser")
         group = parsers.get("group")
 
-        shared_parser.add_argument(
-            "--no-git",
+        # NOTE: `--no-git` cannot go on `shared_parser`: argparse copies
+        # parent actions when a subparser is created, and the base class has
+        # already created the tag/bump parsers with `parents=[shared_parser]`
+        # by the time this method runs. Flags added here must go directly on
+        # each operation parser.
+        no_git_kwargs = dict(
             action="store_true",
-            help="Skip git tagging operations",
+            help=(
+                "skip all git operations (pull, clean-tree check, commit "
+                "and tag) - only version files are updated"
+            ),
             default=False,
         )
 
@@ -45,12 +52,20 @@ class Semver2Plugin(VersionBasePlugin):
             help="tag a prerelease with the specified prerlease name",
         )
         op_tag_parser.add_argument(
+            "--prefix",
+            type=str,
+            help="prefix string to tag with i.e. {v}1.0.1 - v being the prefix",
+            required=False,
+            default=None,
+        )
+        op_tag_parser.add_argument(
             "--no-git-tag",
             dest="no_git_tag",
             action="store_true",
             help="Skip creating git tag (still commits version file changes)",
             default=False,
         )
+        op_tag_parser.add_argument("--no-git", **no_git_kwargs)
 
         # operation `bump`
         op_bump_parser = parsers.get("op_bump_parser")
@@ -59,6 +74,14 @@ class Semver2Plugin(VersionBasePlugin):
             type=str,
             help="tag a prerelease with the specified prerlease name",
         )
+        op_bump_parser.add_argument(
+            "--no-git-tag",
+            dest="no_git_tag",
+            action="store_true",
+            help="skip creating a git tag (default: False)",
+            default=False,
+        )
+        op_bump_parser.add_argument("--no-git", **no_git_kwargs)
 
         # operation `release`
         op_release_parser = sub.add_parser(
@@ -66,6 +89,7 @@ class Semver2Plugin(VersionBasePlugin):
             help="go from pre-release version to release version. This will drop the current pre-release tag.",
             parents=[shared_parser, release_parser],
         )
+        op_release_parser.add_argument("--no-git", **no_git_kwargs)
         confu_cli_args.add(op_release_parser, "changelog_validate")
         confu_cli_args.add(op_release_parser, "branch")
         cls.add_repo_argument(op_release_parser, plugin_config)
@@ -86,6 +110,18 @@ class Semver2Plugin(VersionBasePlugin):
 
         fn(**kwargs)
 
+    def _repo_preflight(self, repo, no_git, require_clean=False):
+        """
+        Resolve the repository plugin and, unless `no_git` is set, pull and
+        optionally require a clean tree before any versioning operation.
+        """
+        repo_plugin = self.repository(repo)
+        if not no_git:
+            repo_plugin.pull()
+            if require_clean and not repo_plugin.is_clean:
+                raise UsageError("Currently checked out branch is not clean")
+        return repo_plugin
+
     @expose("ctl.{plugin_name}.tag")
     def tag(self, version, repo, prerelease=None, **kwargs):
         """
@@ -102,13 +138,7 @@ class Semver2Plugin(VersionBasePlugin):
         - no_git (`bool`): if `True` skip all git operations
         """
         no_git = kwargs.get("no_git", False)
-        repo_plugin = self.repository(repo)
-
-        if not no_git:
-            repo_plugin.pull()
-
-            if not repo_plugin.is_clean:
-                raise UsageError("Currently checked out branch is not clean")
+        repo_plugin = self._repo_preflight(repo, no_git, require_clean=True)
 
         version = semver.VersionInfo.parse(version)
         if prerelease:
@@ -134,11 +164,11 @@ class Semver2Plugin(VersionBasePlugin):
             repo_plugin.commit(files=files, message=f"Version {version_tag}", push=True)
             no_git_tag = kwargs.pop("no_git_tag", False)
             if not no_git_tag:
+                # the prefix is baked into the tag name here; repository
+                # plugins receive the final tag and must not apply it again
                 prefix = kwargs.pop("prefix", None)
                 version_tag = f"{prefix}{version_tag}" if prefix else version_tag
-                repo_plugin.tag(
-                    version_tag, message=version_tag, push=True, prefix=prefix
-                )
+                repo_plugin.tag(version_tag, message=version_tag, push=True)
 
     @expose("ctl.{plugin_name}.bump")
     def bump(self, version, repo, **kwargs):
@@ -151,10 +181,7 @@ class Semver2Plugin(VersionBasePlugin):
         - repo (`str`): name of existing repository type plugin instance
         """
         no_git = kwargs.get("no_git", False)
-        repo_plugin = self.repository(repo)
-
-        if not no_git:
-            repo_plugin.pull()
+        repo_plugin = self._repo_preflight(repo, no_git)
 
         if version not in ["major", "minor", "patch", "prerelease"]:
             raise ValueError(f"Invalid semantic version: {version}")
@@ -195,10 +222,7 @@ class Semver2Plugin(VersionBasePlugin):
         - repo (`str`): name of existing repository type plugin instance
         """
         no_git = kwargs.get("no_git", False)
-        repo_plugin = self.repository(repo)
-
-        if not no_git:
-            repo_plugin.pull()
+        repo_plugin = self._repo_preflight(repo, no_git)
 
         version = repo_plugin.version
 

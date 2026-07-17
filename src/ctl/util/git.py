@@ -688,7 +688,9 @@ class GitManager:
             return None
 
         for ref in self.origin.refs:
-            if ref.name.split("/")[-1] == branch_name:
+            # strip only the remote prefix (`origin/`) so branch names
+            # containing slashes (e.g. `feature/x`) still match their ref
+            if ref.name.removeprefix(f"{self.origin.name}/") == branch_name:
                 # always the same as active_branch?
                 self.log.debug(f"found remote branch {ref}")
                 return ref
