@@ -12,7 +12,7 @@ import tempfile
 import time
 import urllib
 import uuid
-from typing import Callable, Union
+from collections.abc import Callable
 
 import git
 import munge
@@ -126,7 +126,7 @@ class GitManager:
 
     def __init__(
         self,
-        url: Union[str, None],
+        url: str | None,
         directory: str,
         default_branch: str = "main",
         default_service: str = None,
@@ -916,7 +916,7 @@ class ChangeRequest(pydantic.BaseModel):
 
 class EphemeralGitContextState(pydantic.BaseModel):
     git_manager: GitManager
-    branch: Union[str, None] = None
+    branch: str | None = None
     commit_message: str = "Commit changes"
     readonly: bool = False
     inactive: bool = False
@@ -924,9 +924,9 @@ class EphemeralGitContextState(pydantic.BaseModel):
 
     context_id: str = pydantic.Field(default_factory=lambda: str(uuid.uuid4())[:8])
 
-    change_request: Union[ChangeRequest, None] = None
+    change_request: ChangeRequest | None = None
 
-    validate_clean: Union[Callable, None] = None
+    validate_clean: Callable | None = None
 
     files_to_add: list[str] = pydantic.Field(default_factory=list)
 
