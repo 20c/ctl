@@ -20,6 +20,15 @@ class DummyException(Exception):
     pass
 
 
+# RepositoryConfig defaults pull tokens straight from the environment
+# (env-over-config precedence), so ambient CI/developer credentials would
+# otherwise leak into every GitManager these tests construct.
+@pytest.fixture(autouse=True)
+def isolate_ambient_tokens(monkeypatch):
+    for var in ("GITHUB_TOKEN", "GITLAB_TOKEN", "GITLAB_URL"):
+        monkeypatch.delenv(var, raising=False)
+
+
 # Fixture to create a temporary directory and initialize a git repository
 @pytest.fixture
 def git_repo():
@@ -309,6 +318,32 @@ def test_git_manager_load_repository_config(
     mock_gitlab_service.assert_called_once_with(
         token=None, instance_url="https://gitlab.com"
     )
+
+
+# Companion to the ambient-token isolation fixture: environment tokens take
+# precedence over repository config values, and that behavior must stay pinned.
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+def test_git_manager_env_token_precedence(
+    mock_gitlab_service, mock_github_service, git_repo_with_config, monkeypatch
+):
+    monkeypatch.setenv("GITHUB_TOKEN", "env_github_token")
+    monkeypatch.setenv("GITLAB_TOKEN", "env_gitlab_token")
+
+    tmp_dir, repo = git_repo_with_config
+    repo.create_remote("origin", url="http://localhost")
+
+    mock_github_service.return_value = MagicMock()
+    mock_gitlab_service.return_value = MagicMock()
+
+    git_manager = GitManager(url="http://localhost", directory=tmp_dir)
+
+    # env wins over the config.yaml github_token ("test_token"): the service is
+    # initialized from RepositoryConfig's env-derived defaults before the
+    # repository config file is loaded
+    mock_github_service.assert_called_once_with(token="env_github_token")
+    # and the env token is folded back into the repository config
+    assert git_manager.repository_config.gitlab_token == "env_gitlab_token"
 
 
 # Test that a GitManager instance correctly sets the default_service property
