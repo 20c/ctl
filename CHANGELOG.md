@@ -2,6 +2,8 @@
 
 
 ## Unreleased
+### Added
+- GitManager.fetch() cooldown to avoid redundant remote fetches, controlled by GIT_FETCH_COOLDOWN env var (default 30s)
 ### Fixed
 - ephemeral git context push rejection when concurrent processes push to the same branch - pull before push to integrate remote changes
 
