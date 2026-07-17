@@ -456,15 +456,19 @@ class GitManager:
         """
         Fetches the remote repository and will merge with a fast-forward
         strategy if possible and then push back to origin.
+
+        The fetch bypasses the GIT_FETCH_COOLDOWN throttle: syncing is an
+        explicit request to integrate the current remote state, so stale
+        refs would defeat its purpose (and can reject the push).
         """
 
-        self.fetch()
+        self.fetch(force=True)
         if self.require_remote_branch() is True:
             # branch did not exist remotely yet
             self.push()
 
             # fetch again to make sure we have the latest refs
-            self.fetch()
+            self.fetch(force=True)
             return
 
         # fast forward merge from origin
@@ -1174,9 +1178,16 @@ class EphemeralGitContext:
                 self.git_manager.commit(self.state.commit_message)
                 # Pull to integrate any remote changes before pushing,
                 # avoiding rejection when concurrent processes have
-                # pushed to the same branch
+                # pushed to the same branch. Skipped when the branch does
+                # not exist remotely yet (nothing to integrate; pulling a
+                # nonexistent ref is a fatal git error).
                 # If this fails due to conflicts, push would have also failed.
-                if not self.state.force_push:
+                if (
+                    not self.state.force_push
+                    and self.git_manager.remote_branch_reference(
+                        self.git_manager.branch
+                    )
+                ):
                     self.git_manager.pull()
                 # Attempt to push
                 self.git_manager.push(force=self.state.force_push)

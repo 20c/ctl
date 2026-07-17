@@ -9,6 +9,10 @@ Unreleased:
   - git manager tests no longer leak ambient GITHUB_TOKEN/GITLAB_TOKEN from the
     environment; env-over-config token precedence is now covered by an explicit
     test
+  - ephemeral git context finalize no longer fails on the first push of a new
+    branch (pull-before-push is skipped when the branch has no remote ref yet)
+  - GitManager.sync() bypasses the fetch cooldown so it always integrates the
+    current remote state before merging and pushing
   changed:
   - migrated from Poetry to modern pyproject.toml with hatchling build backend
   - migrated from black/isort/flake8/pyupgrade to ruff for linting and formatting
