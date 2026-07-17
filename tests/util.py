@@ -1,5 +1,73 @@
+import os
+import subprocess
+
 import ctl
 from ctl.plugins.repository import RepositoryPlugin
+
+
+def run_git(repo_dir, *args):
+    """
+    runs a git command in the specified scratch repository directory
+
+    uses `git -C` so the command never leaks out of the scratch
+    repository - raises `subprocess.CalledProcessError` on failure
+
+    **Returns**
+
+    stripped stdout (`str`)
+    """
+
+    result = subprocess.run(
+        ["git", "-C", repo_dir] + list(args),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return result.stdout.strip()
+
+
+def init_scratch_git_repo(repo_dir, branch="main"):
+    """
+    initializes an isolated scratch git repository for testing
+
+    - creates the repository with `branch` as the initial branch
+      (avoids default-branch warnings)
+    - sets local user.email / user.name so commits work regardless
+      of the environment's git configuration
+
+    **Returns**
+
+    the repository directory (`str`)
+    """
+
+    os.makedirs(repo_dir, exist_ok=True)
+    run_git(repo_dir, "init", "-b", branch)
+    run_git(repo_dir, "config", "user.email", "test@example.com")
+    run_git(repo_dir, "config", "user.name", "Test User")
+    return repo_dir
+
+
+def scratch_git_commit(repo_dir, message="commit"):
+    """
+    stages all changes in the scratch repository and commits them
+
+    **Returns**
+
+    the commit hash (`str`)
+    """
+
+    run_git(repo_dir, "add", "-A")
+    run_git(repo_dir, "commit", "-m", message)
+    return run_git(repo_dir, "rev-parse", "HEAD")
+
+
+def scratch_git_origin_ref(repo_dir, name="main", target="HEAD"):
+    """
+    creates a remote-tracking ref (eg. `origin/main`) in the scratch
+    repository pointing at `target` - no actual remote is needed
+    """
+
+    run_git(repo_dir, "update-ref", f"refs/remotes/origin/{name}", target)
 
 
 def instantiate_version(tmpdir, ctlr=None):
