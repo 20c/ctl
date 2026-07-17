@@ -2,19 +2,25 @@ Unreleased:
   added:
   - "GitManager.fetch() cooldown to avoid redundant remote fetches, controlled by GIT_FETCH_COOLDOWN env var (default 30s)"
   - py.typed marker file for type checking support
+  - python 3.13 and 3.14 support
   fixed:
   - ephemeral git context push rejection when concurrent processes push to the same branch - pull before push to integrate remote changes
   - replaced deprecated pkg_resources with importlib.metadata
+  - git manager tests no longer leak ambient GITHUB_TOKEN/GITLAB_TOKEN from the
+    environment; env-over-config token precedence is now covered by an explicit
+    test
   changed:
   - migrated from Poetry to modern pyproject.toml with hatchling build backend
   - migrated from black/isort/flake8/pyupgrade to ruff for linting and formatting
   - updated CI workflows to use uv instead of poetry/tox
+  - migrated the docs deploy workflow (gh-pages) from poetry to uv
   - updated pre-commit hooks to use ruff and mypy
   - upgraded all dependencies to latest versions
   deprecated: []
   removed:
-  - python 3.8 support (EOL)
+  - python 3.8 and 3.9 support (EOL)
   - poetry.lock (replaced with uv.lock)
+  - tox (local multi-version testing is `uv run --python 3.X pytest`)
   security: []
 1.2.0:
   added:
