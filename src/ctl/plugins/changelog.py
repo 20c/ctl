@@ -267,6 +267,38 @@ class ChangeLogPlugin(ExecutablePlugin):
 
         return data
 
+    def list_fragments(self, fragments_dir):
+        """
+        Returns the file paths of all changelog fragment files found
+        in the specified directory, sorted by file name.
+
+        Fragment files are `*.yaml` / `*.yml` files - hidden files and
+        files with other extensions are ignored.
+
+        **Arguments**
+
+        - fragments_dir (`str`): file path to a changelog fragments
+        directory
+
+        **Returns**
+
+        fragment file paths `list`
+        """
+
+        files = []
+
+        for filename in sorted(os.listdir(fragments_dir)):
+            if filename.startswith("."):
+                continue
+            if os.path.splitext(filename)[1] not in (".yaml", ".yml"):
+                continue
+            filepath = os.path.join(fragments_dir, filename)
+            if not os.path.isfile(filepath):
+                continue
+            files.append(filepath)
+
+        return files
+
     def load_fragments(self, fragments_dir):
         """
         Loads and validates all changelog fragment files found in the
@@ -286,17 +318,7 @@ class ChangeLogPlugin(ExecutablePlugin):
         `tuple` of (fragment file paths `list`, merged sections `dict`)
         """
 
-        files = []
-
-        for filename in sorted(os.listdir(fragments_dir)):
-            if filename.startswith("."):
-                continue
-            if os.path.splitext(filename)[1] not in (".yaml", ".yml"):
-                continue
-            filepath = os.path.join(fragments_dir, filename)
-            if not os.path.isfile(filepath):
-                continue
-            files.append(filepath)
+        files = self.list_fragments(fragments_dir)
 
         sections = {section: [] for section in CHANGELOG_SECTIONS}
 
@@ -330,7 +352,7 @@ class ChangeLogPlugin(ExecutablePlugin):
         fragment_mode = os.path.isdir(fragments_dir)
 
         if version in changelog:
-            if fragment_mode:
+            if fragment_mode and self.list_fragments(fragments_dir):
                 raise ValueError(
                     f"Release {version} already exists in {data_file} - any "
                     f"changelog fragments left over in {fragments_dir} need "
@@ -411,11 +433,16 @@ class ChangeLogPlugin(ExecutablePlugin):
         """
 
         try:
+            # errors="replace" so undecodable output bytes (e.g. a
+            # non-utf8 filename under a C locale) cannot raise a bare
+            # UnicodeDecodeError, which the cli would swallow into a
+            # silent exit 0
             result = subprocess.run(
                 ["git"] + list(args),
                 cwd=repo_dir,
                 capture_output=True,
                 text=True,
+                errors="replace",
             )
         except OSError as exc:
             return False, "", f"{exc}"
@@ -487,8 +514,18 @@ class ChangeLogPlugin(ExecutablePlugin):
                     f"{fragments_dir}) - please pass --base",
                 )
 
+        # core.quotepath=off so non-ascii paths come out raw instead of
+        # quoted+octal-escaped (which would never match the comparison
+        # below); --no-relative pins root-relative output even when the
+        # user has diff.relative set
         success, diff, error = self.run_git(
-            repo_dir, "diff", "--name-only", f"{base}...HEAD"
+            repo_dir,
+            "-c",
+            "core.quotepath=off",
+            "diff",
+            "--no-relative",
+            "--name-only",
+            f"{base}...HEAD",
         )
 
         if not success:

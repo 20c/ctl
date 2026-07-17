@@ -414,6 +414,42 @@ def test_check_pass_on_data_file_change(tmpdir, ctlr):
     plugin.check(data_file)
 
 
+def test_check_data_file_in_subdir(tmpdir, ctlr):
+    # data file and fragments dir in a repo subdirectory - diff paths
+    # are repo-root-relative so both sides need to be relativized
+    # against the git toplevel, not against dirname(data_file)
+    repo_dir = init_scratch_git_repo(os.path.join(f"{tmpdir}", "repo"))
+    data_file = os.path.join(repo_dir, "sub", "CHANGELOG.yml")
+    fragments_dir = os.path.join(repo_dir, "sub", "changelog.d")
+
+    write_file(data_file, CHANGELOG_YML_EMPTY_UNRELEASED)
+    write_file(os.path.join(fragments_dir, ".gitkeep"), "")
+    base_commit = scratch_git_commit(repo_dir, "base")
+    scratch_git_origin_ref(repo_dir, "main", base_commit)
+
+    plugin = instantiate(tmpdir, ctlr, data_file=data_file)
+
+    # a non-ascii fragment file name must still match (quotepath off)
+    write_file(os.path.join(fragments_dir, "001-für.yaml"), "added:\n- entry\n")
+    scratch_git_commit(repo_dir, "add fragment")
+
+    plugin.check(data_file)
+
+    # changes outside the subdir do not pass the check
+    run_git(repo_dir, "rm", "sub/changelog.d/001-für.yaml")
+    write_file(os.path.join(repo_dir, "CHANGELOG.yml"), CHANGELOG_YML_UNRELEASED)
+    write_file(os.path.join(repo_dir, "changelog.d", "001-decoy.yaml"), "added:\n- x\n")
+    base_commit = scratch_git_commit(repo_dir, "reset to decoy changes only")
+    scratch_git_origin_ref(repo_dir, "main", base_commit)
+
+    write_file(os.path.join(repo_dir, "CHANGELOG.yml"), CHANGELOG_YML_EMPTY_UNRELEASED)
+    write_file(os.path.join(repo_dir, "changelog.d", "002-decoy.yaml"), "added:\n- y\n")
+    scratch_git_commit(repo_dir, "more decoy changes outside sub/")
+
+    with pytest.raises(PluginOperationStopped, match="No changelog changes"):
+        plugin.check(data_file)
+
+
 def test_check_fail_no_changelog_changes(tmpdir, ctlr):
     plugin, repo_dir, data_file, _, base_commit = setup_check_repo(tmpdir, ctlr)
     scratch_git_origin_ref(repo_dir, "main", base_commit)
@@ -484,6 +520,9 @@ def test_check_cli_exit_codes(tmpdir):
 
     failing = subprocess.run(cmd, cwd=repo_dir, capture_output=True, text=True)
     assert failing.returncode == 1
+    # the failure must come from the check op itself, not some other
+    # exit-1 path (e.g. a config error during init)
+    assert "No changelog changes" in failing.stdout + failing.stderr
 
     # changelog fragment added - exit code 0
     write_file(
