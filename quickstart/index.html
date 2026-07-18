@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/20c/ctl/quickstart/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Quickstart - ctl</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Quickstart";
+        var mkdocs_page_input_path = "quickstart.md";
+        var mkdocs_page_url = "/20c/ctl/quickstart/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> ctl
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Quickstart</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#install">Install</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#plugin-centric-approach">Plugin centric approach</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#example-package-release-management">Example: Package / Release management</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#create-a-ctl-config-file">Create a ctl config file</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#run-ctl">Run ctl</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#push-a-version-tag-to-git">Push a version tag to git</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#bump-the-version-in-a-semantic-way">Bump the version in a semantic way</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#release-to-pypi">Release to PyPI</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plugins/">Plugins</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../events/">Plugin Events</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plugin_permissions/">Plugin Permissons</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../config_template/">Config Templating</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Documenation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/auth/">ctl.auth</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins/">ctl.plugins</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.chain/">ctl.plugins.chain</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.changelog/">ctl.plugins.changelog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.copy/">ctl.plugins.copy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.command/">ctl.plugins.command</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.email/">ctl.plugins.email</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.git/">ctl.plugins.git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.log/">ctl.plugins.log</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.log_alert/">ctl.plugins.log_alert</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.log_git/">ctl.plugins.log_git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.log_user/">ctl.plugins.log_user</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.pypi/">ctl.plugins.pypi</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.release/">ctl.plugins.release</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.repository/">ctl.plugins.repository</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.template/">ctl.plugins.template</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.venv/">ctl.plugins.venv</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.version/">ctl.plugins.version</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.walk_dir/">ctl.plugins.walk_dir</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">ctl</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Quickstart</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="quickstart">Quickstart</h1>
+<h2 id="install">Install</h2>
+<pre><code>pip install ctl
+</code></pre>
+<h2 id="plugin-centric-approach">Plugin centric approach</h2>
+<p>Ctl is driven by plugins. When a plugin is configured it will expose itself to the ctl cli by it's name and you may then execute operations on it.</p>
+<p>Plugins are aware of and can make use of one another (were it is sensical), this allows for a streamlined approach when implementing complex operations.</p>
+<h2 id="example-package-release-management">Example: Package / Release management</h2>
+<p>This example shows how to set up ctl to tag releases in a git repository and then build a python package and upload it to pypi</p>
+<h2 id="create-a-ctl-config-file">Create a ctl config file</h2>
+<p>Create a <code>Ctl</code> directory in the location where you want to run ctl from.</p>
+<p>Alternatively you can also create a <code>.ctl</code> directory in your home directory.</p>
+<p>When trying to read your config file, ctl will look in these places, in order:</p>
+<ul>
+<li><code>$CTL_HOME</code></li>
+<li><code>./Ctl</code></li>
+<li><code>~/.ctl</code></li>
+</ul>
+<p>open <code>Ctl/config.yaml</code> in your favorite editor and add the following</p>
+<pre><code class="language-yaml">ctl:
+  plugins:
+
+    # manage / access a git repository
+
+    - type: git
+      name: git_example
+      config:
+        repo_url: git@github.com:my/repo
+
+    # manage release tags / versioning
+
+    - type: version
+      name: version
+      config:
+        repository: git_example
+
+    # handle building and uploading to PyPI
+
+    - type: pypi
+      name: pypi
+      config:
+        config_file: ~/.pypirc
+        repository: git_example
+
+  # full access to all three plugins
+
+  permissions:
+    - namespace: ctl
+      permission: crud
+</code></pre>
+<p>This configures 3 plugins we will need for our package management</p>
+<ol>
+<li>git: access to a git repository</li>
+<li>version: tag a release in the git repository</li>
+<li>pypi: build a package and upload to pypi</li>
+</ol>
+<h2 id="run-ctl">Run ctl</h2>
+<p>You can run <code>ctl --help</code> and it should show the three plugins under <code>Configured Operations</code>:</p>
+<pre><code class="language-sh">ctl --help
+</code></pre>
+<pre><code>[ALL] Configured Operations:
+  {git_example,version,pypi}
+    git_example
+    version             Manipulates repository versions.
+    pypi                Facilitates a PyPI package release
+</code></pre>
+<h3 id="push-a-version-tag-to-git">Push a version tag to git</h3>
+<p>For the sake of this example, let's assume that the repository we are targeting has never been versioned with ctl before.</p>
+<p>So we now need to tag and push the initial version. This will create a <code>Ctl/VERSION</code> file in your repository that holds the version as well as create and push a git tag.</p>
+<pre><code class="language-sh">ctl version tag 0.1.0 --init
+</code></pre>
+<h3 id="bump-the-version-in-a-semantic-way">Bump the version in a semantic way</h3>
+<p>Once the repository has been versioned by ctl, you can now use the <code>bump</code> operation to bump semantic versions</p>
+<pre><code class="language-sh"># bump the version to 0.1.1
+ctl version bump patch
+</code></pre>
+<h3 id="release-to-pypi">Release to PyPI</h3>
+<p>Once our versions exist, we can use the <code>pypi</code> plugin to build and push a release to pypi</p>
+<p>Let's start by doing a dry run to see if everything is in order.</p>
+<pre><code class="language-sh">ctl pypi release 0.1.1 --dry
+</code></pre>
+<p>If all is good, we can commit and also sign the release in the process</p>
+<pre><code class="language-sh">ctl pypi release 0.1.1 --sign
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href=".." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../plugins/" class="btn btn-neutral float-right" title="Plugins">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../plugins/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

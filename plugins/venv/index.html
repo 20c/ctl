@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/20c/ctl/plugins/venv/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Venv Plugin - ctl</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Venv Plugin";
+        var mkdocs_page_input_path = "plugins/venv.md";
+        var mkdocs_page_url = "/20c/ctl/plugins/venv/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ctl
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../quickstart/">Quickstart</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../">Plugins</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../events/">Plugin Events</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugin_permissions/">Plugin Permissons</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../config_template/">Config Templating</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Documenation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/auth/">ctl.auth</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins/">ctl.plugins</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.chain/">ctl.plugins.chain</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.changelog/">ctl.plugins.changelog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.copy/">ctl.plugins.copy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.command/">ctl.plugins.command</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.email/">ctl.plugins.email</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.git/">ctl.plugins.git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log/">ctl.plugins.log</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_alert/">ctl.plugins.log_alert</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_git/">ctl.plugins.log_git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_user/">ctl.plugins.log_user</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.pypi/">ctl.plugins.pypi</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.release/">ctl.plugins.release</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.repository/">ctl.plugins.repository</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.template/">ctl.plugins.template</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.venv/">ctl.plugins.venv</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.version/">ctl.plugins.version</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.walk_dir/">ctl.plugins.walk_dir</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ctl</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Venv Plugin</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="venv-plugin">Venv Plugin</h1>
+<p>Manages a python virtualenv</p>
+<h2 id="requirements">Requirements</h2>
+<p>We currently use <code>pipenv</code> to maintain the virtualenv, although support for other solutions like <code>poetry</code> are being discussed.</p>
+<pre><code>pip install pipenv
+</code></pre>
+<p>Additionally if you want to be able to sync your <code>setup.py</code> file from the Pipfile via the <code>sync_setup</code> setup operation you will need to install the <code>pipenv-setup</code> addon.</p>
+<pre><code>pip install pipenv-setup
+</code></pre>
+<h2 id="example">Example</h2>
+<p>In the following example we want to set up a virtualenv for python3.6. For the sake of simplicity it will only install the latest version of the <code>requests</code> module into it.</p>
+<p><code>Ctl/config.yaml</code></p>
+<pre><code class="language-yaml">ctl:
+  plugins:
+
+    - name: venv36
+      type: venv
+      config:
+
+        # this virtualenv should run on python 3.6
+        # note that this needs to be a string and not a float
+        python_version: &quot;3.6&quot;
+
+        # you can specify a different location for your pipfile
+        # pipfile: path/to/my/Pipfile
+
+
+  permissions:
+    - namespace: ctl
+      permission: crud
+</code></pre>
+<p>By default it will be looking for a pipenv <code>Pipfile</code> in your ctl home</p>
+<p><code>Ctl/Pipfile</code></p>
+<div class="admonition note">
+<p class="admonition-title">Use a symlink</p>
+<p>While it is possible for ctl to work with a Pipfile that is not at your project root
+having it at root seems to be the accepted standard at this point. We suggest you
+maintain the Pipfile at <code>./Pipfile</code> and symlink it in <code>$CTL_HOME/Pipfile</code></p>
+<p>Alternatively you can also just setup your <code>pipfile</code> <a href="/api/ctl.plugins.venv#venvpluginconfig">plugin config</a>
+attribute accordingly.</p>
+</div>
+<pre><code class="language-ini">[[source]]
+name = &quot;pypi&quot;
+url = &quot;https://pypi.org/simple&quot;
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+requests = &quot;*&quot;
+
+[requires]
+python_version = &quot;3.6&quot;
+</code></pre>
+<h2 id="run-the-command">Run the command</h2>
+<p>The command will be exposed as an operation to the ctl cli by it's name and also provide three sub operations: <code>build</code>, <code>sync</code> and <code>copy</code></p>
+<h3 id="build-sync">Build / Sync</h3>
+<p><code>build</code> is used to initially build the virtualenv
+<code>sync</code> will build the virtualenv if it does not exist and otherwise update that it with the latest requirements</p>
+<pre><code class="language-sh">ctl venv36 sync output/venv36
+</code></pre>
+<h3 id="copy">Copy</h3>
+<p>Copies an existing virtualenv to a new location</p>
+<pre><code class="language-sh">ctl venv36 copy output/venv36 output/venv36_copy
+</code></pre>
+<h2 id="usage">Usage</h2>
+<div class="admonition note">
+<p class="admonition-title">Plugin name</p>
+<p>This usage documentation assumes that the plugin instance name
+is <code>venv</code></p>
+</div>
+<pre><code class="language-sh">usage: ctl venv [-h] [--pipfile PIPFILE] [--python-version PYTHON_VERSION]
+                {build,sync,copy,sync_setup} ...
+
+options:
+  -h, --help            show this help message and exit
+  --pipfile PIPFILE     path to Pipfile ({{ctx.home}}/Pipfile)
+  --python-version PYTHON_VERSION
+                        (3.6)
+
+Operation:
+  {build,sync,copy,sync_setup}
+    build               build virtualenv
+    sync                sync virtualenv using pipenv, will build venv first if
+                        it does not exist
+    copy                copy virtualenv
+    sync_setup          sync setup.py from Pipfile
+
+</code></pre>
+<h3 id="build">Build</h3>
+<pre><code class="language-sh">usage: ctl venv build [-h] [output]
+
+positional arguments:
+  output      venv location
+
+options:
+  -h, --help  show this help message and exit
+
+</code></pre>
+<h3 id="sync">Sync</h3>
+<pre><code class="language-sh">usage: ctl venv sync [-h] [output]
+
+positional arguments:
+  output      venv location
+
+options:
+  -h, --help  show this help message and exit
+
+</code></pre>
+<h3 id="sync-setup">Sync Setup</h3>
+<pre><code class="language-sh">usage: ctl venv sync_setup [-h] [--freeze] [--dry] [setup_file]
+
+positional arguments:
+  setup_file  location of the setup.py file you want to sync
+
+options:
+  -h, --help  show this help message and exit
+  --freeze    Do a frozen sync with pinned versions from Pipfile.lock
+  --dry       Do a dry run
+
+</code></pre>
+<h3 id="copy_1">Copy</h3>
+<pre><code class="language-sh">usage: ctl venv copy [-h] [source] [output]
+
+positional arguments:
+  source      venv source location
+  output      venv output location
+
+options:
+  -h, --help  show this help message and exit
+
+</code></pre>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/20c/ctl/plugins/copy/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Copy Plugin - ctl</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Copy Plugin";
+        var mkdocs_page_input_path = "plugins/copy.md";
+        var mkdocs_page_url = "/20c/ctl/plugins/copy/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ctl
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../quickstart/">Quickstart</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../">Plugins</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../events/">Plugin Events</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugin_permissions/">Plugin Permissons</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../config_template/">Config Templating</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Documenation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/auth/">ctl.auth</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins/">ctl.plugins</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.chain/">ctl.plugins.chain</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.changelog/">ctl.plugins.changelog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.copy/">ctl.plugins.copy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.command/">ctl.plugins.command</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.email/">ctl.plugins.email</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.git/">ctl.plugins.git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log/">ctl.plugins.log</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_alert/">ctl.plugins.log_alert</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_git/">ctl.plugins.log_git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_user/">ctl.plugins.log_user</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.pypi/">ctl.plugins.pypi</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.release/">ctl.plugins.release</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.repository/">ctl.plugins.repository</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.template/">ctl.plugins.template</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.venv/">ctl.plugins.venv</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.version/">ctl.plugins.version</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.walk_dir/">ctl.plugins.walk_dir</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ctl</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Copy Plugin</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="copy-plugin">Copy Plugin</h1>
+<p>Walk directories at a source directory and copy files to an output directory</p>
+<h2 id="example-config">Example config</h2>
+<p>In this first example we want to copy all files from <code>./source/dir_1</code> and
+<code>./source/dir_2</code> to <code>./output/dir_1</code> and <code>./output/dir_2</code> respectively.</p>
+<pre><code class="language-yaml">ctl:
+  plugins:
+
+    - name: copy
+      type: copy
+      config:
+
+        # source directory (path)
+
+        source: source
+
+        # output directory (path)
+
+        output: output
+
+        # we want to copy files from source/dir_1 and
+        # source/dir_3, skipping source/dir_2
+
+        walk_dirs:
+          - dir_1
+          - dir_3
+
+  permissions:
+    - namespace: ctl
+      permission: crud
+</code></pre>
+<h2 id="run-the-command">Run the command</h2>
+<p>The command will be exposed as an operation in the ctl cli by it's name, so we simply run it as such</p>
+<pre><code class="language-sh">ctl copy
+</code></pre>
+<pre><code class="language-sh">[2019-10-09 08:22:34,496] [usage] ran command: `copy`
+[2019-10-09 08:22:34,497] [ctl.plugins.copy] Skip dotfiles: True
+[2019-10-09 08:22:34,498] [ctl.plugins.copy] output/dir_1/file.txt
+[2019-10-09 08:22:34,499] [ctl.plugins.copy] output/dir_3/file.txt
+</code></pre>
+<h2 id="example-ignore-files-based-on-pattern">Example: Ignore files based on pattern</h2>
+<p>You can use the <code>ignore</code> config to ignore certain file types or paths</p>
+<pre><code class="language-yaml">ctl:
+  plugins:
+
+    - name: copy
+      type: copy
+      config:
+
+        source: source
+        output: output
+        walk_dirs:
+          - dir_1
+
+        # ignore all *.cfg files
+        ignore:
+          - \.cfg$
+
+  permissions:
+    - namespace: ctl
+      permission: crud
+</code></pre>
+<h2 id="example-process-files-based-on-pattern">Example: process files based on pattern</h2>
+<p>You can use the <code>process</code> config to process files after they have been copied.</p>
+<p>We can defer to other plugins for such actions.</p>
+<p>In the following example we do a simple search and replace on <code>*.html</code> files via a <a href="/plugins/command">command</a> plugin.</p>
+<pre><code class="language-yaml">ctl:
+  plugins:
+
+    # the replace command we will use to process the
+    # files
+
+    - name: replace
+      type: command
+
+      config:
+        shell: true
+        arguments:
+
+          # `source` and `output` will be individual file paths passed on
+          # from the `copy` plugin, so we need to make sure the
+          # command knows about them
+
+          - name: source
+            type: str
+          - name: output
+            type: str
+
+        command:
+          - &quot;sed  -i 's/ cats / dogs /g' {{ kwargs.output }}&quot;
+
+    # the copy plugin
+
+    - name: copy
+      type: copy
+      config:
+
+        source: source
+        output: output
+        walk_dirs:
+          - dir_1
+        process:
+
+          # process *.html files
+
+          - pattern: \.html$
+
+            # we want to process with this plugin
+
+            plugin: replace
+
+            # we want to use this method of the plugin
+            # to handle the processing
+
+            action: execute
+
+
+
+  permissions:
+    - namespace: ctl
+      permission: crud
+</code></pre>
+<h2 id="usage">Usage</h2>
+<div class="admonition note">
+<p class="admonition-title">Plugin name</p>
+<p>This usage documentation assumes that the plugin instance name
+is <code>copy</code></p>
+</div>
+<pre><code class="language-sh">usage: ctl copy [-h] [--no-copy-metadata] [--debug] [--output OUTPUT]
+                [--no-skip-dotfiles] [--source SOURCE]
+
+options:
+  -h, --help          show this help message and exit
+  --no-copy-metadata  DISABLE Copy file metadata
+  --debug             debug mode
+  --output OUTPUT     output directory (output)
+  --no-skip-dotfiles  DISABLE Skip dot files
+  --source SOURCE     source directory (source)
+
+</code></pre>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

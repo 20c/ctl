@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/20c/ctl/api/ctl.plugins.chain/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>ctl.plugins.chain - ctl</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "ctl.plugins.chain";
+        var mkdocs_page_input_path = "api/ctl.plugins.chain.md";
+        var mkdocs_page_url = "/20c/ctl/api/ctl.plugins.chain/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ctl
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../quickstart/">Quickstart</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugins/">Plugins</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../events/">Plugin Events</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugin_permissions/">Plugin Permissons</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../config_template/">Config Templating</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Documenation</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../auth/">ctl.auth</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins/">ctl.plugins</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">ctl.plugins.chain</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.changelog/">ctl.plugins.changelog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.copy/">ctl.plugins.copy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.command/">ctl.plugins.command</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.email/">ctl.plugins.email</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.git/">ctl.plugins.git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log/">ctl.plugins.log</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_alert/">ctl.plugins.log_alert</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_git/">ctl.plugins.log_git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_user/">ctl.plugins.log_user</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.pypi/">ctl.plugins.pypi</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.release/">ctl.plugins.release</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.repository/">ctl.plugins.repository</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.template/">ctl.plugins.template</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.venv/">ctl.plugins.venv</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.version/">ctl.plugins.version</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.walk_dir/">ctl.plugins.walk_dir</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ctl</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">API Documenation</li>
+      <li class="breadcrumb-item active">ctl.plugins.chain</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="ctlpluginschain">ctl.plugins.chain</h1>
+<p>A plugin that allows you to execute other plugins in a chain</p>
+<h1 id="classes">Classes</h1>
+<hr />
+<h2 id="chainactionconfig">ChainActionConfig</h2>
+<pre><code>ChainActionConfig(confu.schema.core.Schema)
+</code></pre>
+<p>Confu schema describes a plugin action</p>
+<h3 id="class-attributes">Class Attributes</h3>
+<ul>
+<li>arguments (<code>Schema&lt;Str&gt;</code>): arguments to pass</li>
+<li>name (<code>Str</code>): call this action on the plugin instance (method name)</li>
+</ul>
+<h2 id="chainconfig">ChainConfig</h2>
+<pre><code>ChainConfig(confu.schema.core.Schema)
+</code></pre>
+<p>Confu schema describes a stage in the chain</p>
+<h3 id="class-attributes_1">Class Attributes</h3>
+<ul>
+<li>action (<code>ChainActionConfig</code>): plugin action</li>
+<li>plugin (<code>Str</code>): plugin instance name</li>
+<li>stage (<code>Str</code>): user friendly name of the stage in the chain</li>
+</ul>
+<h2 id="chainplugin">ChainPlugin</h2>
+<pre><code>ChainPlugin(ctl.plugins.ExecutablePlugin)
+</code></pre>
+<p>chain execute other plugins</p>
+<h3 id="class-attributes_2">Class Attributes</h3>
+<ul>
+<li>ConfigSchema (<code>ConfigSchema Class</code>): Base plugin config schema</li>
+</ul>
+<h3 id="instanced-attributes">Instanced Attributes</h3>
+<p>These attributes / properties will be available on instances of the class</p>
+<ul>
+<li>end (<code>int</code>): end at this stage</li>
+<li>start (<code>int</code>): start at this stage</li>
+</ul>
+<h3 id="class-methods">Class Methods</h3>
+<h4 id="add_arguments">add_arguments</h4>
+<p><code>def add_arguments(cls, parser, plugin_config, confu_cli_args)</code></p>
+<p>Set CLI Arguments</p>
+<p><em>overrides <code>PluginBase.add_arguments</code></em></p>
+<hr />
+<h4 id="expose_vars">expose_vars</h4>
+<p><code>def expose_vars(cls, env, plugin_config)</code></p>
+<p>Expose contents of <code>vars</code> config attribute to the
+submitted environment</p>
+<p><strong>Argument(s)</strong></p>
+<ul>
+<li>env (<code>dict</code>)</li>
+<li>plugin_config (<code>dict</code>)</li>
+</ul>
+<hr />
+<h3 id="methods">Methods</h3>
+<h4 id="execute">execute</h4>
+<p><code>def execute(self, **kwargs)</code></p>
+<p>Execute the plugin</p>
+<p><strong>Keyword Arguments</strong></p>
+<ul>
+<li>start (<code>int</code>): starting stage</li>
+<li>end (<code>int</code>): ending stage</li>
+</ul>
+<p><em>overrides and calls <code>ExecutablePlugin.execute</code></em></p>
+<hr />
+<h4 id="execute_chain">execute_chain</h4>
+<p><code>def execute_chain(self, chain)</code></p>
+<p>Execute a plugin chain from ChainConfig dict</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>chain (<code>list&lt;dict&gt;</code>): list of chain configs (see <code>ChainConfig</code>)</li>
+</ul>
+<hr />
+<h4 id="execute_stage">execute_stage</h4>
+<p><code>def execute_stage(self, stage, num=1, total=1)</code></p>
+<p>Execute a stage</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>stage (<code>dict</code>): chain config (see <code>ChainConfig</code>)</li>
+<li>num (<code>int</code>): stage number in the chain</li>
+<li>total (<code>int</code>): total stages in the chain</li>
+</ul>
+<hr />
+<h4 id="validate_stage">validate_stage</h4>
+<p><code>def validate_stage(self, name)</code></p>
+<p>Validate stage by name, will raise a <code>ValueError</code> on failure to validate</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>name (<code>str</code>)</li>
+</ul>
+<hr />
+<h2 id="chainpluginconfig">ChainPluginConfig</h2>
+<pre><code>ChainPluginConfig(confu.schema.core.Schema)
+</code></pre>
+<p>Confu schema for the chain plugin</p>
+<h3 id="class-attributes_3">Class Attributes</h3>
+<ul>
+<li>arguments (<code>List&lt;ArgparseSchema&gt;</code>): cli parameters for the chain</li>
+<li>chain (<code>List&lt;ChainConfig&gt;</code>): stages in the chain</li>
+<li>vars (<code>Dict&lt;Str&gt;</code>): extra variables</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../ctl.plugins/" class="btn btn-neutral float-left" title="ctl.plugins"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../ctl.plugins.changelog/" class="btn btn-neutral float-right" title="ctl.plugins.changelog">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../ctl.plugins/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../ctl.plugins.changelog/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

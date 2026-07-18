@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/20c/ctl/plugins/pypi/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>PyPI plugin - ctl</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "PyPI plugin";
+        var mkdocs_page_input_path = "plugins/pypi.md";
+        var mkdocs_page_url = "/20c/ctl/plugins/pypi/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ctl
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../quickstart/">Quickstart</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../">Plugins</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../events/">Plugin Events</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugin_permissions/">Plugin Permissons</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../config_template/">Config Templating</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Documenation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/auth/">ctl.auth</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins/">ctl.plugins</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.chain/">ctl.plugins.chain</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.changelog/">ctl.plugins.changelog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.copy/">ctl.plugins.copy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.command/">ctl.plugins.command</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.email/">ctl.plugins.email</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.git/">ctl.plugins.git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log/">ctl.plugins.log</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_alert/">ctl.plugins.log_alert</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_git/">ctl.plugins.log_git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_user/">ctl.plugins.log_user</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.pypi/">ctl.plugins.pypi</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.release/">ctl.plugins.release</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.repository/">ctl.plugins.repository</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.template/">ctl.plugins.template</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.venv/">ctl.plugins.venv</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.version/">ctl.plugins.version</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.walk_dir/">ctl.plugins.walk_dir</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ctl</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">PyPI plugin</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="pypi-plugin">PyPI plugin</h1>
+<p>The PyPI plugin allows you to facilitate python package releases</p>
+<h2 id="requirements">Requirements</h2>
+<p>The <code>twine</code> module needs to be installed</p>
+<pre><code>py(27|34|35): pip install twine&gt;=1.14.0,&lt;2
+py36: pip install twine&gt;=2,&lt;3
+</code></pre>
+<h2 id="config">Config</h2>
+<pre><code class="language-yaml">ctl:
+  plugins:
+
+    # ATTENTION: because of the nature of this plugin
+    # this is not a functional example, as it will require
+    # you to auth and upload to pypi, use as a reference
+    # and substitute values were necessary
+
+    # pypi plugin for live uploads
+
+    - type: pypi
+      name: pypi
+      config:
+        config_file: ~/.pypirc
+
+    # pypi plugin for test uploads
+
+    - type: pypi
+      name: pypi_test
+      config:
+        config_file: ~/.pypirc
+        pypi_repository: testpypi
+
+  permissions:
+    - namespace: ctl
+      permission: crud
+</code></pre>
+<h2 id="through-filepath">Through filepath</h2>
+<pre><code>ctl pypi release 1.2.3 path/to/my/local/checkout
+</code></pre>
+<h2 id="through-git-plugin">Through git plugin</h2>
+<p>Set up a git plugin in the config</p>
+<pre><code class="language-yaml">ctl:
+  plugins:
+    - type: git
+      name: my_repo
+      config:
+        repo_url: git@github.com:me/my_repo
+</code></pre>
+<p>Then just use the plugin name as a repository</p>
+<pre><code>ctl pypi release 1.2.3 my_repo
+</code></pre>
+<h2 id="set-default-repository">Set default repository</h2>
+<p>You can also set a default repository so you dont need to specify
+it in the cli</p>
+<pre><code class="language-yaml">ctl:
+  plugins:
+
+    - type: pypi
+      name: pypi_my_repo
+      config:
+        config_file: ~/.pypirc
+        repository: my_repo
+</code></pre>
+<pre><code>ctl pypi_my_repo release 1.2.3
+</code></pre>
+<h2 id="usage">Usage</h2>
+<div class="admonition note">
+<p class="admonition-title">Plugin name</p>
+<p>This usage documentation assumes that the plugin instance name
+is <code>pypi</code></p>
+</div>
+<pre><code class="language-sh">usage: ctl pypi [-h] [--config-file CONFIG_FILE] [--identity IDENTITY]
+                [--pypi-repository PYPI_REPOSITORY] [--sign]
+                [--sign-with SIGN_WITH]
+                {release,validate} ...
+
+options:
+  -h, --help            show this help message and exit
+  --config-file CONFIG_FILE
+                        path to pypi config file (e.g. ~/.pypirc) (~/.pypirc)
+  --identity IDENTITY   sign release with this identity
+  --pypi-repository PYPI_REPOSITORY
+                        PyPI repository name - needs to exist in your pypi
+                        config file (pypi)
+  --sign                sign releases
+  --sign-with SIGN_WITH
+                        sign release with this program (gpg)
+
+Operation:
+  {release,validate}
+    release             execute release
+    validate            validate release
+
+</code></pre>
+<h3 id="release">Release</h3>
+<pre><code class="language-sh">usage: ctl pypi release [-h] [--dry] version [repository]
+
+options:
+  -h, --help  show this help message and exit
+  --dry       Do a dry run (nothing will be uploaded)
+
+  version     release version - if repository is managed by git, checkout this
+              branch/tag
+  repository  repository target for release - should be a path to a source
+              checkout or the name of a repository type plugin
+
+</code></pre>
+<h3 id="validate">Validate</h3>
+<pre><code class="language-sh">usage: ctl pypi validate [-h] version [repository]
+
+options:
+  -h, --help  show this help message and exit
+
+  version     release version - if repository is managed by git, checkout this
+              branch/tag
+  repository  repository target for release - should be a path to a source
+              checkout or the name of a repository type plugin
+
+</code></pre>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

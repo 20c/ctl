@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/20c/ctl/api/ctl.plugins.command/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>ctl.plugins.command - ctl</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "ctl.plugins.command";
+        var mkdocs_page_input_path = "api/ctl.plugins.command.md";
+        var mkdocs_page_url = "/20c/ctl/api/ctl.plugins.command/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ctl
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../quickstart/">Quickstart</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugins/">Plugins</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../events/">Plugin Events</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugin_permissions/">Plugin Permissons</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../config_template/">Config Templating</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Documenation</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../auth/">ctl.auth</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins/">ctl.plugins</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.chain/">ctl.plugins.chain</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.changelog/">ctl.plugins.changelog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.copy/">ctl.plugins.copy</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">ctl.plugins.command</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.email/">ctl.plugins.email</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.git/">ctl.plugins.git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log/">ctl.plugins.log</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_alert/">ctl.plugins.log_alert</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_git/">ctl.plugins.log_git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_user/">ctl.plugins.log_user</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.pypi/">ctl.plugins.pypi</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.release/">ctl.plugins.release</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.repository/">ctl.plugins.repository</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.template/">ctl.plugins.template</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.venv/">ctl.plugins.venv</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.version/">ctl.plugins.version</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.walk_dir/">ctl.plugins.walk_dir</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ctl</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">API Documenation</li>
+      <li class="breadcrumb-item active">ctl.plugins.command</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="ctlpluginscommand">ctl.plugins.command</h1>
+<p>A plugin that allows you to run one or several shell commands</p>
+<h1 id="classes">Classes</h1>
+<hr />
+<h2 id="commandplugin">CommandPlugin</h2>
+<pre><code>CommandPlugin(ctl.plugins.ExecutablePlugin)
+</code></pre>
+<p>runs a command</p>
+<h3 id="class-attributes">Class Attributes</h3>
+<ul>
+<li>ConfigSchema (<code>ConfigSchema Class</code>): Base plugin config schema</li>
+</ul>
+<h3 id="instanced-attributes">Instanced Attributes</h3>
+<p>These attributes / properties will be available on instances of the class</p>
+<p>during command execution
+- env (<code>dict</code>): shell environment variables that will be set
+- stdin: stdin target
+- stdout: stdout target</p>
+<h3 id="methods">Methods</h3>
+<h4 id="_exec">_exec</h4>
+<p><code>def _exec(self, command)</code></p>
+<p>execute a single command</p>
+<p>this is called automatically during <code>_run_commands</code></p>
+<p><strong>Argument(s)</strong></p>
+<ul>
+<li>command (<code>str</code>)</li>
+</ul>
+<p><strong>Returns</strong></p>
+<ul>
+<li>int: process return code</li>
+</ul>
+<hr />
+<h4 id="_run_commands">_run_commands</h4>
+<p><code>def _run_commands(self, command, **kwargs)</code></p>
+<p>execute a list of commands</p>
+<p>this is called automatically during <code>execute</code></p>
+<p><strong>Argument(s)</strong></p>
+<ul>
+<li>command (<code>list</code>): list of shell commands</li>
+</ul>
+<p><strong>Returns</strong></p>
+<ul>
+<li>False if command failed with error</li>
+</ul>
+<hr />
+<h4 id="cwd_ctx">cwd_ctx</h4>
+<p><code>def cwd_ctx(self, cwd)</code></p>
+<p>Returns a context manager that allows you to execute
+commands in a new working directory</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>cwd <code>str</code>: path to directory</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>CwdContext</code> context</p>
+<hr />
+<h4 id="execute">execute</h4>
+<p><code>def execute(self, kwargs)</code></p>
+<p>execute the command(s) specified in the plugin
+config <code>command</code> list</p>
+<p><em>overrides and calls <code>ExecutablePlugin.execute</code></em></p>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}</code></p>
+</div>
+<hr />
+<h4 id="prepare">prepare</h4>
+<p><code>def prepare(self, **kwargs)</code></p>
+<p>prepares the command environment</p>
+<p>cwd, shell env, stdout / stdin are all set up
+through this</p>
+<p>this is called automatically during the <code>ExecutablePlugin.execute</code>
+call</p>
+<p><em>overrides <code>ExecutablePlugin.prepare</code></em></p>
+<hr />
+<h2 id="commandpluginconfig">CommandPluginConfig</h2>
+<pre><code>CommandPluginConfig(confu.schema.core.Schema)
+</code></pre>
+<p>configuration schema for command plugin</p>
+<h3 id="class-attributes_1">Class Attributes</h3>
+<ul>
+<li>arguments (<code>List&lt;ArgparseSchema&gt;</code>): arbirtrary cli arguments</li>
+<li>command (<code>List&lt;Str&gt;</code>): shell commands to run</li>
+<li>env (<code>Dict&lt;Str&gt;</code>): environment variables</li>
+<li>shell (<code>Bool</code>): run subprocess in shell mode</li>
+<li>working_dir (<code>Directory</code>): set a working directory before running the commands</li>
+</ul>
+<h2 id="cwdcontext">CwdContext</h2>
+<pre><code>CwdContext(builtins.object)
+</code></pre>
+<p>A context manager that allows you to temporarily
+execute commands in a different working directory</p>
+<h3 id="methods_1">Methods</h3>
+<h4 id="__enter__">__enter__</h4>
+<p><code>def __enter__(self)</code></p>
+<p><strong>Returns</strong></p>
+<p>new working directory (<code>str</code>)</p>
+<hr />
+<h4 id="__init__">__init__</h4>
+<p><code>def __init__(self, plugin, cwd)</code></p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>plugin (<code>PluginBase</code>): plugin instance</li>
+<li>cwd (<code>str</code>): set current working directory to this path</li>
+</ul>
+<hr />
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../ctl.plugins.copy/" class="btn btn-neutral float-left" title="ctl.plugins.copy"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../ctl.plugins.email/" class="btn btn-neutral float-right" title="ctl.plugins.email">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../ctl.plugins.copy/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../ctl.plugins.email/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

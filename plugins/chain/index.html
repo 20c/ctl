@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/20c/ctl/plugins/chain/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Chain Plugin - ctl</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Chain Plugin";
+        var mkdocs_page_input_path = "plugins/chain.md";
+        var mkdocs_page_url = "/20c/ctl/plugins/chain/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ctl
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../quickstart/">Quickstart</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../">Plugins</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../events/">Plugin Events</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugin_permissions/">Plugin Permissons</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../config_template/">Config Templating</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Documenation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/auth/">ctl.auth</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins/">ctl.plugins</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.chain/">ctl.plugins.chain</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.changelog/">ctl.plugins.changelog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.copy/">ctl.plugins.copy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.command/">ctl.plugins.command</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.email/">ctl.plugins.email</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.git/">ctl.plugins.git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log/">ctl.plugins.log</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_alert/">ctl.plugins.log_alert</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_git/">ctl.plugins.log_git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_user/">ctl.plugins.log_user</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.pypi/">ctl.plugins.pypi</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.release/">ctl.plugins.release</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.repository/">ctl.plugins.repository</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.template/">ctl.plugins.template</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.venv/">ctl.plugins.venv</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.version/">ctl.plugins.version</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.walk_dir/">ctl.plugins.walk_dir</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ctl</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Chain Plugin</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="chain-plugin">Chain Plugin</h1>
+<p>Chain plugin operations together in a stage driven approach.</p>
+<h3 id="example">Example</h3>
+<p>In the following example we are setting up a chain with 2 stages.</p>
+<p>The first stage will copy files and the second stage will render
+some templates</p>
+<p>For more information on the <a href="/plugins/template">template</a> and <a href="/plugins/copy">copy</a> plugins please refer to their documenation in the <a href="/plugins">plugins</a> section.</p>
+<p><code>Ctl/config.yaml</code></p>
+<pre><code class="language-yaml">ctl:
+  plugins:
+
+    # copy plugin, that will be used in the copy stage
+    # it will copy files from a source directory
+    # to a destination directory
+
+    - name: copy
+      type: copy
+      config:
+        source: source
+        output: output
+        walk_dirs:
+          - dir_1
+
+    # template plugin that will be used in the template stage
+    # it will render the templates from a source directory
+    # to a destination directory
+
+    - name: template
+      type: template
+      config:
+        source: source
+        output: output
+        walk_dirs:
+          - dir_2
+        vars:
+          - Ctl/tmplvars.yaml
+
+    # chain plugin
+    - name: test_chain
+      type: chain
+      config:
+
+        # the stages of the chain
+        # they will be executed in order
+
+        chain:
+
+          # stage #1: copy
+
+          - stage: copy
+            plugin: copy
+
+          # stage #2: render templates
+
+          - stage: template
+            plugin: template
+
+
+  permissions:
+    - namespace: ctl
+      permission: crud
+</code></pre>
+<p><code>Ctl/tmplvars.yaml</code></p>
+<pre><code class="language-yaml">test_variable: &quot;ctl to control your environment&quot;
+</code></pre>
+<h3 id="execute-the-chain">Execute the chain</h3>
+<p>The chain will be exposed as an operation to the ctl cli by it's name, so
+you simply run it like that.</p>
+<pre><code class="language-sh">ctl test_chain
+</code></pre>
+<h4 id="specify-starting-stage">Specify starting stage</h4>
+<p>If you want to skip one ore more stages you can specify which stage
+to start from by passing the <code>--start</code> argument</p>
+<pre><code class="language-sh">ctl test_chain --start template
+
+[2019-10-09 07:41:20,882] [usage] ran command: `test_chain --start template`
+[2019-10-09 07:41:20,882] [ctl.plugins.chain] skip copy
+[2019-10-09 07:41:20,883] [ctl.plugins.chain] exec template [1/2]
+[2019-10-09 07:41:20,883] [ctl.plugins.template] Skip dotfiles: True
+[2019-10-09 07:41:20,886] [ctl.plugins.template] output/dir_2/template.txt
+</code></pre>
+<h4 id="specify-ending-stage">Specify ending stage</h4>
+<p>Likewise you can have the chain end early by setting the <code>--end</code>
+argument</p>
+<pre><code class="language-sh">ctl test_chain --end copy
+
+[2019-10-09 07:41:49,458] [usage] ran command: `test_chain --end copy`
+[2019-10-09 07:41:49,458] [ctl.plugins.chain] exec copy [1/2]
+[2019-10-09 07:41:49,458] [ctl.plugins.copy] Skip dotfiles: True
+[2019-10-09 07:41:49,460] [ctl.plugins.copy] output/dir_1/file.txt
+[2019-10-09 07:41:49,460] [ctl.plugins.chain] end copy
+</code></pre>
+<h3 id="customize-arguments">Customize arguments</h3>
+<p>In some cases you may want to add custom input arguments to a chain
+You can do so by using the <code>arguments</code> config.</p>
+<pre><code class="language-yaml">    - name: chain
+      type: chain
+      config:
+        arguments:
+          - name: tag
+            help: deploy this tag (e.g. 1.0.0)
+        chain:
+          - stage: copy
+            plugin: copy
+          - stage: template
+            plugin: template
+</code></pre>
+<p>Arguments are passed to argparse, so --help will now show</p>
+<pre><code class="language-sh">usage: ctl chain [-h] [--end END] [--start START] [tag]
+
+positional arguments:
+  tag            deploy this tag (e.g. 1.0.0)
+
+options:
+  -h, --help     show this help message and exit
+  --end END      stop at this stage
+  --start START  start at this stage
+
+</code></pre>
+<h3 id="customize-stage-actions">Customize stage actions</h3>
+<p>By default stages call the targeted plugins <code>execute</code> function, however
+in cases where you want to pass arguments or call an entirely different
+function you can do so.</p>
+<pre><code class="language-yaml">    - name: test_chain
+      type: chain
+      config:
+        arguments:
+          - name: tag
+            help: deploy this tag (e.g. 1.0.0)
+        chains:
+          - stage: checkout
+            plugin: git
+            action:
+              name: checkout
+              args:
+                # input arguments are rendered so we can
+                # pass the tag through
+                tag: &quot;{{ input.plugin.tag }}&quot;
+</code></pre>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

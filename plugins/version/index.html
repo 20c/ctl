@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/20c/ctl/plugins/version/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Version - ctl</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Version";
+        var mkdocs_page_input_path = "plugins/version.md";
+        var mkdocs_page_url = "/20c/ctl/plugins/version/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ctl
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../quickstart/">Quickstart</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../">Plugins</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../events/">Plugin Events</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugin_permissions/">Plugin Permissons</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../config_template/">Config Templating</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Documenation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/auth/">ctl.auth</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins/">ctl.plugins</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.chain/">ctl.plugins.chain</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.changelog/">ctl.plugins.changelog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.copy/">ctl.plugins.copy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.command/">ctl.plugins.command</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.email/">ctl.plugins.email</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.git/">ctl.plugins.git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log/">ctl.plugins.log</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_alert/">ctl.plugins.log_alert</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_git/">ctl.plugins.log_git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_user/">ctl.plugins.log_user</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.pypi/">ctl.plugins.pypi</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.release/">ctl.plugins.release</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.repository/">ctl.plugins.repository</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.template/">ctl.plugins.template</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.venv/">ctl.plugins.venv</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.version/">ctl.plugins.version</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.walk_dir/">ctl.plugins.walk_dir</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ctl</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Version</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="version-plugin">Version Plugin</h2>
+<p>Use this plugin to tag and push a release to a repository</p>
+<p>It will automatically tag, merge branches and maintain a <code>Ctl/VERSION</code> file in the targeted repository.</p>
+<h3 id="config-example">Config Example</h3>
+<pre><code class="language-yaml">ctl:
+  plugins:
+
+    # we will use a git plugin instance to manage the repo
+
+    - type: git
+      name: my_repo
+      config:
+        repo_url: git@github.com:path/to/repo
+
+    # next we define an instance for the `version` plugin
+
+    - type: version
+      name: version
+      config:
+
+        # we want to default to the git repo plugin we
+        # configured above
+        #
+        # this is optional, and can be set / overridden
+        # when executing the plugin
+
+        repository: my_repo
+
+        # branches used during `merge_release` operation
+        # branch_dev: dev
+        # branch_release: master
+</code></pre>
+<h3 id="command-examples">Command Examples</h3>
+<p>Tag the repository we specified in the <code>repository</code>
+config attribute above</p>
+<pre><code class="language-sh"># update Ctl/VERSION to 1.0.0
+# tag 1.0.0
+# push tag
+ctl version tag 1.0.0
+</code></pre>
+<p>If you're using the version plugin for the first time on a repo and a <code>Ctl/VERSION</code> file does not exist yet you can pass the <code>--init</code> option to create it.</p>
+<pre><code class="language-sh"># create Ctl/VERSION file
+# update Ctl/VERSION to 1.0.0
+# tag 1.0.0
+# push tag
+ctl version tag 1.0.0 --init
+</code></pre>
+<p>You may also chose to bump a semantic version</p>
+<pre><code class="language-sh"># update Ctl/VERSION from 1.0.0 to 1.1.0
+# tag 1.1.0
+# push tag
+ctl version bump minor
+</code></pre>
+<div class="admonition note">
+<p class="admonition-title">semver2 plugin</p>
+<p>The <code>semver2</code> plugin supports additional flags on these operations:
+<code>--prefix v</code> (tag as <code>v1.0.0</code>), <code>--no-git-tag</code> (commit version files
+but skip the git tag) and <code>--no-git</code> (skip all git operations). For
+example <code>ctl semver2 bump minor --no-git-tag</code>. The <code>version</code> plugin
+does not implement these flags and will reject them.</p>
+</div>
+<h3 id="use-existing-repository-checkout">Use existing repository checkout</h3>
+<p>Instead of configuring and specifying a git type plugin to use
+you can also set <code>repository</code> to a directory path. It still needs
+to be the location of a valid git checkout.</p>
+<pre><code class="language-yaml">ctl:
+  plugins:
+    - type: version
+      name: version
+      config:
+        repository: /path/to/my/repository/checkout
+</code></pre>
+<h3 id="specifying-repository-in-the-command-line">Specifying repository in the command line</h3>
+<p>It is also possible to specify a repository when running the
+command.</p>
+<pre><code>ctl version tag 1.0.0 /path/to/my/repository
+ctl version tag 1.0.0 .
+ctl version tag 1.0.0 [plugin_name]
+</code></pre>
+<h3 id="usage">Usage</h3>
+<div class="admonition note">
+<p class="admonition-title">Plugin name</p>
+<p>This usage documentation assumes that the plugin instance name
+is <code>version</code></p>
+</div>
+<pre><code class="language-sh">usage: ctl version [-h] {tag,bump,merge_release} ...
+
+options:
+  -h, --help            show this help message and exit
+
+Operation:
+  {tag,bump,merge_release}
+    tag                 tag with a specified version
+    bump                bump semantic version
+    merge_release       merge dev branch into release branch (branches defined
+                        in config)
+
+</code></pre>
+<h4 id="tag">Tag</h4>
+<pre><code class="language-sh">usage: ctl version tag [-h] [--init] [--no-changelog-validate]
+                       [--branch BRANCH]
+                       version [repository]
+
+positional arguments:
+  version               version string to tag with
+  repository            name of repository type plugin or path to a repository
+                        checkout
+
+options:
+  -h, --help            show this help message and exit
+  --init                automatically create Ctl/VERSION file if it does not
+                        exist
+  --no-changelog-validate
+                        DISABLE If a changelog data file (CHANGELOG.yaml)
+                        exists, validate before tagging
+  --branch BRANCH       Checkout this branch (this is only relevant when
+                        tagging a path instead of a configured repository)
+                        (main)
+
+</code></pre>
+<h4 id="bump">Bump</h4>
+<pre><code class="language-sh">usage: ctl version bump [-h] [--init] [--no-changelog-validate]
+                        [--branch BRANCH]
+                        {major,minor,patch,prerelease} [repository]
+
+positional arguments:
+  {major,minor,patch,prerelease}
+                        bumps the specified version segment by 1
+  repository            name of repository type plugin or path to a repository
+                        checkout
+
+options:
+  -h, --help            show this help message and exit
+  --init                automatically create Ctl/VERSION file if it does not
+                        exist
+  --no-changelog-validate
+                        DISABLE If a changelog data file (CHANGELOG.yaml)
+                        exists, validate before tagging
+  --branch BRANCH       Checkout this branch (this is only relevant when
+                        tagging a path instead of a configured repository)
+                        (main)
+
+</code></pre>
+<h4 id="merge_release">Merge_Release</h4>
+<pre><code class="language-sh">usage: ctl version merge_release [-h] [repository]
+
+positional arguments:
+  repository  name of repository type plugin or path to a repository checkout
+
+options:
+  -h, --help  show this help message and exit
+
+</code></pre>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

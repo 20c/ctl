@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/20c/ctl/api/ctl.plugins.changelog/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>ctl.plugins.changelog - ctl</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "ctl.plugins.changelog";
+        var mkdocs_page_input_path = "api/ctl.plugins.changelog.md";
+        var mkdocs_page_url = "/20c/ctl/api/ctl.plugins.changelog/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ctl
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../quickstart/">Quickstart</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugins/">Plugins</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../events/">Plugin Events</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugin_permissions/">Plugin Permissons</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../config_template/">Config Templating</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Documenation</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../auth/">ctl.auth</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins/">ctl.plugins</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.chain/">ctl.plugins.chain</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">ctl.plugins.changelog</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.copy/">ctl.plugins.copy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.command/">ctl.plugins.command</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.email/">ctl.plugins.email</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.git/">ctl.plugins.git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log/">ctl.plugins.log</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_alert/">ctl.plugins.log_alert</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_git/">ctl.plugins.log_git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_user/">ctl.plugins.log_user</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.pypi/">ctl.plugins.pypi</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.release/">ctl.plugins.release</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.repository/">ctl.plugins.repository</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.template/">ctl.plugins.template</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.venv/">ctl.plugins.venv</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.version/">ctl.plugins.version</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.walk_dir/">ctl.plugins.walk_dir</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ctl</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">API Documenation</li>
+      <li class="breadcrumb-item active">ctl.plugins.changelog</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="ctlpluginschangelog">ctl.plugins.changelog</h1>
+<p>Plugin that allows you manage CHANGELOG.(md|yaml|json) files</p>
+<h1 id="functions">Functions</h1>
+<hr />
+<h2 id="temporary_plugin">temporary_plugin</h2>
+<p><code>def temporary_plugin(ctl, name, **config)</code></p>
+<p>instantiate an impromptu changelog plugin instance</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>ctl: ctl instance</li>
+<li>name: instance name</li>
+</ul>
+<p><strong>Keyword Arguments</strong></p>
+<p>Any keyword arguments will be passed on to plugin
+config</p>
+<p><strong>Returns</strong></p>
+<p><code>ChangeLogPlugin</code> instance</p>
+<hr />
+<h1 id="classes">Classes</h1>
+<hr />
+<h2 id="changelogplugin">ChangeLogPlugin</h2>
+<pre><code>ChangeLogPlugin(ctl.plugins.ExecutablePlugin)
+</code></pre>
+<p>manage changelog files</p>
+<h3 id="class-attributes">Class Attributes</h3>
+<ul>
+<li>ConfigSchema (<code>ConfigSchema Class</code>): Base plugin config schema</li>
+</ul>
+<h3 id="methods">Methods</h3>
+<h4 id="datafile_to_md">datafile_to_md</h4>
+<p><code>def datafile_to_md(self, changelog_filepath)</code></p>
+<p>Will attempt to generate md formatted changelog
+string from changelog data file</p>
+<p>We are using munge so any codec that munge supports
+can be used (default=yaml)</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>changelog_filepath (<code>str</code>): filepath to your CHANGELOG.yaml file</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>str</code>: md formatted changelog</p>
+<hr />
+<h4 id="execute">execute</h4>
+<p><code>def execute(self, **kwargs)</code></p>
+<p>Execute the plugin's main action</p>
+<p>Will automatically call <code>prepare</code></p>
+<p><strong>Keyword Arguments</strong></p>
+<p>Any keyword arguments passed to this function will
+be stored in the plugin's <code>kwargs</code> attribute</p>
+<hr />
+<h4 id="generate">generate</h4>
+<p><code>def generate(self, md_file, data_file, kwargs)</code></p>
+<p>Generates a changelog markdown filefrom
+a CHANGELOG.(yaml|json) file that follows the 20c changelog
+format</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>md_file (<code>str</code>): file path to a CHANGELOG.md file
+this is where the output will be written to</li>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file</li>
+</ul>
+<p><strong>Keyword Arguments</strong></p>
+<ul>
+<li>print (<code>bool=False</code>): if True print the generated changelog
+to stdout instead of writing to a file</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.generate</code></p>
+</div>
+<hr />
+<h4 id="generate_clean">generate_clean</h4>
+<p><code>def generate_clean(self, data_file, kwargs)</code></p>
+<p>Will generate a clean CHANGELOG.(yaml|json) file with
+just an <code>unreleased</code> section in it.</p>
+<p>Will fail if a file already exists</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file
+this is where the output will be written to</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.generate_clean</code></p>
+</div>
+<hr />
+<h4 id="generate_datafile">generate_datafile</h4>
+<p><code>def generate_datafile(self, md_file, data_file, kwargs)</code></p>
+<p>Generates a changelog data file (yaml, json etc.) from
+a CHANGELOG.md file that follows the 20c changelog
+format.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>md_file (<code>str</code>): file path to a CHANGELOG.md file</li>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file
+this is where the output will be written to</li>
+</ul>
+<p><strong>Keyword Arguments</strong></p>
+<ul>
+<li>print (<code>bool=False</code>): if True print the generated changelog
+to stdout instead of writing to a file</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.generate_datafile</code></p>
+</div>
+<hr />
+<h4 id="md_to_dict">md_to_dict</h4>
+<p><code>def md_to_dict(self, changelog_filepath)</code></p>
+<p>will attempt to generate a dict from an
+existing CHANGELOG.md file</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>changelog_filepath (<code>str</code>): filepath to the CHANGELOG.md
+file</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p>changelog <code>dict</code></p>
+<hr />
+<h4 id="release">release</h4>
+<p><code>def release(self, version, data_file, kwargs)</code></p>
+<p>Adds the specified release to the changelog.</p>
+<p>This will validate and move all items under "unreleased"
+to a new section for the specified release version</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>version (<code>str</code>): version mame (eg. tag name)</li>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.release</code></p>
+</div>
+<hr />
+<h4 id="sort_changelog">sort_changelog</h4>
+<p><code>def sort_changelog(self, changelog)</code></p>
+<p>Takes a changelog <code>dict</code> and sorts keys by version using
+natural sort</p>
+<p>Returns the sorted <code>dict</code></p>
+<hr />
+<h4 id="validate">validate</h4>
+<p><code>def validate(self, data_file, version)</code></p>
+<p>Checks if the specified release version exists in the changelog
+and will raise a <code>ChangelogVersionMissing</code> Exception when it
+does not</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file</li>
+<li>version (<code>str</code>)</li>
+</ul>
+<hr />
+<h4 id="version_exists">version_exists</h4>
+<p><code>def version_exists(self, data_file, version)</code></p>
+<p>Checks if the specified release exists in the changelog</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file</li>
+<li>version (<code>str</code>)</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>True</code> if release exists, <code>False</code> if not</p>
+<hr />
+<h2 id="changelogpluginconfig">ChangeLogPluginConfig</h2>
+<pre><code>ChangeLogPluginConfig(confu.schema.core.Schema)
+</code></pre>
+<p>Config schema for the ChangeLogPlugin plugin</p>
+<h3 id="class-attributes_1">Class Attributes</h3>
+<ul>
+<li>data_file (<code>Str</code>): path to a changelog data file</li>
+<li>md_file (<code>Str</code>): path to a changelog markdown file</li>
+</ul>
+<h2 id="changelogversionmissing">ChangelogVersionMissing</h2>
+<pre><code>ChangelogVersionMissing(builtins.KeyError)
+</code></pre>
+<p>Raised when a changlog data file is validated
+to contain a specific version but that version
+is missing</p>
+<h3 id="methods_1">Methods</h3>
+<h4 id="__init__">__init__</h4>
+<p><code>def __init__(self, data_file, version)</code></p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file</li>
+<li>version (<code>str</code>)</li>
+</ul>
+<hr />
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../ctl.plugins.chain/" class="btn btn-neutral float-left" title="ctl.plugins.chain"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../ctl.plugins.copy/" class="btn btn-neutral float-right" title="ctl.plugins.copy">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../ctl.plugins.chain/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../ctl.plugins.copy/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

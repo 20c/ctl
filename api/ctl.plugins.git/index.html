@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/20c/ctl/api/ctl.plugins.git/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>ctl.plugins.git - ctl</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "ctl.plugins.git";
+        var mkdocs_page_input_path = "api/ctl.plugins.git.md";
+        var mkdocs_page_url = "/20c/ctl/api/ctl.plugins.git/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ctl
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../quickstart/">Quickstart</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugins/">Plugins</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../events/">Plugin Events</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugin_permissions/">Plugin Permissons</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../config_template/">Config Templating</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Documenation</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../auth/">ctl.auth</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins/">ctl.plugins</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.chain/">ctl.plugins.chain</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.changelog/">ctl.plugins.changelog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.copy/">ctl.plugins.copy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.command/">ctl.plugins.command</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.email/">ctl.plugins.email</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">ctl.plugins.git</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log/">ctl.plugins.log</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_alert/">ctl.plugins.log_alert</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_git/">ctl.plugins.log_git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_user/">ctl.plugins.log_user</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.pypi/">ctl.plugins.pypi</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.release/">ctl.plugins.release</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.repository/">ctl.plugins.repository</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.template/">ctl.plugins.template</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.venv/">ctl.plugins.venv</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.version/">ctl.plugins.version</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.walk_dir/">ctl.plugins.walk_dir</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ctl</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">API Documenation</li>
+      <li class="breadcrumb-item active">ctl.plugins.git</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="ctlpluginsgit">ctl.plugins.git</h1>
+<p>Plugin that allows you to manage a git repository</p>
+<h1 id="functions">Functions</h1>
+<hr />
+<h2 id="temporary_plugin">temporary_plugin</h2>
+<p><code>def temporary_plugin(ctl, name, path, **config)</code></p>
+<p>Instantiate a temporary git plugin pointing
+at an existing checkout path.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>ctl: ctl instance</li>
+<li>name: plugin name</li>
+<li>path: file path to a cloned git repository</li>
+</ul>
+<p><strong>Keyword Arguments</strong></p>
+<p>Any keyword arguments will be passed on to
+plugin config</p>
+<p><strong>Returns</strong></p>
+<p><code>GitPlugin</code> instance</p>
+<hr />
+<h1 id="classes">Classes</h1>
+<hr />
+<h2 id="gitplugin">GitPlugin</h2>
+<pre><code>GitPlugin(ctl.plugins.repository.RepositoryPlugin)
+</code></pre>
+<p>manage a git repository</p>
+<p>For information on the configuration schema please check
+the <code>RepositoryPlugin</code> documenation</p>
+<h3 id="instanced-attributes">Instanced Attributes</h3>
+<p>These attributes / properties will be available on instances of the class</p>
+<ul>
+<li>branch (<code>@property</code>): Return current branch name</li>
+<li>git_manager (<code>@property</code>): None</li>
+<li>is_clean (<code>@property</code>): Return whether the current repo checkout is clean</li>
+<li>is_cloned (<code>@property</code>): returns whether or not the checkout_path location is inside a
+valid git repo (uses the same root resolution as git commands,
+see <code>find_git_root</code>)</li>
+</ul>
+<p>a missing or empty checkout_path is not considered cloned even
+when it is nested inside an enclosing repository, so <code>clone</code>
+can still create a nested repository there
+- uuid (<code>@property</code>): return recent commit hash of the repo</p>
+<h3 id="methods">Methods</h3>
+<h4 id="branch_exists">branch_exists</h4>
+<p><code>def branch_exists(self, name)</code></p>
+<p>Return if a branch exists in the local repo or not</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>name (<code>str</code>): branch name</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>True</code> if branch exists, <code>False</code> if not</p>
+<hr />
+<h4 id="checkout">checkout</h4>
+<p><code>def checkout(self, branch, kwargs)</code></p>
+<p>Checkout a branch or tag</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>branch (<code>str</code>): branch name</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.checkout</code></p>
+</div>
+<hr />
+<h4 id="clone">clone</h4>
+<p><code>def clone(self, kwargs)</code></p>
+<p>Clone the repo specified in <code>repo_url</code> to <code>checkout_path</code></p>
+<p>Will only clone if there is no valid git repo at ceckout_path
+already</p>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.clone</code></p>
+</div>
+<hr />
+<h4 id="command">command</h4>
+<p><code>def command(self, *command)</code></p>
+<p>Prepare git command to use with <code>run_git_command</code></p>
+<p>Will automaticdally prepare <code>--git-dir</code> and <code>--work-tree</code> options</p>
+<p><strong>Arguments</strong></p>
+<p>Any arguments passed will be joined together as a command</p>
+<p><strong>Returns</strong></p>
+<p>prepared command (<code>list</code>)</p>
+<hr />
+<h4 id="commit">commit</h4>
+<p><code>def commit(self, **kwargs)</code></p>
+<p>Commit changes</p>
+<p><strong>Keyword Arguments</strong></p>
+<ul>
+<li>files (<code>list</code>): list of files to commit, should be
+  filenames relative to the repo root</li>
+<li>message (<code>str</code>): commit message</li>
+<li>push (<code>bool</code>=<code>True</code>): push immediately</li>
+</ul>
+<hr />
+<h4 id="execute">execute</h4>
+<p><code>def execute(self, **kwargs)</code></p>
+<p>Execute plugin operation</p>
+<p><strong>Keyword Arguments</strong></p>
+<ul>
+<li>op (<code>str</code>): operation to execute - needs to be exposed</li>
+<li>checkout_path (<code>str</code>): override repo_url config param</li>
+<li>repo_url (<code>str</code>): override repo_url config param</li>
+</ul>
+<p><em>overrides and calls <code>RepositoryPlugin.execute</code></em></p>
+<hr />
+<h4 id="find_git_root">find_git_root</h4>
+<p><code>def find_git_root(self, start_path=None)</code></p>
+<p>Find git root by walking up from start_path or checkout_path.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>start_path (<code>str</code>): path to start searching from (default: checkout_path)</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p>git root path (<code>str</code>) or <code>None</code> if not found</p>
+<hr />
+<h4 id="list_change_requests">list_change_requests</h4>
+<p><code>def list_change_requests(self, kwargs)</code></p>
+<p>0!!! note "Exposed to CLI"
+0    namespace: <code>ctl.{plugin_name}.list_change_requests</code></p>
+<hr />
+<h4 id="merge">merge</h4>
+<p><code>def merge(self, branch_a, branch_b, **kwargs)</code></p>
+<p>Merge branch A into branch B</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>branch_a (<code>str</code>): name of branch to merge</li>
+<li>branch_b (<code>str</code>): name of branch to merge into</li>
+</ul>
+<p><strong>Keyword Arguments</strong></p>
+<ul>
+<li>push (<code>bool</code>): if true will push branch B after merge</li>
+</ul>
+<hr />
+<h4 id="merge_release">merge_release</h4>
+<p><code>def merge_release(self, source_branch, target_branch, kwargs)</code></p>
+<p>0!!! note "Exposed to CLI"
+0    namespace: <code>ctl.{plugin_name}.merge_release</code></p>
+<hr />
+<h4 id="pull">pull</h4>
+<p><code>def pull(self, kwargs)</code></p>
+<p>Pull the repo</p>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.pull</code></p>
+</div>
+<hr />
+<h4 id="push">push</h4>
+<p><code>def push(self, **kwargs)</code></p>
+<p>Push commits</p>
+<hr />
+<h4 id="rename_change_request">rename_change_request</h4>
+<p><code>def rename_change_request(self, source_branch, target_branch, title, kwargs)</code></p>
+<p>Rename a merge/pull request title</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>source_branch (<code>str</code>): branch name</li>
+<li>target_branch (<code>str</code>): branch name</li>
+<li>title (<code>str</code>): new title</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.change_request_rename</code></p>
+</div>
+<hr />
+<h4 id="run_git_command">run_git_command</h4>
+<p><code>def run_git_command(self, command)</code></p>
+<p>Execute git command</p>
+<p>Use <code>command</code> to prepare command</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>command (<code>list</code>): command list that will be passed to subprocess</li>
+</ul>
+<p><strong>Returns</strong></p>
+<ul>
+<li>captured output (<code>list</code>)</li>
+</ul>
+<hr />
+<h4 id="tag">tag</h4>
+<p><code>def tag(self, version, message, **kwargs)</code></p>
+<p>Tag the currently active branch</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>vrsion (<code>str</code>): tag version string / tag name</li>
+<li>message (<code>str</code>): commit message</li>
+</ul>
+<hr />
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../ctl.plugins.email/" class="btn btn-neutral float-left" title="ctl.plugins.email"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../ctl.plugins.log/" class="btn btn-neutral float-right" title="ctl.plugins.log">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../ctl.plugins.email/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../ctl.plugins.log/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

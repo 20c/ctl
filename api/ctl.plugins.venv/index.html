@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/20c/ctl/api/ctl.plugins.venv/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>ctl.plugins.venv - ctl</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "ctl.plugins.venv";
+        var mkdocs_page_input_path = "api/ctl.plugins.venv.md";
+        var mkdocs_page_url = "/20c/ctl/api/ctl.plugins.venv/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ctl
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../quickstart/">Quickstart</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugins/">Plugins</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../events/">Plugin Events</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugin_permissions/">Plugin Permissons</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../config_template/">Config Templating</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Documenation</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../auth/">ctl.auth</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins/">ctl.plugins</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.chain/">ctl.plugins.chain</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.changelog/">ctl.plugins.changelog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.copy/">ctl.plugins.copy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.command/">ctl.plugins.command</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.email/">ctl.plugins.email</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.git/">ctl.plugins.git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log/">ctl.plugins.log</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_alert/">ctl.plugins.log_alert</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_git/">ctl.plugins.log_git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_user/">ctl.plugins.log_user</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.pypi/">ctl.plugins.pypi</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.release/">ctl.plugins.release</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.repository/">ctl.plugins.repository</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.template/">ctl.plugins.template</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">ctl.plugins.venv</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.version/">ctl.plugins.version</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.walk_dir/">ctl.plugins.walk_dir</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ctl</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">API Documenation</li>
+      <li class="breadcrumb-item active">ctl.plugins.venv</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="ctlpluginsvenv">ctl.plugins.venv</h1>
+<p>Plugin that allows you to manage a python virtual env</p>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li><code>pipenv</code></li>
+<li><code>pipenv-setup</code> if you want to run the <code>sync_setup</code> operation</li>
+</ul>
+<h1 id="classes">Classes</h1>
+<hr />
+<h2 id="venvplugin">VenvPlugin</h2>
+<pre><code>VenvPlugin(ctl.plugins.command.CommandPlugin)
+</code></pre>
+<p>manage a virtual python envinronment</p>
+<h3 id="class-attributes">Class Attributes</h3>
+<ul>
+<li>ConfigSchema (<code>ConfigSchema Class</code>): Base plugin config schema</li>
+</ul>
+<h3 id="instanced-attributes">Instanced Attributes</h3>
+<p>These attributes / properties will be available on instances of the class</p>
+<ul>
+<li>binpath (<code>str</code>): path to venv <code>bin/</code> directory</li>
+</ul>
+<h3 id="methods">Methods</h3>
+<h4 id="build">build</h4>
+<p><code>def build(self, kwargs)</code></p>
+<p>build a fresh virtualenv</p>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.build</code></p>
+</div>
+<hr />
+<h4 id="copy">copy</h4>
+<p><code>def copy(self, source, kwargs)</code></p>
+<p>copy virtualenv to new location</p>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.copy</code></p>
+</div>
+<hr />
+<h4 id="execute">execute</h4>
+<p><code>def execute(self, **kwargs)</code></p>
+<p>execute the command(s) specified in the plugin
+config <code>command</code> list</p>
+<p><em>overrides and calls <code>ExecutablePlugin.execute</code></em></p>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}</code></p>
+</div>
+<hr />
+<h4 id="sync">sync</h4>
+<p><code>def sync(self, kwargs)</code></p>
+<p>sync a virtualenv using pipenv</p>
+<p>will build a fresh virtualenv if it doesnt exist yet</p>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.sync</code></p>
+</div>
+<hr />
+<h4 id="sync_setup">sync_setup</h4>
+<p><code>def sync_setup(self, setup_file, dry=., freeze=False, dev=False, kwargs=True)</code></p>
+<p>Syncs setup.py requirements from Pipfile</p>
+<p><strong>Keyword Arguments</strong></p>
+<ul>
+<li>setup_file (<code>str</code>): path to <code>setup.py</code> file. If not specified
+  will check in <code>.</code> instead</li>
+<li>dry (<code>bool</code>=<code>False</code>): if <code>True</code> do a dry run and report what
+  updates would be done to <code>setup.py</code></li>
+<li>freeze (<code>bool</code>=<code>False</code>): if <code>True</code> do frozen pinned versions
+  from Pipfile.lock</li>
+<li>dev (<code>bool</code>=<code>True</code>): Also fill extras_require with Pipfile dev
+  entries</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.sync_setup</code></p>
+</div>
+<hr />
+<h4 id="venv_exists">venv_exists</h4>
+<p><code>def venv_exists(self, path=None)</code></p>
+<p>Does a valid virtual environment exist at location?</p>
+<p>If no location is supplied the path in <code>self.output</code> is checked</p>
+<p><strong>Keyword Arguments</strong></p>
+<ul>
+<li>path (<code>str</code>): path to check (should be virtuelenv root directory)</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>True</code> if venv exists, <code>False</code> if not</p>
+<hr />
+<h4 id="venv_validate">venv_validate</h4>
+<p><code>def venv_validate(self, path=None)</code></p>
+<p>Validate virtualenv at location</p>
+<p>If no location is supplied the path in <code>self.output</code> is checked</p>
+<p>Will raise a <code>UsageError</code> on validation failure</p>
+<p><strong>Keyword Arguments</strong></p>
+<ul>
+<li>path (<code>str</code>): path to check (should be virtuelenv root directory)</li>
+</ul>
+<hr />
+<h2 id="venvpluginconfig">VenvPluginConfig</h2>
+<pre><code>VenvPluginConfig(confu.schema.core.Schema)
+</code></pre>
+<p>Configuration schema for <code>VenvPlugin</code></p>
+<h3 id="class-attributes_1">Class Attributes</h3>
+<ul>
+<li>pipfile (<code>Str</code>): path to Pipfile</li>
+<li>python_version (<code>Str</code>): </li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../ctl.plugins.template/" class="btn btn-neutral float-left" title="ctl.plugins.template"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../ctl.plugins.version/" class="btn btn-neutral float-right" title="ctl.plugins.version">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../ctl.plugins.template/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../ctl.plugins.version/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
