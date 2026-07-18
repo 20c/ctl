@@ -2,7 +2,6 @@
 A plugin that allows you to run one or several shell commands
 """
 
-
 import os
 import subprocess
 import sys
@@ -69,7 +68,7 @@ class CommandPluginConfig(confu.schema.Schema):
     working_dir = confu.schema.Directory(
         default=None,
         blank=True,
-        help="set a working directory before " "running the commands",
+        help="set a working directory before running the commands",
     )
 
 

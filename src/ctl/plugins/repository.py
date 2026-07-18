@@ -9,7 +9,6 @@ from ogr.parsing import parse_git_repo
 
 from ctl.docs import pymdgen_confu_types
 from ctl.plugins import ExecutablePlugin
-from ctl.util.git import GitManager
 
 
 @pymdgen_confu_types()

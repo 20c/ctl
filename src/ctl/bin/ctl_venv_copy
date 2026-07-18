@@ -1,5 +1,5 @@
 #!/bin/bash
-#Build a virtualenv 
+#Build a virtualenv
 
 src=$1
 dest=$2

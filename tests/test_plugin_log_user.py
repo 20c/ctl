@@ -3,8 +3,6 @@ import pwd
 
 from util import instantiate_test_plugin
 
-from ctl.plugins.log_user import LogUserPlugin
-
 
 def test_apply():
     username = pwd.getpwuid(os.getuid()).pw_name
@@ -12,6 +10,4 @@ def test_apply():
 
     assert plugin.username == username
 
-    assert plugin.apply("this is a test") == "{username} - this is a test".format(
-        username=username
-    )
+    assert plugin.apply("this is a test") == f"{username} - this is a test"

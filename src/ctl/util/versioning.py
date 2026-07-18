@@ -16,7 +16,7 @@ def version_string(version):
 
 
 def validate_prerelease(prerelease):
-    if not isinstance(prerelease, (list, tuple)):
+    if not isinstance(prerelease, list | tuple):
         prerelease = list(prerelease.split("."))
 
     for identifier in prerelease:
@@ -44,7 +44,7 @@ def validate_prerelease(prerelease):
 
 
 def validate_semantic(version, pad=0):
-    if not isinstance(version, (list, tuple)):
+    if not isinstance(version, list | tuple):
         version = version_tuple(version)
 
     parts = len(version)

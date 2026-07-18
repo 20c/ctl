@@ -2,7 +2,6 @@
 Plugin that allows you to manage a git repository
 """
 
-
 import argparse
 import os
 import re
@@ -42,7 +41,6 @@ def temporary_plugin(ctl, name, path, **config):
 
 @ctl.plugin.register("git")
 class GitPlugin(RepositoryPlugin):
-
     """
     manage a git repository
 
@@ -59,10 +57,22 @@ class GitPlugin(RepositoryPlugin):
     @property
     def is_cloned(self):
         """
-        returns whether or not the checkout_path location is a valid
-        git repo or not
+        returns whether or not the checkout_path location is inside a
+        valid git repo (uses the same root resolution as git commands,
+        see `find_git_root`)
+
+        a missing or empty checkout_path is not considered cloned even
+        when it is nested inside an enclosing repository, so `clone`
+        can still create a nested repository there
         """
-        return os.path.exists(os.path.join(self.checkout_path, ".git"))
+        git_root = self.find_git_root()
+        if git_root is None:
+            return False
+        if os.path.abspath(git_root) == os.path.abspath(self.checkout_path):
+            return True
+        return os.path.isdir(self.checkout_path) and bool(
+            os.listdir(self.checkout_path)
+        )
 
     @property
     def is_clean(self):
@@ -206,6 +216,29 @@ class GitPlugin(RepositoryPlugin):
 
         fn(**kwargs)
 
+    def find_git_root(self, start_path=None):
+        """
+        Find git root by walking up from start_path or checkout_path.
+
+        **Arguments**
+
+        - start_path (`str`): path to start searching from (default: checkout_path)
+
+        **Returns**
+
+        git root path (`str`) or `None` if not found
+        """
+        path = os.path.abspath(start_path or self.checkout_path)
+        while True:
+            if os.path.exists(os.path.join(path, ".git")):
+                return path
+            parent = os.path.dirname(path)
+            if parent == path:
+                # filesystem root reached (works for windows drive roots
+                # too, where dirname returns the path itself)
+                return None
+            path = parent
+
     def command(self, *command):
         """
         Prepare git command to use with `run_git_command`
@@ -220,12 +253,24 @@ class GitPlugin(RepositoryPlugin):
 
         prepared command (`list`)
         """
+        git_root = self.find_git_root()
+        if git_root is None:
+            git_root = self.checkout_path  # fallback (not yet cloned)
+        elif os.path.abspath(git_root) != os.path.abspath(self.checkout_path):
+            # operating on an enclosing repository (e.g. a monorepo
+            # subdirectory) - make the retargeting visible since commit/push
+            # will affect the whole enclosing repo, not just checkout_path
+            self.log.warning(
+                f"checkout_path {self.checkout_path} is not a git repository "
+                f"root; git operations will target the enclosing repository "
+                f"at {git_root}"
+            )
         return [
             "git",
             "--git-dir",
-            os.path.join(self.checkout_path, ".git"),
+            os.path.join(git_root, ".git"),
             "--work-tree",
-            self.checkout_path,
+            git_root,
         ] + list(command)
 
     def run_git_command(self, command):
@@ -306,6 +351,18 @@ class GitPlugin(RepositoryPlugin):
         """
 
         if self.is_cloned:
+            git_root = self.find_git_root()
+            if os.path.abspath(git_root) != os.path.abspath(self.checkout_path):
+                # checkout_path is a content-bearing subdirectory of an
+                # enclosing repository - cloning into it would fail, but the
+                # skip needs to be visible since subsequent git operations
+                # will target the enclosing repo
+                self.log.warning(
+                    f"skipping clone: checkout_path {self.checkout_path} is not "
+                    f"a repository root but has content and is inside the "
+                    f"repository at {git_root}; git operations will target "
+                    f"that repository"
+                )
             return
 
         self.log.debug(f"Cloning {self.repo_url}")
@@ -313,7 +370,7 @@ class GitPlugin(RepositoryPlugin):
 
         self.run_git_command(command)
 
-        self.log.debug("Cloned {s.repo_url} in {s.checkout_path}".format(s=self))
+        self.log.debug(f"Cloned {self.repo_url} in {self.checkout_path}")
 
     @expose("ctl.{plugin_name}.pull")
     def pull(self, **kwargs):

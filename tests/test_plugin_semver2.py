@@ -1,12 +1,13 @@
+import argparse
 import os
 import shutil
 
 import pytest
 import tomlkit
-from util import instantiate_semver2 as instantiate
 
 import ctl
 from ctl.exceptions import PermissionDenied
+from util import instantiate_semver2 as instantiate
 
 
 def test_init():
@@ -31,9 +32,13 @@ def test_tag(tmpdir, ctlr):
     assert dummy_repo.version == "1.0.2"
     assert dummy_repo.has_tag("1.0.2")
 
-    plugin.tag(version="1.0.3", repo="dummy_repo", nogit=True)
+    plugin.tag(version="1.0.3", repo="dummy_repo", no_git_tag=True)
     assert dummy_repo.version == "1.0.3"
     assert not dummy_repo.has_tag("1.0.3")
+
+    plugin.tag(version="1.0.4", repo="dummy_repo", prefix="v")
+    assert dummy_repo.version == "1.0.4"
+    assert dummy_repo.has_tag("v1.0.4")
 
 
 def test_tag_prerelease(tmpdir, ctlr):
@@ -43,7 +48,7 @@ def test_tag_prerelease(tmpdir, ctlr):
     assert dummy_repo.version == "1.0.0-beta.1"
     assert dummy_repo.has_tag("1.0.0-beta.1")
 
-    plugin.tag(version="1.0.0", repo="dummy_repo", prerelease="rc", nogit=True)
+    plugin.tag(version="1.0.0", repo="dummy_repo", prerelease="rc", no_git_tag=True)
     assert dummy_repo.version == "1.0.0-rc.1"
     assert not dummy_repo.has_tag("1.0.0-rc.1")
 
@@ -82,9 +87,9 @@ def test_bump(tmpdir, ctlr):
     with pytest.raises(ValueError):
         plugin.bump(version="invalid", repo="dummy_repo")
 
-    plugin.bump(version="patch", repo="dummy_repo", nogit=True)
-    assert dummy_repo.version == "2.0.1"
-    assert not dummy_repo.has_tag("2.0.1")
+    plugin.bump(version="patch", repo="dummy_repo", no_git_tag=True)
+    assert dummy_repo.version == "2.0.1"  # version IS bumped
+    assert not dummy_repo.has_tag("2.0.1")  # but no tag is created
 
 
 def test_bump_w_prerelease_flag(tmpdir, ctlr):
@@ -95,9 +100,9 @@ def test_bump_w_prerelease_flag(tmpdir, ctlr):
     assert dummy_repo.version == "1.0.1-rc.1"
     assert dummy_repo.has_tag("1.0.1-rc.1")
 
-    plugin.bump(version="patch", repo="dummy_repo", prerelease="beta", nogit=True)
-    assert dummy_repo.version == "1.0.2-beta.1"
-    assert not dummy_repo.has_tag("1.0.2-beta.1")
+    plugin.bump(version="patch", repo="dummy_repo", prerelease="beta", no_git_tag=True)
+    assert dummy_repo.version == "1.0.2-beta.1"  # version IS bumped
+    assert not dummy_repo.has_tag("1.0.2-beta.1")  # but no tag is created
 
 
 def test_bump_prerelease_version(tmpdir, ctlr):
@@ -111,9 +116,9 @@ def test_bump_prerelease_version(tmpdir, ctlr):
     assert dummy_repo.version == "1.0.0-rc.3"
     assert dummy_repo.has_tag("1.0.0-rc.3")
 
-    plugin.bump(version="prerelease", repo="dummy_repo", nogit=True)
-    assert dummy_repo.version == "1.0.0-rc.4"
-    assert not dummy_repo.has_tag("1.0.0-rc.4")
+    plugin.bump(version="prerelease", repo="dummy_repo", no_git_tag=True)
+    assert dummy_repo.version == "1.0.0-rc.4"  # version IS bumped
+    assert not dummy_repo.has_tag("1.0.0-rc.4")  # but no tag is created
 
 
 def test_release(tmpdir, ctlr):
@@ -126,7 +131,7 @@ def test_release(tmpdir, ctlr):
 
     plugin.tag(version="1.1.0", repo="dummy_repo", prerelease="rc")
     assert dummy_repo.version == "1.1.0-rc.1"
-    plugin.release(repo="dummy_repo", nogit=True)
+    plugin.release(repo="dummy_repo", no_git_tag=True)
     assert dummy_repo.version == "1.1.0"
     assert not dummy_repo.has_tag("1.1.0")
 
@@ -138,6 +143,11 @@ def test_execute(tmpdir, ctlr):
 
     plugin.execute(op="bump", version="patch", repository="dummy_repo", init=True)
     assert dummy_repo.version == "1.0.1"
+
+    # Regression test for prefix parameter (was incorrectly defined as positional with required=False)
+    plugin.execute(op="tag", version="2.0.0", repository="dummy_repo", prefix="v")
+    assert dummy_repo.version == "2.0.0"
+    assert dummy_repo.has_tag("v2.0.0")
 
     with pytest.raises(ValueError, match="operation not defined"):
         plugin.execute(op=None)
@@ -153,3 +163,57 @@ def test_execute_permissions(tmpdir, ctldeny):
 
     with pytest.raises(PermissionDenied):
         plugin.execute(op="bump", version="patch", repo="dummy_repo", init=True)
+
+
+def test_tag_no_git(tmpdir, ctlr):
+    plugin, dummy_repo = instantiate(tmpdir, ctlr)
+    # a dirty tree would normally raise UsageError; --no-git skips all git
+    # operations, including the clean-tree check that guards them
+    dummy_repo._clean = False
+    plugin.tag(version="1.0.0", repo="dummy_repo", no_git=True)
+    assert dummy_repo.version == "1.0.0"
+    assert not dummy_repo.has_tag("1.0.0")
+    assert dummy_repo._pulled is False
+    assert dummy_repo._committed is False
+    assert dummy_repo._pushed is False
+
+
+def test_bump_no_git(tmpdir, ctlr):
+    plugin, dummy_repo = instantiate(tmpdir, ctlr)
+    plugin.tag(version="1.0.0", repo="dummy_repo")
+    dummy_repo._pulled = False
+    plugin.bump(version="minor", repo="dummy_repo", no_git=True)
+    assert dummy_repo.version == "1.1.0"
+    assert not dummy_repo.has_tag("1.1.0")
+    assert dummy_repo._pulled is False
+
+
+def _cli_parser(ctlr, plugin_type):
+    parser = argparse.ArgumentParser()
+    ctl.plugin_cli_arguments(
+        ctlr, parser, {"type": plugin_type, "name": plugin_type, "config": {}}
+    )
+    return parser
+
+
+def test_cli_flags_parse(ctlr):
+    # --no-git/--no-git-tag/--prefix must be wired onto each operation
+    # parser directly: argparse copies parent actions at add_parser() time,
+    # so flags added to a shared parent afterwards never reach tag/bump
+    parser = _cli_parser(ctlr, "semver2")
+
+    args = parser.parse_args(["tag", "--no-git", "--prefix", "v", "1.0.0"])
+    assert args.no_git is True
+    assert args.prefix == "v"
+
+    args = parser.parse_args(["tag", "--no-git-tag", "1.0.0"])
+    assert args.no_git_tag is True
+
+    args = parser.parse_args(["bump", "--no-git", "minor"])
+    assert args.no_git is True
+
+    args = parser.parse_args(["bump", "--no-git-tag", "minor"])
+    assert args.no_git_tag is True
+
+    args = parser.parse_args(["release", "--no-git"])
+    assert args.no_git is True

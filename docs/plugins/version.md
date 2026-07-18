@@ -41,6 +41,13 @@ You may also chose to bump a semantic version
 ctl version bump minor
 ```
 
+!!! note "semver2 plugin"
+    The `semver2` plugin supports additional flags on these operations:
+    `--prefix v` (tag as `v1.0.0`), `--no-git-tag` (commit version files
+    but skip the git tag) and `--no-git` (skip all git operations). For
+    example `ctl semver2 bump minor --no-git-tag`. The `version` plugin
+    does not implement these flags and will reject them.
+
 ### Use existing repository checkout
 
 Instead of configuring and specifying a git type plugin to use

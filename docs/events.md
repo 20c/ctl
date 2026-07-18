@@ -62,4 +62,3 @@ event_handler = Events()
 event_handler.on("my_event", lambda *a, **kw: do_something(*a, **kw))
 event.handler.trigger("my_event", "some arg", test="some kwarg")
 ```
-

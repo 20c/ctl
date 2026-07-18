@@ -36,7 +36,7 @@ You can use the `ignore` config to ignore certain file types or paths
 
 ## Example: process files based on pattern
 
-You can use the `process` config to process files after they have been copied. 
+You can use the `process` config to process files after they have been copied.
 
 We can defer to other plugins for such actions.
 

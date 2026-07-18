@@ -23,7 +23,6 @@ try:
             return "{{ " + self.name + " }}"
 
     class IgnoreUndefined(jinja2.Undefined):
-
         """
         Will ignore certain undefined variables and keep
         their variable names in place so they can be rendered
@@ -43,49 +42,11 @@ try:
             print(("_undefined", self._undefined_name, self.names))
             return super()._fail_with_undefined_error(*args, **kwargs)
 
-        __add__ = (
-            __radd__
-        ) = (
-            __mul__
-        ) = (
-            __rmul__
-        ) = (
-            __div__
-        ) = (
-            __rdiv__
-        ) = (
-            __truediv__
-        ) = (
+        __add__ = __radd__ = __mul__ = __rmul__ = __div__ = __rdiv__ = __truediv__ = (
             __rtruediv__
-        ) = (
-            __floordiv__
-        ) = (
-            __rfloordiv__
-        ) = (
-            __mod__
-        ) = (
-            __rmod__
-        ) = (
-            __pos__
-        ) = (
-            __neg__
-        ) = (
+        ) = __floordiv__ = __rfloordiv__ = __mod__ = __rmod__ = __pos__ = __neg__ = (
             __call__
-        ) = (
-            __getitem__
-        ) = (
-            __lt__
-        ) = (
-            __le__
-        ) = (
-            __gt__
-        ) = (
-            __ge__
-        ) = (
-            __int__
-        ) = (
-            __float__
-        ) = (
+        ) = __getitem__ = __lt__ = __le__ = __gt__ = __ge__ = __int__ = __float__ = (
             __complex__
         ) = __pow__ = __rpow__ = __sub__ = __rsub__ = _fail_with_undefined_error
 

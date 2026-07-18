@@ -1,5 +1,5 @@
 #!/bin/bash
-#Build a virtualenv 
+#Build a virtualenv
 
 venv=$1
 pipfile=$2

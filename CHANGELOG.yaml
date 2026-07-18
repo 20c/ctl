@@ -1,11 +1,47 @@
 Unreleased:
   added:
   - "GitManager.fetch() cooldown to avoid redundant remote fetches, controlled by GIT_FETCH_COOLDOWN env var (default 30s)"
+  - py.typed marker file for type checking support
+  - python 3.13 and 3.14 support
   fixed:
   - ephemeral git context push rejection when concurrent processes push to the same branch - pull before push to integrate remote changes
-  changed: []
+  - replaced deprecated pkg_resources with importlib.metadata
+  - git manager tests no longer leak ambient GITHUB_TOKEN/GITLAB_TOKEN from the
+    environment; env-over-config token precedence is now covered by an explicit
+    test
+  - ephemeral git context finalize no longer fails on the first push of a new
+    branch (pull-before-push is skipped when the branch has no remote ref yet)
+  - GitManager.sync() bypasses the fetch cooldown so it always integrates the
+    current remote state before merging and pushing
+  - '`ctl semver2 tag/bump --no-git` was not recognized by the CLI (the flag
+    only reached the `release` operation due to argparse parent timing)'
+  - docs deploy no longer fails on the pymdgen markdown extension (added to
+    the docs extra)
+  - '`--prefix` and `--no-git-tag` no longer parse on the `version` plugin,
+    which never implemented them (they are semver2-only and were silently
+    ignored)'
+  - remote branch lookups now match branch names containing slashes
+    (e.g. `feature/x`)
+  - git plugin clone() no longer silently skips a not-yet-cloned checkout_path
+    nested inside an enclosing repository (a missing or empty checkout_path is
+    not considered cloned; skipping due to a content-bearing subdirectory now
+    warns loudly)
+  - Log gained a `warning` level; the git plugin retargeting warning previously
+    crashed with AttributeError
+  changed:
+  - migrated from Poetry to modern pyproject.toml with hatchling build backend
+  - migrated from black/isort/flake8/pyupgrade to ruff for linting and formatting
+  - updated CI workflows to use uv instead of poetry/tox
+  - migrated the docs deploy workflow (gh-pages) from poetry to uv
+  - updated pre-commit hooks to use ruff and mypy
+  - upgraded all dependencies to latest versions
+  - git plugin warns loudly when git operations retarget an enclosing
+    repository because checkout_path is not itself a repository root
   deprecated: []
-  removed: []
+  removed:
+  - python 3.8 and 3.9 support (EOL)
+  - poetry.lock (replaced with uv.lock)
+  - tox (local multi-version testing is `uv run --python 3.X pytest`)
   security: []
 1.2.0:
   added:
