@@ -22,5 +22,3 @@ pip install tmpl jinja2
 | ctx.user_home | path to user home directory |
 | input.plugin | input parameters for the plugin that's being executed |
 | plugin.[plugin_name] | variables exposed by a plugins `expose_vars` function |
-
-

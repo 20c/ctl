@@ -41,7 +41,6 @@ def temporary_plugin(ctl, name, **config):
 
 
 class ChangelogVersionMissing(KeyError):
-
     """
     Raised when a changlog data file is validated
     to contain a specific version but that version
@@ -57,9 +56,7 @@ class ChangelogVersionMissing(KeyError):
         """
 
         super().__init__(
-            "Version {} does not exist in changelog located at {}".format(
-                version, data_file
-            )
+            f"Version {version} does not exist in changelog located at {data_file}"
         )
 
 

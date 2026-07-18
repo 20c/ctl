@@ -13,7 +13,7 @@ ctl git list_change_requests  --checkout-path $REPO_PATH
 ctl git rename_change_request prep-release main "Updated PR title" --checkout-path $REPO_PATH
 
 # merge release
-# ctl git merge_release <source> <target> 
+# ctl git merge_release <source> <target>
 ctl git merge_release prep-release main --checkout-path $REPO_PATH
 ```
 

@@ -2,7 +2,6 @@
 Plugin that allows you to handle repository versioning
 """
 
-import argparse
 import os
 
 import confu.schema
@@ -23,12 +22,12 @@ class VersionPluginConfig(VersionBasePluginConfig):
 
     branch_dev = confu.schema.Str(
         default="main",
-        help="the branch to merge from when the " "--merge-release flag is present",
+        help="the branch to merge from when the --merge-release flag is present",
     )
 
     branch_release = confu.schema.Str(
         default="main",
-        help="the breanch to merge to when " "the --merge-release flag is present",
+        help="the breanch to merge to when the --merge-release flag is present",
     )
 
 
@@ -61,7 +60,7 @@ class VersionPlugin(VersionBasePlugin):
         # operations `merge_release`
         op_mr_parser = sub.add_parser(
             "merge_release",
-            help="merge dev branch into release branch " "(branches defined in config)",
+            help="merge dev branch into release branch (branches defined in config)",
             parents=[shared_parser],
         )
         cls.add_repo_argument(op_mr_parser, plugin_config)
@@ -161,9 +160,7 @@ class VersionPlugin(VersionBasePlugin):
         version = bump_semantic(current, version)
 
         self.log.info(
-            "Bumping semantic version: {} to {}".format(
-                version_string(current), version_string(version)
-            )
+            f"Bumping semantic version: {version_string(current)} to {version_string(version)}"
         )
 
         if self.get_config("changelog_validate") and not is_dev:

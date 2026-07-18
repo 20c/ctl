@@ -8,7 +8,6 @@ from ctl.exceptions import PermissionDenied
 
 
 class expose:
-
     """
     Decorator to expose a ctl plugin's method - permissions will be checked before
     method is executed

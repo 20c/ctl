@@ -68,5 +68,8 @@ class Log:
     def info(self, msg, typ=None):
         self.log("info", msg, typ=typ)
 
+    def warning(self, msg, typ=None):
+        self.log("warning", msg, typ=typ)
+
     def error(self, msg, typ=None):
         self.log("error", msg, typ=typ)

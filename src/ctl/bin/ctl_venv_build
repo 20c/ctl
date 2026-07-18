@@ -1,5 +1,5 @@
 #!/bin/bash
-#Build a virtualenv 
+#Build a virtualenv
 
 output=$1
 python=python$2

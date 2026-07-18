@@ -12,7 +12,7 @@ import tempfile
 import time
 import urllib
 import uuid
-from typing import Callable, Union
+from collections.abc import Callable
 
 import git
 import munge
@@ -61,7 +61,6 @@ class MergeNotPossible(OSError):
 
 
 class RepositoryConfig(pydantic.BaseModel):
-
     """
     Repository config model
     """
@@ -81,7 +80,6 @@ class Services:
 
 
 class GitManager:
-
     """
     Git manager utility that allows management of git repositories as well as remote repositories on Github and Gitlab.
 
@@ -128,7 +126,7 @@ class GitManager:
 
     def __init__(
         self,
-        url: Union[str, None],
+        url: str | None,
         directory: str,
         default_branch: str = "main",
         default_service: str = None,
@@ -458,15 +456,19 @@ class GitManager:
         """
         Fetches the remote repository and will merge with a fast-forward
         strategy if possible and then push back to origin.
+
+        The fetch bypasses the GIT_FETCH_COOLDOWN throttle: syncing is an
+        explicit request to integrate the current remote state, so stale
+        refs would defeat its purpose (and can reject the push).
         """
 
-        self.fetch()
+        self.fetch(force=True)
         if self.require_remote_branch() is True:
             # branch did not exist remotely yet
             self.push()
 
             # fetch again to make sure we have the latest refs
-            self.fetch()
+            self.fetch(force=True)
             return
 
         # fast forward merge from origin
@@ -686,7 +688,9 @@ class GitManager:
             return None
 
         for ref in self.origin.refs:
-            if ref.name.split("/")[-1] == branch_name:
+            # strip only the remote prefix (`origin/`) so branch names
+            # containing slashes (e.g. `feature/x`) still match their ref
+            if ref.name.removeprefix(f"{self.origin.name}/") == branch_name:
                 # always the same as active_branch?
                 self.log.debug(f"found remote branch {ref}")
                 return ref
@@ -918,7 +922,7 @@ class ChangeRequest(pydantic.BaseModel):
 
 class EphemeralGitContextState(pydantic.BaseModel):
     git_manager: GitManager
-    branch: Union[str, None] = None
+    branch: str | None = None
     commit_message: str = "Commit changes"
     readonly: bool = False
     inactive: bool = False
@@ -926,9 +930,9 @@ class EphemeralGitContextState(pydantic.BaseModel):
 
     context_id: str = pydantic.Field(default_factory=lambda: str(uuid.uuid4())[:8])
 
-    change_request: Union[ChangeRequest, None] = None
+    change_request: ChangeRequest | None = None
 
-    validate_clean: Union[Callable, None] = None
+    validate_clean: Callable | None = None
 
     files_to_add: list[str] = pydantic.Field(default_factory=list)
 
@@ -1125,7 +1129,7 @@ class EphemeralGitContext:
         # always pop stash
         if self.state.stash_pushed:
             # can_read implied
-            self.log.info(f"Popping stash")
+            self.log.info("Popping stash")
             if self.git_manager.is_dirty:
                 self.reset(from_origin=False)
             try:
@@ -1151,7 +1155,7 @@ class EphemeralGitContext:
 
         self.git_manager.repo.git.stash("push")
         self.state.stash_pushed = True
-        self.log.info(f"Stashed current context")
+        self.log.info("Stashed current context")
 
     def finalize(self, exc_type, exc_val, exc_tb):
         if not self.can_write:
@@ -1176,9 +1180,16 @@ class EphemeralGitContext:
                 self.git_manager.commit(self.state.commit_message)
                 # Pull to integrate any remote changes before pushing,
                 # avoiding rejection when concurrent processes have
-                # pushed to the same branch
+                # pushed to the same branch. Skipped when the branch does
+                # not exist remotely yet (nothing to integrate; pulling a
+                # nonexistent ref is a fatal git error).
                 # If this fails due to conflicts, push would have also failed.
-                if not self.state.force_push:
+                if (
+                    not self.state.force_push
+                    and self.git_manager.remote_branch_reference(
+                        self.git_manager.branch
+                    )
+                ):
                     self.git_manager.pull()
                 # Attempt to push
                 self.git_manager.push(force=self.state.force_push)
@@ -1207,7 +1218,7 @@ class EphemeralGitContext:
 
         if not self.can_write:
             self.log.debug(
-                f"Cannot create change request in readonly ephemeral git context"
+                "Cannot create change request in readonly ephemeral git context"
             )
             return
 
