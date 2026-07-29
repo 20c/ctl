@@ -79,8 +79,13 @@ def isolate_ambient_ci_base_ref(monkeypatch):
 def clean_ci_base_ref_env():
     """
     a copy of the environment with the CI base-ref variables removed,
-    for subprocess based tests - they inherit os.environ, which the
-    autouse fixture above does not reach into
+    for subprocess based tests
+
+    the autouse fixture above already scrubs os.environ for the
+    duration of a test, so a subprocess inherits a clean environment
+    either way - passing this explicitly keeps the subprocess tests
+    correct on their own terms rather than by way of a fixture they
+    do not name
     """
 
     return {
@@ -874,9 +879,8 @@ def test_check_cli_exit_codes(tmpdir):
     write_file(os.path.join(repo_dir, "unrelated.txt"), "unrelated change\n")
     scratch_git_commit(repo_dir, "unrelated change")
 
-    # the subprocess inherits os.environ, which the autouse fixture
-    # does not reach into - a CI base-ref variable would otherwise pick
-    # a base ref that does not exist in this scratch repository
+    # a leaked CI base-ref variable would pick a base ref that does not
+    # exist in this scratch repository
     env = clean_ci_base_ref_env()
 
     failing = subprocess.run(cmd, cwd=repo_dir, capture_output=True, text=True, env=env)
