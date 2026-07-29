@@ -1,0 +1,2 @@
+fixed:
+- '`ctl changelog release` no longer prints a stray `LOADING <path>` debug line'

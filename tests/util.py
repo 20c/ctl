@@ -1,5 +1,106 @@
+import os
+import subprocess
+import sys
+
 import ctl
 from ctl.plugins.repository import RepositoryPlugin
+
+# invoking a bare `ctl` would resolve through PATH, which may hold an
+# unrelated installation or no `ctl` at all (the venv's bin directory
+# is not on PATH when the suite runs as `python -m pytest`) - going
+# through the interpreter running the tests always exercises the code
+# under test
+
+CTL_CMD = [
+    sys.executable,
+    "-c",
+    "import sys; from ctl.cli import main; sys.exit(main(sys.argv))",
+]
+
+
+def run_git(repo_dir, *args):
+    """
+    runs a git command in the specified scratch repository directory
+
+    uses `git -C` so the command never leaks out of the scratch
+    repository - raises `RuntimeError` (carrying git's stderr) on
+    failure
+
+    the ambient git configuration is neutralized so the scratch
+    repository behaves the same on any developer machine - a global
+    `commit.gpgsign`, `core.hooksPath` or `init.templateDir` would
+    otherwise reach into every test
+
+    **Returns**
+
+    stripped stdout (`str`)
+    """
+
+    env = dict(os.environ)
+    env["GIT_CONFIG_GLOBAL"] = os.devnull
+    env["GIT_CONFIG_NOSYSTEM"] = "1"
+
+    result = subprocess.run(
+        ["git", "-C", repo_dir] + list(args),
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    if result.returncode != 0:
+        # CalledProcessError's str() drops stderr, which is the only
+        # part that says what actually went wrong
+        raise RuntimeError(
+            f"git {' '.join(args)} failed in {repo_dir} "
+            f"(exit {result.returncode}): {result.stderr.strip()}"
+        )
+
+    return result.stdout.strip()
+
+
+def init_scratch_git_repo(repo_dir, branch="main"):
+    """
+    initializes an isolated scratch git repository for testing
+
+    - creates the repository with `branch` as the initial branch
+      (avoids default-branch warnings)
+    - sets local user.email / user.name, and `run_git` neutralizes the
+      global/system config, so commits work regardless of the
+      environment's git configuration
+
+    **Returns**
+
+    the repository directory (`str`)
+    """
+
+    os.makedirs(repo_dir, exist_ok=True)
+    run_git(repo_dir, "init", "-b", branch)
+    run_git(repo_dir, "config", "user.email", "test@example.com")
+    run_git(repo_dir, "config", "user.name", "Test User")
+    return repo_dir
+
+
+def scratch_git_commit(repo_dir, message="commit"):
+    """
+    stages all changes in the scratch repository and commits them
+
+    **Returns**
+
+    the commit hash (`str`)
+    """
+
+    run_git(repo_dir, "add", "-A")
+    run_git(repo_dir, "commit", "-m", message)
+    return run_git(repo_dir, "rev-parse", "HEAD")
+
+
+def scratch_git_origin_ref(repo_dir, name="main", target="HEAD"):
+    """
+    creates a remote-tracking ref (eg. `origin/main`) in the scratch
+    repository pointing at `target` - no actual remote is needed
+    """
+
+    run_git(repo_dir, "update-ref", f"refs/remotes/origin/{name}", target)
 
 
 def instantiate_version(tmpdir, ctlr=None):
