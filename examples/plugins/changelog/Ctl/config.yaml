@@ -8,6 +8,8 @@ ctl:
         # these are also exposed to the CLI
         # data_file: CHANGELOG.yaml
         # md_file: CHANGELOG.md
+
+        # config only - there is no --fragments-dir command line argument
         # fragments_dir: changelog.d
 
 

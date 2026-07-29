@@ -415,6 +415,84 @@ def test_release_fragments_empty_error(tmpdir, ctlr):
         plugin.release("1.1.0", data_file)
 
 
+def test_release_existing_version_reports_leftover_fragments(tmpdir, ctlr):
+    """
+    releasing a version that already exists while fragments are still
+    present is the non-atomic-release recovery case - the error has to
+    say so, it is the only thing telling an operator their fragments
+    would otherwise be counted twice
+    """
+
+    fragments = {"001-first.yaml": "added:\n- fragment added entry\n"}
+    plugin, data_file, _, fragments_dir = setup_fragments(
+        tmpdir, ctlr, CHANGELOG_YML_EMPTY_UNRELEASED, fragments
+    )
+
+    plugin.release("1.1.0", data_file)
+
+    # a partially failed run leaves fragments behind for a version that
+    # is already written
+    write_file(
+        os.path.join(fragments_dir, "002-leftover.yaml"), "added:\n- leftover entry\n"
+    )
+
+    with pytest.raises(ValueError, match="removed by hand") as excinfo:
+        plugin.release("1.1.0", data_file)
+
+    assert fragments_dir in str(excinfo.value)
+
+    # nothing was consumed by the rejected release
+    assert os.listdir(fragments_dir) == ["002-leftover.yaml"]
+
+
+@pytest.mark.parametrize("absolute", [False, True])
+def test_release_custom_fragments_dir(tmpdir, ctlr, absolute):
+    """
+    the fragments_dir config attribute has to be honored, and an
+    absolute value has to be used as given rather than resolved against
+    the data file's directory
+    """
+
+    project_dir = os.path.join(f"{tmpdir}", "project")
+    data_file = os.path.join(project_dir, "CHANGELOG.yml")
+    md_file = os.path.join(project_dir, "CHANGELOG.md")
+
+    if absolute:
+        fragments_dir = os.path.join(f"{tmpdir}", "elsewhere", "notes.d")
+        configured = fragments_dir
+    else:
+        fragments_dir = os.path.join(project_dir, "notes.d")
+        configured = "notes.d"
+
+    write_file(data_file, CHANGELOG_YML_EMPTY_UNRELEASED)
+    write_file(
+        os.path.join(fragments_dir, "001-first.yaml"), "added:\n- fragment entry\n"
+    )
+
+    # the default location must be ignored entirely
+    write_file(
+        os.path.join(project_dir, "changelog.d", "999-decoy.yaml"),
+        "added:\n- decoy entry\n",
+    )
+
+    plugin = instantiate(
+        tmpdir,
+        ctlr,
+        data_file=data_file,
+        md_file=md_file,
+        fragments_dir=configured,
+    )
+
+    assert plugin.fragments_dir_path(data_file) == fragments_dir
+
+    plugin.release("1.1.0", data_file)
+
+    assert plugin.load(data_file)["1.1.0"] == {"added": ["fragment entry"]}
+    assert os.listdir(fragments_dir) == []
+    # the decoy in the default directory was never touched
+    assert os.listdir(os.path.join(project_dir, "changelog.d")) == ["999-decoy.yaml"]
+
+
 @pytest.mark.parametrize(
     "filename,content,expected",
     [
@@ -629,8 +707,95 @@ def test_check_fail_no_changelog_changes(tmpdir, ctlr):
 def test_check_fail_bad_base(tmpdir, ctlr):
     plugin, _, data_file, _, _ = setup_check_repo(tmpdir, ctlr)
 
-    with pytest.raises(PluginOperationStopped, match="does-not-exist"):
+    # the message has to identify the base-ref guard specifically -
+    # matching the ref name alone also matches the diff-failure and the
+    # no-changes messages, so it cannot tell the three paths apart
+    with pytest.raises(PluginOperationStopped, match="Could not resolve base ref"):
         plugin.check(data_file, base="does-not-exist")
+
+
+def test_check_fail_outside_git_repository(tmpdir, ctlr):
+    project_dir = os.path.join(f"{tmpdir}", "not-a-repo")
+    data_file = os.path.join(project_dir, "CHANGELOG.yml")
+
+    write_file(data_file, CHANGELOG_YML_EMPTY_UNRELEASED)
+    os.makedirs(os.path.join(project_dir, "changelog.d"))
+
+    plugin = instantiate(tmpdir, ctlr, data_file=data_file)
+
+    with pytest.raises(PluginOperationStopped, match="Could not locate a git"):
+        plugin.check(data_file)
+
+
+def test_check_fail_no_merge_base(tmpdir, ctlr):
+    """
+    the diff guard is what turns a missing merge base (the shallow
+    clone case the docs call out) into a loud failure instead of an
+    unreadable one
+    """
+
+    plugin, repo_dir, data_file, fragments_dir, _ = setup_check_repo(tmpdir, ctlr)
+
+    write_file(os.path.join(fragments_dir, "001-first.yaml"), "added:\n- entry\n")
+    scratch_git_commit(repo_dir, "add fragment")
+
+    # an orphan commit shares no history with HEAD, so there is no
+    # merge base for the three-dot diff to resolve
+    tree = run_git(repo_dir, "hash-object", "-w", "-t", "tree", os.devnull)
+    orphan = run_git(repo_dir, "commit-tree", "-m", "orphan", tree)
+    scratch_git_origin_ref(repo_dir, "main", orphan)
+
+    with pytest.raises(PluginOperationStopped, match="Could not diff against base ref"):
+        plugin.check(data_file)
+
+
+def test_check_three_dot_diff_ignores_base_branch_changes(tmpdir, ctlr):
+    """
+    the diff has to be three-dot (against the merge base) - a two-dot
+    diff reports changelog changes that landed on the base branch after
+    the branch point, so a branch that touched nothing would pass
+    """
+
+    plugin, repo_dir, data_file, _, branch_point = setup_check_repo(tmpdir, ctlr)
+
+    # the branch itself only touches code
+    write_file(os.path.join(repo_dir, "src.py"), "print('hi')\n")
+    scratch_git_commit(repo_dir, "code only")
+    branch_head = run_git(repo_dir, "rev-parse", "HEAD")
+
+    # meanwhile the base branch gains a changelog change of its own
+    run_git(repo_dir, "checkout", "-b", "base-branch", branch_point)
+    write_file(data_file, CHANGELOG_YML_UNRELEASED)
+    base_commit = scratch_git_commit(repo_dir, "changelog change on base branch")
+    scratch_git_origin_ref(repo_dir, "main", base_commit)
+
+    run_git(repo_dir, "checkout", branch_head)
+
+    with pytest.raises(PluginOperationStopped, match="No changelog changes"):
+        plugin.check(data_file)
+
+
+def test_check_default_base_prefers_origin_head(tmpdir, ctlr):
+    """
+    origin/HEAD is the documented first candidate - it has to win over
+    origin/main when both resolve
+    """
+
+    plugin, repo_dir, data_file, fragments_dir, branch_point = setup_check_repo(
+        tmpdir, ctlr
+    )
+
+    write_file(os.path.join(fragments_dir, "001-first.yaml"), "added:\n- entry\n")
+    fragment_commit = scratch_git_commit(repo_dir, "add fragment")
+
+    # origin/HEAD sits at the fragment commit, so diffing against it
+    # yields no changelog change - origin/main sits at the branch point
+    # and would pass. Only the candidate order decides the outcome.
+    scratch_git_origin_ref(repo_dir, "HEAD", fragment_commit)
+    scratch_git_origin_ref(repo_dir, "main", branch_point)
+
+    with pytest.raises(PluginOperationStopped, match="No changelog changes"):
+        plugin.check(data_file)
 
 
 def test_check_default_base_fallback(tmpdir, ctlr):
@@ -696,6 +861,45 @@ def test_check_cli_exit_codes(tmpdir):
 
     passing = subprocess.run(cmd, cwd=repo_dir, capture_output=True, text=True)
     assert passing.returncode == 0, passing.stderr
+    # exit 0 alone is not proof the op ran - assert it actually
+    # reported the detection and did not log a swallowed error
+    passing_output = passing.stdout + passing.stderr
+    assert "Changelog change detected against" in passing_output
+    assert "command error" not in passing_output
+
+    # --base has to reach the op - if the argparse plumbing broke, the
+    # op would silently fall back to default base resolution, which
+    # passes here too, so point --base at a ref that must fail
+    bad_base = subprocess.run(
+        cmd + ["--base", "origin/does-not-exist"],
+        cwd=repo_dir,
+        capture_output=True,
+        text=True,
+    )
+    assert bad_base.returncode == 1
+    assert "origin/does-not-exist" in bad_base.stdout + bad_base.stderr
+
+
+def test_check_ci_base_ref_unresolvable(tmpdir, ctlr, monkeypatch):
+    """
+    when CI names the target branch but the ref is not present, the
+    check has to fail closed - falling back to the origin/HEAD guess
+    would diff against the wrong branch and pass the gate on a
+    changelog entry that arrived with that branch
+    """
+
+    plugin, repo_dir, data_file, fragments_dir, base_commit = setup_check_repo(
+        tmpdir, ctlr
+    )
+    scratch_git_origin_ref(repo_dir, "main", base_commit)
+
+    write_file(os.path.join(repo_dir, "src.py"), "print('hi')\n")
+    scratch_git_commit(repo_dir, "code only")
+
+    monkeypatch.setenv("GITHUB_BASE_REF", "release-2.x")
+
+    with pytest.raises(PluginOperationStopped, match="release-2.x"):
+        plugin.check(data_file)
 
 
 def test_cli_exit_code_on_unhandled_error(tmpdir):

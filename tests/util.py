@@ -23,19 +23,38 @@ def run_git(repo_dir, *args):
     runs a git command in the specified scratch repository directory
 
     uses `git -C` so the command never leaks out of the scratch
-    repository - raises `subprocess.CalledProcessError` on failure
+    repository - raises `RuntimeError` (carrying git's stderr) on
+    failure
+
+    the ambient git configuration is neutralized so the scratch
+    repository behaves the same on any developer machine - a global
+    `commit.gpgsign`, `core.hooksPath` or `init.templateDir` would
+    otherwise reach into every test
 
     **Returns**
 
     stripped stdout (`str`)
     """
 
+    env = dict(os.environ)
+    env["GIT_CONFIG_GLOBAL"] = os.devnull
+    env["GIT_CONFIG_NOSYSTEM"] = "1"
+
     result = subprocess.run(
         ["git", "-C", repo_dir] + list(args),
         capture_output=True,
         text=True,
-        check=True,
+        env=env,
     )
+
+    if result.returncode != 0:
+        # CalledProcessError's str() drops stderr, which is the only
+        # part that says what actually went wrong
+        raise RuntimeError(
+            f"git {' '.join(args)} failed in {repo_dir} "
+            f"(exit {result.returncode}): {result.stderr.strip()}"
+        )
+
     return result.stdout.strip()
 
 
@@ -45,8 +64,9 @@ def init_scratch_git_repo(repo_dir, branch="main"):
 
     - creates the repository with `branch` as the initial branch
       (avoids default-branch warnings)
-    - sets local user.email / user.name so commits work regardless
-      of the environment's git configuration
+    - sets local user.email / user.name, and `run_git` neutralizes the
+      global/system config, so commits work regardless of the
+      environment's git configuration
 
     **Returns**
 

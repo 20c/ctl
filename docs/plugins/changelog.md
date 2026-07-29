@@ -138,6 +138,10 @@ If `--base` is not passed the base ref is taken from the CI environment
 first of `origin/HEAD`, `origin/main`, `origin/master` that resolves. The exit
 code is 1 when no changelog change is found or the base ref cannot be resolved.
 
+When one of those CI variables is set the target branch is known, so an
+`origin/<branch>` that does not resolve is an error rather than a reason to
+guess - fetch the base ref in the checkout step, or pass `--base`.
+
 !!! warning "The fallback guess is not the branch's base"
     The `origin/HEAD` fallback is only the right answer for a branch that
     targets the default branch. A branch that targets, say, `develop` is

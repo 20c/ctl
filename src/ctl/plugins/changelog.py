@@ -481,9 +481,12 @@ class ChangeLogPlugin(ExecutablePlugin):
         if f"{version}" in existing_versions:
             if fragment_mode and self.list_fragments(fragments_dir):
                 raise ValueError(
-                    f"Release {version} already exists in {data_file} - any "
-                    f"changelog fragments left over in {fragments_dir} need "
-                    "to be removed by hand"
+                    f"Release {version} already exists in {data_file}. If a "
+                    "previous run wrote it and then failed before removing "
+                    f"the changelog fragments in {fragments_dir}, those are "
+                    "leftovers and need to be removed by hand - otherwise "
+                    "the fragments are pending entries for the next release "
+                    "and the version argument is wrong"
                 )
             raise ValueError(f"Release {version} already exists in {data_file}")
 
@@ -652,13 +655,27 @@ class ChangeLogPlugin(ExecutablePlugin):
                     continue
 
                 candidate = f"origin/{value}"
-                success, _, _ = self.run_git(
+                success, _, error = self.run_git(
                     repo_dir, "rev-parse", "--verify", candidate
                 )
-                if success:
-                    base = candidate
-                    self.log.info(f"Using base ref `{base}` from ${variable}")
-                    break
+
+                # CI named the target branch, so it is known - falling
+                # back to the origin/HEAD guess here would diff against
+                # the wrong branch and pass the gate on a changelog
+                # entry that came in with that branch
+
+                if not success:
+                    raise PluginOperationStopped(
+                        self,
+                        f"${variable} names `{value}` as the branch this "
+                        f"change merges into, but `{candidate}` does not "
+                        f"resolve: {error} - fetch the base ref, or pass "
+                        "--base explicitly",
+                    )
+
+                base = candidate
+                self.log.info(f"Using base ref `{base}` from ${variable}")
+                break
 
         if not base:
             for candidate in ("origin/HEAD", "origin/main", "origin/master"):
