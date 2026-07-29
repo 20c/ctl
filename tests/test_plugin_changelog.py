@@ -8,12 +8,57 @@ import ctl
 from ctl.exceptions import PluginOperationStopped
 from ctl.plugins.changelog import CHANGELOG_SECTIONS, ChangelogVersionMissing
 from util import (
+    CTL_CMD,
     init_scratch_git_repo,
     instantiate_test_plugin,
     run_git,
     scratch_git_commit,
     scratch_git_origin_ref,
 )
+
+CHANGELOG_YML_UNRELEASED = """\
+Unreleased:
+  added:
+  - unreleased added entry
+  security: []
+1.0.0:
+  added:
+  - initial release
+"""
+
+CHANGELOG_YML_EMPTY_UNRELEASED = """\
+Unreleased:
+  added: []
+  fixed: []
+  changed: []
+  deprecated: []
+  removed: []
+  security: []
+1.0.0:
+  added:
+  - initial release
+"""
+
+CHANGELOG_YML_RELEASED_ONLY = """\
+1.0.0:
+  added:
+  - initial release
+"""
+
+CTL_CONFIG_YML = """\
+ctl:
+  permissions:
+    - namespace: "ctl"
+      permission: "crud"
+
+  plugins:
+    - name: changelog
+      type: changelog
+
+  log:
+"""
+
+EMPTY_SECTIONS = {section: [] for section in CHANGELOG_SECTIONS}
 
 
 def instantiate(tmpdir, ctlr=None, **kwargs):
@@ -95,51 +140,6 @@ def test_validate(tmpdir, ctlr, data_changelog_generate):
 
 
 # changelog fragments (changelog.d)
-
-
-CHANGELOG_YML_UNRELEASED = """\
-Unreleased:
-  added:
-  - unreleased added entry
-  security: []
-1.0.0:
-  added:
-  - initial release
-"""
-
-CHANGELOG_YML_EMPTY_UNRELEASED = """\
-Unreleased:
-  added: []
-  fixed: []
-  changed: []
-  deprecated: []
-  removed: []
-  security: []
-1.0.0:
-  added:
-  - initial release
-"""
-
-CHANGELOG_YML_RELEASED_ONLY = """\
-1.0.0:
-  added:
-  - initial release
-"""
-
-CTL_CONFIG_YML = """\
-ctl:
-  permissions:
-    - namespace: "ctl"
-      permission: "crud"
-
-  plugins:
-    - name: changelog
-      type: changelog
-
-  log:
-"""
-
-EMPTY_SECTIONS = {section: [] for section in CHANGELOG_SECTIONS}
 
 
 def write_file(filepath, content):
@@ -282,6 +282,130 @@ def test_release_fragments_unreleased_absent(tmpdir, ctlr):
     assert "Unreleased" not in data
 
 
+def test_release_fragments_preserves_nonstandard_unreleased_sections(tmpdir, ctlr):
+    """
+    a non-standard section under `Unreleased` (hand written, or produced
+    by generate_datafile which lowercases arbitrary `### Section`
+    headings into keys) must survive a fragment mode release - the
+    legacy path carries every key over and dropping them here would be
+    silent data loss
+    """
+
+    changelog_yml = """\
+Unreleased:
+  added:
+  - unreleased added entry
+  notes:
+  - a non standard section entry
+1.0.0:
+  added:
+  - initial release
+"""
+
+    fragments = {"001-first.yaml": "added:\n- fragment added entry\n"}
+    plugin, data_file, _, _ = setup_fragments(tmpdir, ctlr, changelog_yml, fragments)
+
+    plugin.release("1.1.0", data_file)
+
+    data = plugin.load(data_file)
+
+    assert data["1.1.0"]["added"] == ["unreleased added entry", "fragment added entry"]
+    assert data["1.1.0"]["notes"] == ["a non standard section entry"]
+
+    # and the scaffold reset did not leave the entry behind either
+    assert "notes" not in data["Unreleased"]
+
+
+def test_release_fragment_duplicate_section_key(tmpdir, ctlr):
+    """
+    a duplicated section key inside one fragment must be an error -
+    the fragment is deleted once collected, so letting the last key
+    win would drop the shadowed entries unrecoverably
+    """
+
+    fragments = {
+        "001-dupe.yaml": "added:\n- first entry\nfixed:\n- a fix\nadded:\n- second entry\n"
+    }
+    plugin, data_file, _, fragments_dir = setup_fragments(
+        tmpdir, ctlr, CHANGELOG_YML_EMPTY_UNRELEASED, fragments
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        plugin.release("1.1.0", data_file)
+
+    message = str(excinfo.value)
+    assert "001-dupe.yaml" in message
+    assert "duplicate key" in message
+
+    # nothing was written and the fragment is still on disk
+    assert "1.1.0" not in plugin.load(data_file)
+    assert os.listdir(fragments_dir) == ["001-dupe.yaml"]
+
+
+def test_release_version_collision_non_string_key(tmpdir, ctlr):
+    """
+    an unquoted `1.0:` in the data file parses as a float - the
+    collision guard needs to compare as strings, otherwise the release
+    is written a second time under a differently typed key and the
+    fragments are consumed
+    """
+
+    changelog_yml = """\
+Unreleased:
+  added: []
+1.0:
+  added:
+  - initial release
+"""
+
+    fragments = {"001-first.yaml": "added:\n- fragment added entry\n"}
+    plugin, data_file, _, fragments_dir = setup_fragments(
+        tmpdir, ctlr, changelog_yml, fragments
+    )
+
+    with pytest.raises(ValueError, match="already exists"):
+        plugin.release("1.0", data_file)
+
+    # the fragment was not consumed by the rejected release
+    assert os.listdir(fragments_dir) == ["001-first.yaml"]
+
+
+def test_release_fragment_removal_failure_names_leftovers(tmpdir, ctlr, monkeypatch):
+    """
+    if a fragment cannot be removed after the release was written, the
+    error has to name the fragments still on disk - they would
+    otherwise be silently collected into the next release as well
+    """
+
+    fragments = {
+        "001-a.yaml": "added:\n- entry a\n",
+        "002-b.yaml": "added:\n- entry b\n",
+    }
+    plugin, data_file, md_file, fragments_dir = setup_fragments(
+        tmpdir, ctlr, CHANGELOG_YML_EMPTY_UNRELEASED, fragments
+    )
+
+    real_remove = os.remove
+
+    def fail_on_second(path, *args, **kwargs):
+        if os.path.basename(path) == "002-b.yaml":
+            raise OSError("permission denied")
+        return real_remove(path, *args, **kwargs)
+
+    monkeypatch.setattr(os, "remove", fail_on_second)
+
+    with pytest.raises(OSError) as excinfo:
+        plugin.release("1.1.0", data_file)
+
+    assert "002-b.yaml" in str(excinfo.value)
+
+    # the md file was regenerated before the removal step, so a failing
+    # removal does not also cost the markdown regeneration
+    assert os.path.isfile(md_file)
+    with open(md_file) as fh:
+        assert "entry b" in fh.read()
+
+
 def test_release_fragments_empty_error(tmpdir, ctlr):
     plugin, data_file, _, _ = setup_fragments(
         tmpdir, ctlr, CHANGELOG_YML_EMPTY_UNRELEASED
@@ -391,6 +515,23 @@ def test_check_pass_on_fragment_added(tmpdir, ctlr):
     plugin.check(data_file, base=base_commit)
 
 
+def test_check_relative_data_file(tmpdir, ctlr, monkeypatch):
+    # `check` is exposed and can be called directly with a relative
+    # data_file - `execute()` only abspaths it on the cli path, so
+    # without hardening dirname() is "" and subprocess raises OSError
+    # on cwd="", surfacing as a misleading "no git repository" error
+    plugin, repo_dir, data_file, fragments_dir, base_commit = setup_check_repo(
+        tmpdir, ctlr
+    )
+    scratch_git_origin_ref(repo_dir, "main", base_commit)
+
+    write_file(os.path.join(fragments_dir, "001-first.yaml"), "added:\n- entry\n")
+    scratch_git_commit(repo_dir, "add fragment")
+
+    monkeypatch.chdir(repo_dir)
+    plugin.check(os.path.basename(data_file))
+
+
 def test_check_pass_on_fragment_deleted(tmpdir, ctlr):
     plugin, repo_dir, data_file, fragments_dir, _ = setup_check_repo(tmpdir, ctlr)
 
@@ -402,6 +543,30 @@ def test_check_pass_on_fragment_deleted(tmpdir, ctlr):
     scratch_git_commit(repo_dir, "remove fragment")
 
     plugin.check(data_file)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        # `list_fragments` does not recurse, so a nested file would pass
+        # the gate and then never be collected by `release`
+        "changelog.d/2026/nested.yaml",
+        # not a fragment file - editing the directory's readme is not a
+        # changelog entry
+        "changelog.d/README.md",
+        "changelog.d/.hidden.yaml",
+    ],
+)
+def test_check_fail_on_non_collected_fragment_path(tmpdir, ctlr, path):
+    plugin, repo_dir, data_file, _, base_commit = setup_check_repo(tmpdir, ctlr)
+    scratch_git_origin_ref(repo_dir, "main", base_commit)
+
+    write_file(os.path.join(repo_dir, path), "added:\n- entry\n")
+    scratch_git_commit(repo_dir, "add non-fragment path")
+
+    # the gate only accepts what `release` would actually collect
+    with pytest.raises(PluginOperationStopped):
+        plugin.check(data_file)
 
 
 def test_check_pass_on_data_file_change(tmpdir, ctlr):
@@ -504,8 +669,7 @@ def test_check_cli_exit_codes(tmpdir):
     base_commit = scratch_git_commit(repo_dir, "base")
     scratch_git_origin_ref(repo_dir, "main", base_commit)
 
-    cmd = [
-        "ctl",
+    cmd = CTL_CMD + [
         "changelog",
         "check",
         "--data-file",
@@ -532,3 +696,109 @@ def test_check_cli_exit_codes(tmpdir):
 
     passing = subprocess.run(cmd, cwd=repo_dir, capture_output=True, text=True)
     assert passing.returncode == 0, passing.stderr
+
+
+def test_cli_exit_code_on_unhandled_error(tmpdir):
+    """
+    an operation that fails with something other than a
+    PluginOperationStopped must still exit non-zero - exiting 0 makes
+    every validation error and every outright bug look like success to
+    a calling script or CI gate
+    """
+
+    home = os.path.join(f"{tmpdir}", "home")
+    write_file(os.path.join(home, "config.yml"), CTL_CONFIG_YML)
+
+    data_file = os.path.join(f"{tmpdir}", "CHANGELOG.yml")
+    write_file(data_file, CHANGELOG_YML_EMPTY_UNRELEASED)
+
+    # generate_clean refuses to overwrite an existing data file and
+    # raises a plain ValueError to do it
+    result = subprocess.run(
+        CTL_CMD
+        + [
+            "changelog",
+            "generate_clean",
+            "--data-file",
+            data_file,
+            "--home",
+            home,
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "already exists" in result.stdout + result.stderr
+
+
+def test_check_base_ref_from_ci_environment(tmpdir, ctlr, monkeypatch):
+    """
+    the origin/HEAD guess is only right for a branch that targets the
+    default branch - when CI names the real target branch the check has
+    to diff against that, otherwise the gate passes on a changelog
+    entry that came in with the target branch rather than this change
+    """
+
+    repo_dir = init_scratch_git_repo(os.path.join(f"{tmpdir}", "repo"))
+    data_file = os.path.join(repo_dir, "CHANGELOG.yml")
+    fragments_dir = os.path.join(repo_dir, "changelog.d")
+
+    write_file(data_file, CHANGELOG_YML_EMPTY_UNRELEASED)
+    write_file(os.path.join(fragments_dir, ".gitkeep"), "")
+    main_commit = scratch_git_commit(repo_dir, "base")
+    scratch_git_origin_ref(repo_dir, "main", main_commit)
+
+    # `develop` branches off main and carries somebody else's fragment
+    run_git(repo_dir, "checkout", "-b", "develop")
+    write_file(os.path.join(fragments_dir, "000-other.yaml"), "added:\n- other entry\n")
+    develop_commit = scratch_git_commit(repo_dir, "other fragment")
+    scratch_git_origin_ref(repo_dir, "develop", develop_commit)
+
+    # this branch targets develop and adds no changelog entry at all
+    run_git(repo_dir, "checkout", "-b", "feature")
+    write_file(os.path.join(repo_dir, "src.py"), "print('hi')\n")
+    scratch_git_commit(repo_dir, "code only")
+
+    plugin = instantiate(tmpdir, ctlr, data_file=data_file)
+
+    monkeypatch.setenv("GITHUB_BASE_REF", "develop")
+
+    with pytest.raises(PluginOperationStopped):
+        plugin.check(data_file)
+
+    # without the CI hint the origin/HEAD -> origin/main guess picks up
+    # develop's fragment and the gate passes on somebody else's entry
+    monkeypatch.delenv("GITHUB_BASE_REF")
+    plugin.check(data_file)
+
+
+def test_check_ignores_ambient_git_env(tmpdir, ctlr, monkeypatch):
+    """
+    GIT_DIR / GIT_WORK_TREE override cwd based repository discovery -
+    a tool invoked from a git hook or `git rebase --exec` inherits them
+    and would otherwise probe an unrelated repository
+    """
+
+    # the data file lives in a subdirectory, so the git commands run
+    # with that subdirectory as cwd - a relative GIT_DIR then resolves
+    # against the wrong directory
+    repo_dir = init_scratch_git_repo(os.path.join(f"{tmpdir}", "repo"))
+    data_file = os.path.join(repo_dir, "sub", "CHANGELOG.yml")
+    fragments_dir = os.path.join(repo_dir, "sub", "changelog.d")
+
+    write_file(data_file, CHANGELOG_YML_EMPTY_UNRELEASED)
+    write_file(os.path.join(fragments_dir, ".gitkeep"), "")
+    base_commit = scratch_git_commit(repo_dir, "base")
+    scratch_git_origin_ref(repo_dir, "main", base_commit)
+
+    write_file(os.path.join(fragments_dir, "001-first.yaml"), "added:\n- entry\n")
+    scratch_git_commit(repo_dir, "add fragment")
+
+    plugin = instantiate(tmpdir, ctlr, data_file=data_file)
+
+    # what git exports to a hook - a bare `.git` that only resolves
+    # relative to the repository git itself was invoked from
+    monkeypatch.setenv("GIT_DIR", ".git")
+
+    plugin.check(data_file)

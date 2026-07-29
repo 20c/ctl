@@ -89,6 +89,14 @@ Files that are not `*.yaml` / `*.yml` (README.md, .gitkeep) as well as hidden
 files are ignored. An empty `.yaml` file is a validation error since it parses
 to None - use a non-yaml name for placeholder files.
 
+Subdirectories are not scanned - only fragment files directly in the fragments
+directory are collected.
+
+A section key may not appear twice in the same fragment file. Since a fragment
+is deleted once it has been collected into a release, letting the last key win
+would silently drop the shadowed entries, so a duplicate key is a validation
+error instead.
+
 #### Release behavior with fragments
 
 When `ctl changelog release <version>` runs with a fragments directory
@@ -98,9 +106,11 @@ present:
   name the offending file
 - per section, residual `Unreleased:` entries are merged first, then the
   fragment entries in file name order
-- the fragment files are deleted after the release has been written to the
-  data file
+- non-standard section keys under `Unreleased:` are carried over to the
+  release section as well, they are never dropped
 - the CHANGELOG.md file is regenerated
+- the fragment files are deleted last, after the release has been written to
+  the data file and the markdown has been regenerated
 
 A populated `Unreleased:` section is still allowed - a friendly suggestion to
 move its items to fragments is printed.
@@ -108,18 +118,34 @@ move its items to fragments is printed.
 !!! note "Release is not atomic"
     If a release fails between writing the data file and deleting the
     fragments, a re-run will error with "already exists" and the leftover
-    fragments need to be removed by hand.
+    fragments need to be removed by hand. The removal error names the
+    fragments that are still on disk - they would otherwise be collected into
+    the next release a second time.
 
 ### Check for changelog changes (CI)
 
 The `check` operation checks that the current branch touched the changelog -
-any path under the fragments directory (including deletions) or the data file
-itself - using `git diff --name-only <base>...HEAD` (three-dot, i.e. changes
-since the merge-base with the base ref).
+the data file itself, or a fragment file added, changed or deleted directly in
+the fragments directory - using `git diff --name-only <base>...HEAD` (three-dot,
+i.e. changes since the merge-base with the base ref).
 
-If `--base` is not passed the base ref defaults to the first of `origin/HEAD`,
-`origin/main`, `origin/master` that resolves. The exit code is 1 when no
-changelog change is found or the base ref cannot be resolved.
+Only paths that `release` would actually collect satisfy the gate, so a nested
+`changelog.d/<subdir>/entry.yaml` or a `changelog.d/README.md` edit does not
+pass it.
+
+If `--base` is not passed the base ref is taken from the CI environment
+(`GITHUB_BASE_REF`, `CI_MERGE_REQUEST_TARGET_BRANCH_NAME`), falling back to the
+first of `origin/HEAD`, `origin/main`, `origin/master` that resolves. The exit
+code is 1 when no changelog change is found or the base ref cannot be resolved.
+
+!!! warning "The fallback guess is not the branch's base"
+    The `origin/HEAD` fallback is only the right answer for a branch that
+    targets the default branch. A branch that targets, say, `develop` is
+    diffed against the default branch instead, so a changelog entry that
+    arrived with `develop` satisfies the gate even though the branch itself
+    added none. The fallback logs a warning naming the ref it guessed - pass
+    `--base` explicitly wherever branches target anything but the default
+    branch.
 
 ```sh
 # diff against origin/HEAD -> origin/main -> origin/master
@@ -146,6 +172,8 @@ Example usage in a GitHub Actions workflow:
       default base then falls through to `origin/main` / `origin/master`.
     - The default-base logic assumes the remote is named `origin` - pass
       `--base` otherwise.
+    - `check` reads committed history only - a fragment that has been written
+      but not committed does not satisfy the gate.
 
 ### Usage
 

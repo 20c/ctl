@@ -1,0 +1,5 @@
+fixed:
+- 'a failing operation now exits non-zero - previously any error other than a
+  `PluginOperationStopped` (a validation error, a permission denial, an
+  unexpected exception) was logged and then exited 0, which silently
+  green-lit calling scripts and CI gates'

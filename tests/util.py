@@ -1,8 +1,21 @@
 import os
 import subprocess
+import sys
 
 import ctl
 from ctl.plugins.repository import RepositoryPlugin
+
+# invoking a bare `ctl` would resolve through PATH, which may hold an
+# unrelated installation or no `ctl` at all (the venv's bin directory
+# is not on PATH when the suite runs as `python -m pytest`) - going
+# through the interpreter running the tests always exercises the code
+# under test
+
+CTL_CMD = [
+    sys.executable,
+    "-c",
+    "import sys; from ctl.cli import main; sys.exit(main(sys.argv))",
+]
 
 
 def run_git(repo_dir, *args):

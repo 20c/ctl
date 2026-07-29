@@ -182,5 +182,11 @@ def main(argv=sys.argv, run=True):
         ctlr.log.error(traceback.format_exc())
         if ctx.debug:
             raise
+        # a failed operation must not exit 0 - falling through here
+        # used to return None, which made every error that was not a
+        # PluginOperationStopped (a validation ValueError, a
+        # PermissionDenied from @expose, an outright bug) look like
+        # success to a calling script or CI gate
+        return 1
     finally:
         common_events.trigger("exit")
