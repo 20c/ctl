@@ -6,7 +6,11 @@ import pytest
 
 import ctl
 from ctl.exceptions import PluginOperationStopped
-from ctl.plugins.changelog import CHANGELOG_SECTIONS, ChangelogVersionMissing
+from ctl.plugins.changelog import (
+    CHANGELOG_SECTIONS,
+    CI_BASE_REF_ENV,
+    ChangelogVersionMissing,
+)
 from util import (
     CTL_CMD,
     init_scratch_git_repo,
@@ -59,6 +63,29 @@ ctl:
 """
 
 EMPTY_SECTIONS = {section: [] for section in CHANGELOG_SECTIONS}
+
+
+# the check op reads the CI base-ref variables, and these tests run in
+# CI - a `pull_request` job sets GITHUB_BASE_REF to a branch that does
+# not exist in the scratch repositories, which would fail every default
+# base-ref test. The tests that exercise the CI path set the variable
+# themselves.
+@pytest.fixture(autouse=True)
+def isolate_ambient_ci_base_ref(monkeypatch):
+    for var in CI_BASE_REF_ENV:
+        monkeypatch.delenv(var, raising=False)
+
+
+def clean_ci_base_ref_env():
+    """
+    a copy of the environment with the CI base-ref variables removed,
+    for subprocess based tests - they inherit os.environ, which the
+    autouse fixture above does not reach into
+    """
+
+    return {
+        key: value for key, value in os.environ.items() if key not in CI_BASE_REF_ENV
+    }
 
 
 def instantiate(tmpdir, ctlr=None, **kwargs):
@@ -847,7 +874,12 @@ def test_check_cli_exit_codes(tmpdir):
     write_file(os.path.join(repo_dir, "unrelated.txt"), "unrelated change\n")
     scratch_git_commit(repo_dir, "unrelated change")
 
-    failing = subprocess.run(cmd, cwd=repo_dir, capture_output=True, text=True)
+    # the subprocess inherits os.environ, which the autouse fixture
+    # does not reach into - a CI base-ref variable would otherwise pick
+    # a base ref that does not exist in this scratch repository
+    env = clean_ci_base_ref_env()
+
+    failing = subprocess.run(cmd, cwd=repo_dir, capture_output=True, text=True, env=env)
     assert failing.returncode == 1
     # the failure must come from the check op itself, not some other
     # exit-1 path (e.g. a config error during init)
@@ -859,7 +891,7 @@ def test_check_cli_exit_codes(tmpdir):
     )
     scratch_git_commit(repo_dir, "add fragment")
 
-    passing = subprocess.run(cmd, cwd=repo_dir, capture_output=True, text=True)
+    passing = subprocess.run(cmd, cwd=repo_dir, capture_output=True, text=True, env=env)
     assert passing.returncode == 0, passing.stderr
     # exit 0 alone is not proof the op ran - assert it actually
     # reported the detection and did not log a swallowed error
@@ -875,6 +907,7 @@ def test_check_cli_exit_codes(tmpdir):
         cwd=repo_dir,
         capture_output=True,
         text=True,
+        env=env,
     )
     assert bad_base.returncode == 1
     assert "origin/does-not-exist" in bad_base.stdout + bad_base.stderr
