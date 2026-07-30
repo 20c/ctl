@@ -41,12 +41,36 @@ You may also chose to bump a semantic version
 ctl version bump minor
 ```
 
+If the release itself is driven outside of ctl you can write the version
+files without any git operations at all - no pull, no commit, no tag, no
+push:
+
+```sh
+# update Ctl/VERSION and/or pyproject.toml to 1.0.0
+# no commit, no tag, no push
+ctl version set 1.0.0
+```
+
+`bump` takes a `--no-git` flag that does the same thing for a version it
+derives itself:
+
+```sh
+# update the version files from 1.0.0 to 1.1.0, nothing else
+ctl version bump minor --no-git
+```
+
+A repository that keeps its version only in `pyproject.toml` is a valid
+target for all of these - `Ctl/VERSION` is only created when `--init` is
+passed.
+
 !!! note "semver2 plugin"
     The `semver2` plugin supports additional flags on these operations:
-    `--prefix v` (tag as `v1.0.0`), `--no-git-tag` (commit version files
-    but skip the git tag) and `--no-git` (skip all git operations). For
-    example `ctl semver2 bump minor --no-git-tag`. The `version` plugin
-    does not implement these flags and will reject them.
+    `--prefix v` (tag as `v1.0.0`) and `--no-git-tag` (commit version
+    files but skip the git tag). For example
+    `ctl semver2 bump minor --no-git-tag`. The `version` plugin does not
+    implement these flags and will reject them. It does implement
+    `--no-git` on `bump`; `version tag --no-git` is rejected - use
+    `version set` instead.
 
 ### Use existing repository checkout
 
@@ -90,6 +114,10 @@ ctl version tag 1.0.0 [plugin_name]
 #### Bump
 
 {pymdgen-cmd:ctl --home=docs version bump --help}
+
+#### Set
+
+{pymdgen-cmd:ctl --home=docs version set --help}
 
 #### Merge_Release
 

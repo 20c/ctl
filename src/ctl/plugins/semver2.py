@@ -2,8 +2,6 @@
 Plugin that allows you to handle repository versioning
 """
 
-import os
-
 import semver
 
 import ctl
@@ -153,8 +151,9 @@ class Semver2Plugin(VersionBasePlugin):
 
         self.log.info(f"Preparing to tag {repo_plugin.checkout_path} as {version_tag}")
 
-        if not os.path.exists(repo_plugin.repo_ctl_dir):
-            os.makedirs(repo_plugin.repo_ctl_dir)
+        # no `makedirs` here: `update_ctl_version` creates `Ctl/` only when
+        # it actually writes the version file, so a pyproject-only
+        # repository does not acquire an empty directory it never uses
 
         files = []
 
@@ -186,7 +185,11 @@ class Semver2Plugin(VersionBasePlugin):
         if version not in ["major", "minor", "patch", "prerelease"]:
             raise ValueError(f"Invalid semantic version: {version}")
 
-        current = semver.VersionInfo.parse(repo_plugin.version)
+        # `current_version`, not `repo_plugin.version`: the latter falls
+        # back to 0.0.0 when Ctl/VERSION is missing, and a pyproject-only
+        # repository now passes the `repository()` guard - bumping from
+        # 0.0.0 there would write, commit and tag a version regression
+        current = semver.VersionInfo.parse(self.current_version(repo_plugin))
         prerelease = kwargs.pop("prerelease", None)
 
         if version == "major":
@@ -224,7 +227,9 @@ class Semver2Plugin(VersionBasePlugin):
         no_git = kwargs.get("no_git", False)
         repo_plugin = self._repo_preflight(repo, no_git)
 
-        version = repo_plugin.version
+        # see `bump` - a pyproject-only repository must not be told it is
+        # on 0.0.0 and therefore "not on a pre-release version"
+        version = self.current_version(repo_plugin)
 
         # Use semver to parse version
         version = semver.VersionInfo.parse(version)
