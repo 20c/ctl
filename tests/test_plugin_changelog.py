@@ -348,6 +348,182 @@ Unreleased:
     assert "notes" not in data["Unreleased"]
 
 
+CHANGELOG_YML_LOWERCASE_UNRELEASED = """\
+unreleased:
+  added:
+  - unreleased added entry
+  security: []
+1.0.0:
+  added:
+  - initial release
+"""
+
+
+@pytest.mark.parametrize(
+    "key,changelog_yml",
+    [
+        ("unreleased", CHANGELOG_YML_LOWERCASE_UNRELEASED),
+        ("Unreleased", CHANGELOG_YML_UNRELEASED),
+        (
+            "UNRELEASED",
+            CHANGELOG_YML_LOWERCASE_UNRELEASED.replace("unreleased:", "UNRELEASED:", 1),
+        ),
+    ],
+)
+def test_release_fragments_unreleased_key_casing(tmpdir, ctlr, key, changelog_yml):
+    """
+    the residual section is matched case insensitively - a changelog
+    using `unreleased:` collects its residual entries just like one
+    using `Unreleased:`, and keeps its own casing across the roll
+
+    matching only the canonical casing rolled a release that silently
+    omitted every residual entry, since fragment mode has no loud
+    "nothing to move" failure to fall back on
+    """
+
+    fragments = {"001-first.yaml": "added:\n- fragment added entry\n"}
+    plugin, data_file, _, fragments_dir = setup_fragments(
+        tmpdir, ctlr, changelog_yml, fragments
+    )
+
+    plugin.release("1.1.0", data_file)
+
+    data = plugin.load(data_file)
+
+    # residual entries first, fragments after
+    assert data["1.1.0"]["added"] == [
+        "unreleased added entry",
+        "fragment added entry",
+    ]
+
+    # the repository's own casing survives the roll, and no second
+    # residual section is introduced alongside it
+    assert key in data
+    assert [k for k in data if f"{k}".casefold() == "unreleased"] == [key]
+    assert data[key] == EMPTY_SECTIONS
+
+    assert os.listdir(fragments_dir) == []
+
+
+def test_release_legacy_lowercase_unreleased_key(tmpdir, ctlr):
+    """
+    legacy mode (no changelog.d directory) collects the residual
+    entries under a lowercase key as well - it used to raise
+    `No items exist in unreleased to be moved` instead
+    """
+
+    project_dir = os.path.join(f"{tmpdir}", "project")
+    data_file = os.path.join(project_dir, "CHANGELOG.yml")
+    md_file = os.path.join(project_dir, "CHANGELOG.md")
+
+    write_file(data_file, CHANGELOG_YML_LOWERCASE_UNRELEASED)
+
+    plugin = instantiate(tmpdir, ctlr, data_file=data_file, md_file=md_file)
+
+    # no changelog.d directory - legacy mode
+    assert not os.path.isdir(plugin.fragments_dir_path(data_file))
+
+    plugin.release("1.1.0", data_file)
+
+    data = plugin.load(data_file)
+
+    assert data["1.1.0"] == {"added": ["unreleased added entry"]}
+    assert data["unreleased"] == EMPTY_SECTIONS
+    assert "Unreleased" not in data
+
+
+def test_release_ambiguous_unreleased_keys(tmpdir, ctlr):
+    """
+    two residual sections differing only in casing must raise rather
+    than have one of them guessed at - merging them silently is the
+    same data loss this resolution fixes
+
+    nothing may be written before the refusal: neither the changelog
+    nor the fragment files
+    """
+
+    changelog_yml = """\
+Unreleased:
+  added:
+  - capital unreleased entry
+unreleased:
+  added:
+  - lowercase unreleased entry
+1.0.0:
+  added:
+  - initial release
+"""
+
+    fragments = {"001-first.yaml": "added:\n- fragment added entry\n"}
+    plugin, data_file, _, fragments_dir = setup_fragments(
+        tmpdir, ctlr, changelog_yml, fragments
+    )
+
+    fragment_path = os.path.join(fragments_dir, "001-first.yaml")
+
+    with open(data_file) as fh:
+        changelog_before = fh.read()
+    with open(fragment_path) as fh:
+        fragment_before = fh.read()
+
+    with pytest.raises(ValueError, match="more than one unreleased section"):
+        plugin.release("1.1.0", data_file)
+
+    with open(data_file) as fh:
+        assert fh.read() == changelog_before
+    with open(fragment_path) as fh:
+        assert fh.read() == fragment_before
+
+    assert os.listdir(fragments_dir) == ["001-first.yaml"]
+
+
+def test_release_preserves_nonstandard_sections_under_lowercase_key(tmpdir, ctlr):
+    """
+    the non-standard section carry over is not narrowed by the case
+    insensitive lookup - it is the provision the casing mismatch was
+    bypassing in the first place
+    """
+
+    changelog_yml = """\
+unreleased:
+  added:
+  - unreleased added entry
+  notes:
+  - a non standard section entry
+1.0.0:
+  added:
+  - initial release
+"""
+
+    fragments = {"001-first.yaml": "added:\n- fragment added entry\n"}
+    plugin, data_file, _, _ = setup_fragments(tmpdir, ctlr, changelog_yml, fragments)
+
+    plugin.release("1.1.0", data_file)
+
+    data = plugin.load(data_file)
+
+    assert data["1.1.0"]["added"] == ["unreleased added entry", "fragment added entry"]
+    assert data["1.1.0"]["notes"] == ["a non standard section entry"]
+    assert "notes" not in data["unreleased"]
+
+
+def test_resolve_unreleased_key(tmpdir, ctlr):
+    plugin = instantiate(tmpdir, ctlr)
+
+    assert plugin.resolve_unreleased_key({"Unreleased": {}}) == "Unreleased"
+    assert plugin.resolve_unreleased_key({"unreleased": {}}) == "unreleased"
+    assert plugin.resolve_unreleased_key({"UnReLeAsEd": {}}) == "UnReLeAsEd"
+    assert plugin.resolve_unreleased_key({"1.0.0": {}}) is None
+    assert plugin.resolve_unreleased_key({}) is None
+
+    # a non string key (an unquoted `1.0:` parses as a float) must not
+    # blow the comparison up
+    assert plugin.resolve_unreleased_key({1.0: {}, "unreleased": {}}) == "unreleased"
+
+    with pytest.raises(ValueError, match="more than one unreleased section"):
+        plugin.resolve_unreleased_key({"unreleased": {}, "Unreleased": {}})
+
+
 def test_release_fragment_duplicate_section_key(tmpdir, ctlr):
     """
     a duplicated section key inside one fragment must be an error -

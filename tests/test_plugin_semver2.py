@@ -6,7 +6,7 @@ import pytest
 import tomlkit
 
 import ctl
-from ctl.exceptions import PermissionDenied
+from ctl.exceptions import PermissionDenied, UsageError
 from util import instantiate_semver2 as instantiate
 
 
@@ -186,6 +186,83 @@ def test_bump_no_git(tmpdir, ctlr):
     assert dummy_repo.version == "1.1.0"
     assert not dummy_repo.has_tag("1.1.0")
     assert dummy_repo._pulled is False
+
+
+PYPROJECT_PEP621 = """\
+[project]
+name = "ctl-test"
+version = "1.4.2"
+"""
+
+
+def write_pyproject(dummy_repo, content):
+    path = os.path.join(dummy_repo.checkout_path, "pyproject.toml")
+    with open(path, "w") as fh:
+        fh.write(content)
+    return path
+
+
+def test_bump_pyproject_only_repo(tmpdir, ctlr):
+    """
+    a pyproject-only repository is a valid target for the `repository()`
+    guard, so the bump has to derive from the pyproject version - the
+    0.0.0 that `RepositoryPlugin.version` falls back to would write,
+    commit and tag a version regression and report it as success
+    """
+
+    plugin, dummy_repo = instantiate(tmpdir, ctlr)
+    plugin.init_version = False
+
+    pyproject_path = write_pyproject(dummy_repo, PYPROJECT_PEP621)
+
+    plugin.bump(version="minor", repo="dummy_repo")
+
+    with open(pyproject_path) as fh:
+        # 1.4.2 -> 1.5.0, not 0.0.0 -> 0.1.0
+        assert tomlkit.load(fh)["project"]["version"] == "1.5.0"
+
+    assert dummy_repo.has_tag("1.5.0")
+
+    # no Ctl/VERSION and no empty Ctl/ left behind for a repository that
+    # does not use them
+    assert not os.path.exists(dummy_repo.version_file)
+    assert not os.path.exists(dummy_repo.repo_ctl_dir)
+
+
+def test_release_pyproject_only_repo(tmpdir, ctlr):
+    """
+    same for `release`, which is refused with a misleading "not on a
+    pre-release version" when it reads 0.0.0
+    """
+
+    plugin, dummy_repo = instantiate(tmpdir, ctlr)
+    plugin.init_version = False
+
+    pyproject_path = write_pyproject(
+        dummy_repo,
+        PYPROJECT_PEP621.replace('version = "1.4.2"', 'version = "1.4.2-rc.1"'),
+    )
+
+    plugin.release(repo="dummy_repo")
+
+    with open(pyproject_path) as fh:
+        assert tomlkit.load(fh)["project"]["version"] == "1.4.2"
+
+    assert dummy_repo.has_tag("1.4.2")
+    assert not os.path.exists(dummy_repo.repo_ctl_dir)
+
+
+def test_bump_without_version_anywhere_is_refused(tmpdir, ctlr):
+    """
+    with neither Ctl/VERSION nor a pyproject version there is nothing to
+    derive from, and 0.0.0 must not be substituted for it
+    """
+
+    plugin, dummy_repo = instantiate(tmpdir, ctlr)
+    plugin.init_version = False
+
+    with pytest.raises(UsageError, match="No version found"):
+        plugin.bump(version="minor", repo="dummy_repo")
 
 
 def _cli_parser(ctlr, plugin_type):

@@ -1,0 +1,31 @@
+added:
+- '`ctl version set <version>` writes a version to the repository''s version
+  files with no git operations at all - no pull, commit, tag or push. This is
+  the operation to use when the release is driven outside of ctl, where a
+  commit or tag from ctl would bypass the caller''s own gates'
+- '`ctl version bump --no-git` performs a semantic bump the same way, writing
+  the version files without any git operations'
+fixed:
+- 'the residual `unreleased` changelog section is now matched case
+  insensitively. A changelog using `unreleased:` rather than `Unreleased:`
+  had its residual entries silently dropped from the release in fragment
+  mode, and was refused with "No items exist in unreleased to be moved" in
+  legacy mode. The changelog''s own casing is preserved when the section is
+  reset, and a changelog carrying both spellings is now refused rather than
+  having one of them guessed at'
+- 'version operations read the current version from `pyproject.toml` when the
+  repository has no `Ctl/VERSION` file, instead of computing a semantic bump
+  from `0.0.0`. A repository that keeps its version only in `pyproject.toml`
+  is now a valid target without `--init`, which would otherwise create an
+  untracked `Ctl/VERSION` file'
+- '`ctl semver2 bump` and `ctl semver2 release` read the current version the
+  same way. Without this they derived from `0.0.0` on a repository whose
+  version lives only in `pyproject.toml`, so a repository at `1.4.2` had
+  `0.1.0` written, committed and tagged, and the regression was reported as
+  success'
+- 'version files that do not already exist are no longer created unless
+  `--init` is passed, and an operation that would write no version file at
+  all now fails instead of reporting success having changed nothing'
+- 'the `--init` flag now takes effect - it parsed and was then ignored, so
+  the flag the "Ctl/VERSION file does not exist" error recommends did not
+  actually work'

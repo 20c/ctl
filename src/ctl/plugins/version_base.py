@@ -142,6 +142,21 @@ class VersionBasePlugin(ExecutablePlugin):
     def init_version(self, value):
         self._init_version = value
 
+    def execute(self, **kwargs):
+        """
+        Carries the `--init` cli flag over to `init_version`.
+
+        Without this the flag parses and is passed through as `init`,
+        but nothing ever reads it - `repository()` would keep refusing
+        a repository without a `Ctl/VERSION` file while pointing at the
+        very flag that was just used.
+        """
+
+        super().execute(**kwargs)
+
+        if kwargs.get("init"):
+            self.init_version = True
+
     def repository(self, target):
         """
         Return plugin instance for repository
@@ -179,19 +194,118 @@ class VersionBasePlugin(ExecutablePlugin):
                 self.ctl, target, target, branch=self.kwargs.get("branch")
             )
 
-        if not self.init_version and not os.path.exists(plugin.version_file):
+        # a repository that keeps its version in pyproject.toml is a
+        # valid target even without a Ctl/VERSION file - `--init` is no
+        # escape for it, since the untracked Ctl/VERSION it creates
+        # shows up in a caller's diff check
+
+        if (
+            not self.init_version
+            and not os.path.exists(plugin.version_file)
+            and not self.pyproject_version(plugin)
+        ):
             raise UsageError(
-                "Ctl/VERSION file does not exist. You can set the --init flag to create "
-                "it automatically."
+                f"No version found for {plugin.checkout_path}: neither a "
+                "Ctl/VERSION file nor a version in pyproject.toml. You can "
+                "set the --init flag to create a Ctl/VERSION file "
+                "automatically."
             )
 
         return plugin
+
+    def pyproject_version(self, repo_plugin):
+        """
+        Returns the version declared in the repository's `pyproject.toml`,
+        supporting both Poetry (`[tool.poetry].version`) and PEP 621
+        (`[project].version`) layouts.
+
+        **Arguments**
+
+        - repo_plugin (`RepositoryPlugin`)
+
+        **Returns**
+
+        `str` the version, or `None` if there is no `pyproject.toml` or it
+        declares no static version (a PEP 621 `dynamic` version has
+        nothing to read here)
+        """
+
+        # `default` is munge's own contract for "no such file" - matching
+        # on the wording of the OSError it would otherwise raise makes this
+        # break silently the day that wording changes
+        pyproject = munge.load_datafile(
+            "pyproject.toml", search_path=repo_plugin.checkout_path, default=None
+        )
+
+        if pyproject is None:
+            return None
+
+        project = pyproject.get("project") or {}
+        if project.get("version"):
+            return f"{project['version']}"
+
+        poetry = (pyproject.get("tool") or {}).get("poetry") or {}
+        if poetry.get("version"):
+            return f"{poetry['version']}"
+
+        return None
+
+    def current_version(self, repo_plugin):
+        """
+        Returns the repository's current version.
+
+        `Ctl/VERSION` is authoritative when it exists, but a repository
+        that keeps its version only in `pyproject.toml` is read from
+        there rather than being handed the `0.0.0` that
+        `RepositoryPlugin.version` falls back to - computing a semantic
+        bump from `0.0.0` produces a plausible wrong answer that nothing
+        reports.
+
+        `RepositoryPlugin.version` itself is deliberately left alone: it
+        is a generic repository interface, and `log_git` calls it to
+        build a log line prefix, where raising is not an option.
+
+        **Arguments**
+
+        - repo_plugin (`RepositoryPlugin`)
+
+        **Returns**
+
+        `str` the current version
+
+        **Raises**
+
+        `UsageError` if no version can be determined
+        """
+
+        if os.path.exists(repo_plugin.version_file):
+            return repo_plugin.version
+
+        version = self.pyproject_version(repo_plugin)
+        if version:
+            return version
+
+        if self.init_version:
+            # initializing: there genuinely is no previous version, and
+            # this is the one case where 0.0.0 is the right answer
+            return "0.0.0"
+
+        raise UsageError(
+            f"Cannot determine the current version of {repo_plugin.checkout_path}: "
+            "neither a Ctl/VERSION file nor a version in pyproject.toml. You "
+            "can set the --init flag to start from 0.0.0."
+        )
 
     def update_version_files(self, repo_plugin, version, files):
         """
         Finds the various files in a repo that will need to
         have new version values written, such as Ctl/VERSION
         and pyproject.toml
+
+        Raises `UsageError` if there was nothing to write. Exiting
+        successfully having changed no file at all is worse than
+        failing - the caller is told the version was set, and only
+        finds out otherwise when a later step inspects the diff.
         """
 
         types = ["ctl", "pyproject"]
@@ -202,10 +316,30 @@ class VersionBasePlugin(ExecutablePlugin):
             if path:
                 files.append(path)
 
+        if not files:
+            raise UsageError(
+                f"No version files to write in {repo_plugin.checkout_path}: "
+                "there is no Ctl/VERSION file and pyproject.toml declares no "
+                "static version. You can set the --init flag to create a "
+                "Ctl/VERSION file."
+            )
+
     def update_ctl_version(self, repo_plugin, version):
         """
-        Writes a new version to the Ctl/VERSION files
+        Writes a new version to the Ctl/VERSION file.
+
+        Only files that already exist are written - a repository that
+        does not use Ctl/VERSION must not acquire an untracked one, it
+        would show up as an unexpected entry in a caller's diff. `--init`
+        is the explicit opt in to creating it.
+
+        Returns the written file path, or `None` if nothing was written.
         """
+
+        if not os.path.exists(repo_plugin.version_file) and not self.init_version:
+            return None
+
+        os.makedirs(repo_plugin.repo_ctl_dir, exist_ok=True)
 
         with open(repo_plugin.version_file, "w") as fh:
             fh.write(version)
@@ -218,38 +352,35 @@ class VersionBasePlugin(ExecutablePlugin):
         and PEP 621 format ([project].version).
         """
 
-        try:
-            pyproject_path = os.path.join(repo_plugin.checkout_path, "pyproject.toml")
-            pyproject = munge.load_datafile(
-                "pyproject.toml", search_path=(repo_plugin.checkout_path)
-            )
+        pyproject_path = os.path.join(repo_plugin.checkout_path, "pyproject.toml")
+        pyproject = munge.load_datafile(
+            "pyproject.toml", search_path=repo_plugin.checkout_path, default=None
+        )
 
-            updated = False
+        if pyproject is None:
+            return None
 
-            # Check for Poetry format: [tool.poetry].version
-            if "tool" in pyproject and "poetry" in pyproject["tool"]:
-                if "version" in pyproject["tool"]["poetry"]:
-                    pyproject["tool"]["poetry"]["version"] = version
-                    updated = True
+        updated = False
 
-            # Check for PEP 621 format: [project].version
-            if "project" in pyproject and "version" in pyproject["project"]:
-                pyproject["project"]["version"] = version
+        # Check for Poetry format: [tool.poetry].version
+        if "tool" in pyproject and "poetry" in pyproject["tool"]:
+            if "version" in pyproject["tool"]["poetry"]:
+                pyproject["tool"]["poetry"]["version"] = version
                 updated = True
 
-            if not updated:
-                return None
+        # Check for PEP 621 format: [project].version
+        if "project" in pyproject and "version" in pyproject["project"]:
+            pyproject["project"]["version"] = version
+            updated = True
 
-            codec = munge.get_codec("toml")
+        if not updated:
+            return None
 
-            with open(pyproject_path, "w") as fh:
-                codec().dump(pyproject, fh)
-            return pyproject_path
+        codec = munge.get_codec("toml")
 
-        except OSError as exc:
-            if "not found" in str(exc):
-                return None
-            raise
+        with open(pyproject_path, "w") as fh:
+            codec().dump(pyproject, fh)
+        return pyproject_path
 
     def validate_changelog(self, repo, version, data_file="CHANGELOG.yaml"):
         """

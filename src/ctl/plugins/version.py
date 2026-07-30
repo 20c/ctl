@@ -2,8 +2,6 @@
 Plugin that allows you to handle repository versioning
 """
 
-import os
-
 import confu.schema
 
 import ctl
@@ -56,6 +54,46 @@ class VersionPlugin(VersionBasePlugin):
         )
 
         op_bump_parser = parsers.get("op_bump_parser")
+
+        # NOTE: `--no-git` goes directly on the operation parser, never on
+        # `shared_parser`: argparse copies parent actions when a subparser
+        # is created, and the base class has already created the tag/bump
+        # parsers by the time this method runs. Same trap as documented in
+        # the semver2 plugin.
+        op_bump_parser.add_argument(
+            "--no-git",
+            dest="no_git",
+            action="store_true",
+            help="skip all git operations (pull, commit, tag and push) - only "
+            "version files are updated",
+            default=False,
+        )
+
+        # operation `set`
+        #
+        # deliberately a verb of its own rather than a flag on `tag`: it
+        # never tags, and this is the normal case for any repository whose
+        # release is driven externally, so it should be the short form
+        op_set_parser = sub.add_parser(
+            "set",
+            help="write a version to the repository's version files without "
+            "any git operations",
+            parents=[shared_parser],
+        )
+        op_set_parser.add_argument(
+            "version", nargs=1, type=str, help="version string to write"
+        )
+        op_set_parser.add_argument(
+            "--init",
+            action="store_true",
+            help="automatically create Ctl/VERSION file if it does not exist",
+        )
+        # `changelog_validate` and `branch` are deliberately not offered
+        # here: `set` performs no git operations, so there is no branch to
+        # act on, and validation belongs to `bump`, which owns the version
+        # it derived. Accepting a flag that is then never read is the same
+        # defect as the `--init` that used to parse and be ignored.
+        cls.add_repo_argument(op_set_parser, plugin_config)
 
         # operations `merge_release`
         op_mr_parser = sub.add_parser(
@@ -127,8 +165,6 @@ class VersionPlugin(VersionBasePlugin):
             repo_plugin.checkout(self.get_config("branch_release") or "main")
 
         self.log.info(f"Preparing to tag {repo_plugin.checkout_path} as {version}")
-        if not os.path.exists(repo_plugin.repo_ctl_dir):
-            os.makedirs(repo_plugin.repo_ctl_dir)
 
         files = []
 
@@ -136,6 +172,42 @@ class VersionPlugin(VersionBasePlugin):
 
         repo_plugin.commit(files=files, message=f"Version {version}", push=True)
         repo_plugin.tag(version, message=version, push=True)
+
+    @expose("ctl.{plugin_name}.set")
+    def set(self, version, repo, **kwargs):
+        """
+        write a version to the repository's version files
+
+        Performs no git operations at all - no pull, no clean tree
+        check, no commit, no tag, no push. Only files that already
+        exist are written, unless `--init` was passed.
+
+        This is the operation to use when the release itself is driven
+        outside of ctl, where a commit or tag from here would bypass the
+        caller's own gates.
+
+        **Arguments**
+
+        - version (`str`): version to write (eg. 1.0.0)
+        - repo (`str`): name of existing repository type plugin instance
+        """
+
+        repo_plugin = self.repository(repo)
+
+        current = self.current_version(repo_plugin)
+
+        files = []
+        self.update_version_files(repo_plugin, version, files)
+
+        # report what was written so the caller can check it before
+        # committing - the caller verifies the result itself, this is
+        # for a human reading the output
+        for filepath in files:
+            self.log.info(f"Wrote {filepath}")
+
+        self.log.info(f"Version {version_string(current)} -> {version_string(version)}")
+
+        return files
 
     @expose("ctl.{plugin_name}.bump")
     def bump(self, version, repo, **kwargs):
@@ -146,17 +218,26 @@ class VersionPlugin(VersionBasePlugin):
 
         - version (`str`): major, minor, patch or dev
         - repo (`str`): name of existing repository type plugin instance
+
+        **Keyword Arguments**
+
+        - no_git (`bool`): if `True` only write the version files, no
+          pull, commit, tag or push
         """
 
+        no_git = kwargs.get("no_git", False)
+
         repo_plugin = self.repository(repo)
-        repo_plugin.pull()
+
+        if not no_git:
+            repo_plugin.pull()
 
         if version not in ["major", "minor", "patch", "dev"]:
             raise ValueError(f"Invalid semantic version: {version}")
 
         is_dev = version == "dev"
 
-        current = repo_plugin.version
+        current = self.current_version(repo_plugin)
         version = bump_semantic(current, version)
 
         self.log.info(
@@ -165,5 +246,9 @@ class VersionPlugin(VersionBasePlugin):
 
         if self.get_config("changelog_validate") and not is_dev:
             self.validate_changelog(repo, version)
+
+        if no_git:
+            self.set(version=version_string(version), repo=repo, **kwargs)
+            return
 
         self.tag(version=version_string(version), repo=repo, **kwargs)

@@ -21,6 +21,11 @@ from ctl.plugins import ExecutablePlugin
 
 CHANGELOG_SECTIONS = ("added", "fixed", "changed", "deprecated", "removed", "security")
 
+# the canonical residual section key, used when writing a changelog from
+# scratch - an existing changelog's own casing is preserved instead, see
+# `ChangelogPlugin.resolve_unreleased_key`
+UNRELEASED_KEY = "Unreleased"
+
 # environment variables through which CI systems expose the branch a
 # change is merging into - used by the `check` operation to pick a base
 # ref when none was passed
@@ -229,6 +234,44 @@ class ChangeLogPlugin(ExecutablePlugin):
 
         return dict(changelog_list)
 
+    def resolve_unreleased_key(self, changelog):
+        """
+        Returns the key under which the residual (unreleased) entries are
+        stored in the changelog, matched case insensitively.
+
+        A changelog written by `generate_clean` uses `Unreleased`, but a
+        hand maintained one may use any casing - matching only the
+        canonical form silently drops every residual entry in fragment
+        mode, which is exactly the data loss the non-standard section
+        carry over below exists to prevent.
+
+        Keys are compared as strings for the same reason
+        `release` compares them that way: an unquoted `1.0:` in a yaml
+        changelog parses as a float.
+
+        **Arguments**
+
+        - changelog (`dict`): loaded changelog data
+
+        **Returns**
+
+        `str` the matching key, or `None` if the changelog has none
+        """
+
+        matches = [key for key in changelog if f"{key}".casefold() == "unreleased"]
+
+        if len(matches) > 1:
+            # guessing which one was meant would merge two sections the
+            # author kept apart - the same silent data loss in a
+            # different shape
+            raise ValueError(
+                "Changelog contains more than one unreleased section: "
+                f"{', '.join(sorted(f'{key}' for key in matches))} - "
+                "rename all but one of them before releasing"
+            )
+
+        return matches[0] if matches else None
+
     def fragments_dir_path(self, data_file):
         """
         Returns the resolved file path to the changelog fragments
@@ -387,7 +430,9 @@ class ChangeLogPlugin(ExecutablePlugin):
 
         return files, sections
 
-    def collect_release_section(self, changelog, fragments_dir, fragment_mode):
+    def collect_release_section(
+        self, changelog, fragments_dir, fragment_mode, unreleased_key
+    ):
         """
         Collects the changes that are to be moved into a new release
         section.
@@ -406,13 +451,18 @@ class ChangeLogPlugin(ExecutablePlugin):
         - fragments_dir (`str`): file path to the changelog fragments
         directory
         - fragment_mode (`bool`): whether to collect changelog fragments
+        - unreleased_key (`str`): the key the residual entries are stored
+        under, or `None` if the changelog has none. The caller resolves it
+        with `resolve_unreleased_key` before anything is written, and that
+        resolution is the authoritative one - resolving again here could
+        only ever disagree with the key the caller then resets.
 
         **Returns**
 
         `tuple` of (release section `dict`, fragment file paths `list`)
         """
 
-        unreleased = changelog.get("Unreleased") or {}
+        unreleased = (changelog.get(unreleased_key) if unreleased_key else None) or {}
         release_section = {}
 
         if not fragment_mode:
@@ -468,6 +518,14 @@ class ChangeLogPlugin(ExecutablePlugin):
         """
         changelog = self.load(data_file)
 
+        # resolved up front, before anything is written: an ambiguous
+        # changelog has to fail with the data file and the fragments
+        # still untouched. Resolving after `changelog[version]` was
+        # assigned would also let a release literally named `unreleased`
+        # be mistaken for the residual section.
+
+        unreleased_key = self.resolve_unreleased_key(changelog)
+
         fragments_dir = self.fragments_dir_path(data_file)
         fragment_mode = os.path.isdir(fragments_dir)
 
@@ -491,7 +549,7 @@ class ChangeLogPlugin(ExecutablePlugin):
             raise ValueError(f"Release {version} already exists in {data_file}")
 
         release_section, fragment_files = self.collect_release_section(
-            changelog, fragments_dir, fragment_mode
+            changelog, fragments_dir, fragment_mode, unreleased_key
         )
 
         if not release_section:
@@ -504,8 +562,15 @@ class ChangeLogPlugin(ExecutablePlugin):
 
         changelog[version] = release_section
 
-        if not fragment_mode or "Unreleased" in changelog:
-            changelog["Unreleased"] = {section: [] for section in CHANGELOG_SECTIONS}
+        if unreleased_key:
+            # the key the repository actually uses is reset, not a
+            # normalized one - rewriting `unreleased:` to `Unreleased:`
+            # behind the author's back is its own surprise diff
+            #
+            # legacy mode without a residual key never gets here: the
+            # release section would be empty and the raise above has
+            # already fired
+            changelog[unreleased_key] = {section: [] for section in CHANGELOG_SECTIONS}
 
         changelog = self.sort_changelog(changelog)
 
@@ -809,7 +874,7 @@ class ChangeLogPlugin(ExecutablePlugin):
         if os.path.exists(data_file):
             raise ValueError(f"File already exists: {data_file}")
 
-        changelog = {"Unreleased": {section: [] for section in CHANGELOG_SECTIONS}}
+        changelog = {UNRELEASED_KEY: {section: [] for section in CHANGELOG_SECTIONS}}
 
         codec = os.path.splitext(data_file)[1][1:]
         codec = munge.get_codec(codec)
