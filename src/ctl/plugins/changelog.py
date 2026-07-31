@@ -38,6 +38,48 @@ CI_BASE_REF_ENV = (
 )
 
 
+def comment_lines(text):
+    """
+    Returns the 0-based line numbers of every yaml comment in `text`.
+
+    A `#` only opens a comment where it is not part of a scalar, and the
+    parser is the only thing that knows the difference - `- fixed '#31'`
+    carries a `#` that is data, and a `#` on the line above it is not. The
+    scanner reports the character range of every token it produces and
+    skips comments entirely, so a `#` that falls outside all of those
+    ranges is a comment. Matching `^\\s*#` instead would also claim the
+    lines of a block scalar.
+
+    **Arguments**
+
+    - text (`str`): yaml document text
+
+    **Returns**
+
+    `set` of 0-based line numbers
+    """
+
+    spans = [
+        (token.start_mark.index, token.end_mark.index)
+        for token in yaml.scan(text, Loader=yaml.SafeLoader)
+    ]
+
+    lines = set()
+    line = 0
+
+    for index, char in enumerate(text):
+        if char == "\n":
+            line += 1
+            continue
+        if char != "#":
+            continue
+        if any(start <= index < end for start, end in spans):
+            continue
+        lines.add(line)
+
+    return lines
+
+
 class StrictFragmentLoader(yaml.SafeLoader):
     """
     A yaml safe loader that rejects duplicate mapping keys instead of
@@ -499,6 +541,191 @@ class ChangeLogPlugin(ExecutablePlugin):
 
         return release_section, fragment_files
 
+    def block_spans(self, text):
+        """
+        Returns the line span each top level key of a yaml mapping document
+        occupies.
+
+        The boundaries come from the parser's own marks rather than from
+        matching indentation: a changelog entry may be indented any way
+        that parses, and a `-` at column 0 inside a section list is the
+        common case.
+
+        Blank lines and comment lines that sit between two blocks are
+        counted as part of neither. A comment above a key belongs to that
+        key, and a writer that swallowed it into the block above would move
+        somebody's annotation onto another release.
+
+        **Arguments**
+
+        - text (`str`): yaml document text
+
+        **Returns**
+
+        `list` of `(key, lead, start, end)` tuples, where `lead` is the
+        first line of the block's leading comment run, `start` the line the
+        key is on and `end` the first line after the block. All 0-based,
+        `end` exclusive.
+        """
+
+        node = yaml.compose(text, Loader=yaml.SafeLoader)
+
+        if node is None:
+            return []
+
+        if not isinstance(node, yaml.MappingNode):
+            raise ValueError(
+                "Changelog data file does not contain a mapping of versions "
+                "to changes"
+            )
+
+        lines = text.splitlines(keepends=True)
+        comments = comment_lines(text)
+
+        def is_comment(number):
+            return number in comments and lines[number].lstrip().startswith("#")
+
+        def is_gap(number):
+            return is_comment(number) or not lines[number].strip()
+
+        spans = []
+
+        for position, (key_node, _) in enumerate(node.value):
+            start = key_node.start_mark.line
+
+            if position + 1 < len(node.value):
+                end = node.value[position + 1][0].start_mark.line
+            else:
+                end = len(lines)
+
+            while end > start + 1 and is_gap(end - 1):
+                end -= 1
+
+            lead = start
+            while lead > 0 and is_gap(lead - 1):
+                lead -= 1
+
+            spans.append((f"{key_node.value}", lead, start, end))
+
+        return spans
+
+    def render_block(self, key, value):
+        """
+        Renders a single top level changelog block.
+
+        The same codec that writes the whole file elsewhere, so a block
+        written here is byte for byte the block the file-wide writer would
+        have produced.
+        """
+
+        return munge.get_codec("yaml")().dumps({key: value})
+
+    def write_release_yaml(
+        self, data_file, version, release_section, unreleased_key, existing_keys
+    ):
+        """
+        Writes a release into a yaml changelog by rewriting only the lines
+        the release actually changes: the residual section is reset in
+        place and the new release block is inserted at its sorted position.
+
+        Everything else in the file - comments, indentation, line wrapping,
+        quoting, the order of blocks already there - is left as the bytes
+        it already was. Reserializing the parsed document instead is what
+        deletes every comment in the file and reformats sections the
+        release never touched.
+
+        Two consequences worth knowing about:
+
+        - the file is no longer globally re-sorted on every release. A
+          changelog whose blocks are out of order stays that way, and only
+          the new block is placed by sort order
+        - a comment inside the residual section is attached to entries that
+          are moving into the release, and cannot come along. That is
+          warned about rather than done silently
+
+        **Arguments**
+
+        - data_file (`str`): file path to a CHANGELOG.(yaml|yml) file
+        - version (`str`): version name (eg. tag name)
+        - release_section (`dict`): the changes to write under `version`
+        - unreleased_key (`str`): the key holding the residual entries, or
+          `None` if the changelog has none
+        - existing_keys (`list`): the changelog's keys, for sorting
+        """
+
+        # newline="" so the file's own line endings survive the read - with
+        # translation on, a CRLF changelog would be rewritten as LF
+        # throughout, which is the whole-file diff this is here to avoid
+        with open(data_file, newline="") as fh:
+            text = fh.read()
+
+        newline = "\r\n" if "\r\n" in text else "\n"
+        ends_with_newline = text.endswith(("\n", "\r"))
+        lines = text.splitlines(keepends=True)
+
+        spans = self.block_spans(text)
+
+        # a file that does not end with a newline is terminated for the
+        # duration of the edit, so an appended block cannot end up glued to
+        # its last line, and un-terminated again on the way out
+        if lines and not ends_with_newline:
+            lines[-1] = f"{lines[-1]}{newline}"
+
+        def render(key, value):
+            block = self.render_block(key, value)
+            return [f"{line}{newline}" for line in block.splitlines()]
+
+        # sorted position of the new block, expressed against the keys as
+        # they are, so an out of order file is not silently reordered
+        ranking = {
+            f"{key}": rank
+            for rank, key in enumerate(
+                natsorted(
+                    [f"{key}" for key in existing_keys] + [f"{version}"], reverse=True
+                )
+            )
+        }
+
+        insert_at = len(lines)
+
+        for key, lead, _, _ in spans:
+            if ranking.get(key, -1) > ranking[f"{version}"]:
+                insert_at = lead
+                break
+
+        edits = [(insert_at, insert_at, render(version, release_section))]
+
+        if unreleased_key is not None:
+            _, _, start, end = next(
+                span for span in spans if span[0] == f"{unreleased_key}"
+            )
+
+            moved = sorted(
+                number for number in comment_lines(text) if start <= number < end
+            )
+
+            for number in moved:
+                self.log.warning(
+                    f"{data_file}:{number + 1}: comment dropped by the release - "
+                    f"{lines[number].strip()} - it annotates entries that are "
+                    f"moving into {version}, and only the entries move"
+                )
+
+            reset = {section: [] for section in CHANGELOG_SECTIONS}
+            edits.append((start, end, render(unreleased_key, reset)))
+
+        # bottom up, so an earlier edit cannot shift a later edit's lines
+        for start, end, block in sorted(edits, key=lambda edit: edit[0], reverse=True):
+            lines[start:end] = block
+
+        output = "".join(lines)
+
+        if not ends_with_newline:
+            output = output[: -len(newline)]
+
+        with open(data_file, "w", newline="") as fh:
+            fh.write(output)
+
     @expose("ctl.{plugin_name}.release")
     def release(self, version, data_file, **kwargs):
         """
@@ -560,25 +787,41 @@ class ChangeLogPlugin(ExecutablePlugin):
                 )
             raise ValueError("No items exist in unreleased to be moved")
 
-        changelog[version] = release_section
-
-        if unreleased_key:
-            # the key the repository actually uses is reset, not a
-            # normalized one - rewriting `unreleased:` to `Unreleased:`
-            # behind the author's back is its own surprise diff
-            #
-            # legacy mode without a residual key never gets here: the
-            # release section would be empty and the raise above has
-            # already fired
-            changelog[unreleased_key] = {section: [] for section in CHANGELOG_SECTIONS}
-
-        changelog = self.sort_changelog(changelog)
-
         ext = os.path.splitext(data_file)[1][1:]
-        codec = munge.get_codec(ext)
 
-        with open(data_file, "w+") as fh:
-            codec().dump(changelog, fh)
+        if ext in ("yaml", "yml"):
+            # only the lines the release changes are rewritten - see
+            # `write_release_yaml`. Reserializing the parsed document, as
+            # the codec path below does, is what deletes every comment in
+            # the file and reformats sections nothing touched
+            self.write_release_yaml(
+                data_file,
+                version,
+                release_section,
+                unreleased_key,
+                list(changelog.keys()),
+            )
+        else:
+            changelog[version] = release_section
+
+            if unreleased_key:
+                # the key the repository actually uses is reset, not a
+                # normalized one - rewriting `unreleased:` to `Unreleased:`
+                # behind the author's back is its own surprise diff
+                #
+                # legacy mode without a residual key never gets here: the
+                # release section would be empty and the raise above has
+                # already fired
+                changelog[unreleased_key] = {
+                    section: [] for section in CHANGELOG_SECTIONS
+                }
+
+            changelog = self.sort_changelog(changelog)
+
+            codec = munge.get_codec(ext)
+
+            with open(data_file, "w+") as fh:
+                codec().dump(changelog, fh)
 
         self.log.info(f"Updated {data_file}")
 
@@ -588,6 +831,25 @@ class ChangeLogPlugin(ExecutablePlugin):
         # md regeneration
 
         self.generate(self.get_config("md_file"), data_file)
+
+        self.remove_fragments(version, data_file, fragment_files)
+
+    def remove_fragments(self, version, data_file, fragment_files):
+        """
+        Removes the changelog fragment files that were collected into a
+        release.
+
+        Raises `OSError` naming every fragment still on disk if one of them
+        cannot be removed - a leftover fragment is collected into the next
+        release as well, so the ones that were not reached have to be named
+        rather than left to be discovered.
+
+        **Arguments**
+
+        - version (`str`): the release the fragments were collected into
+        - data_file (`str`): file path to a CHANGELOG.(yaml|json) file
+        - fragment_files (`list`): fragment file paths to remove
+        """
 
         removed = []
 
