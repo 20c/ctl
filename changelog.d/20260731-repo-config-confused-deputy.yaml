@@ -1,0 +1,44 @@
+security:
+- '#30: ctl no longer sends the operator''s GitLab credential to a host named by the
+  repository it operates on. A config file committed to an operated repository could
+  set `gitlab_url` and omit `gitlab_token`, and ctl would then authenticate to that
+  host with the operator''s real `GITLAB_TOKEN` - a confused deputy that exfiltrated
+  a broadly scoped credential to whoever could land a commit on the default branch'
+- '#35: ctl no longer accepts a `github_token` from repository content. It was
+  previously used verbatim, with no environment precedence at all, so an operated
+  repository could choose the GitHub identity ctl acted as'
+- 'urls are stripped of any embedded credentials before they are logged or put in an
+  error message, and `RepositoryConfig`''s token fields no longer render in its repr'
+removed:
+- 'BREAKING: the repository config file (`repository_config_filename`) is no longer
+  read. ctl does not take its own configuration out of the content of the repository
+  it operates on - a repository must not be able to name the host a credential is
+  sent to, nor supply the credential itself. `gitlab_url`, `gitlab_token` and
+  `github_token` now come only from the environment (`GITLAB_URL`, `GITLAB_TOKEN`,
+  `GITHUB_TOKEN`), from the command line (`--gitlab-url`) or from a caller supplied
+  `repository_config`. Anyone who relied on an operated repository declaring a
+  *different* GitLab instance than the one it was cloned from loses that,
+  deliberately. This release must be a major version bump'
+changed:
+- 'BREAKING: when no GitLab instance is named by the operator, the instance url is
+  now derived from the repository''s own clone origin, so an ambient token can only
+  ever reach the host the repository was cloned from. Derivation handles https, ssh
+  and scp style (`git@host:path`) origins, and fails closed - no origin, disagreeing
+  remotes, an origin that names no host, or a github host produces no service at all
+  rather than a guess, with a warning naming what was inspected. The instance url and
+  where it came from are logged at INFO so it is visible on a normal run which host
+  received the token'
+- 'BREAKING: because a GitLab service is now created in cases where none was created
+  before, a caller that has both `GITHUB_TOKEN` and `GITLAB_TOKEN` set, no
+  `GITLAB_URL`, and no `default_service`, and that operates a repository whose origin
+  is not a github host, will now get `ValueError("Multiple services available,
+  please specify one as default via default_service")` from `GitManager.service`
+  where it previously got the github service. Set `default_service`'
+- 'BREAKING: `GITLAB_URL` (and `--gitlab-url`) must be a full url with a scheme, e.g.
+  `https://gitlab.example.com`. A value without one previously produced a service
+  pointed at the malformed url `"://"`; it now raises a `ValueError` naming the value
+  and the expected form'
+deprecated:
+- '`GitManager(repository_config_filename=...)` is accepted but ignored, and logs a
+  notice when passed. Set `GITLAB_URL` / `GITLAB_TOKEN` / `GITHUB_TOKEN` in the
+  environment, or pass `repository_config`, instead'

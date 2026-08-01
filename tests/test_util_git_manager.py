@@ -1,3 +1,4 @@
+import logging
 import os
 import tempfile
 from unittest.mock import MagicMock, patch
@@ -11,8 +12,13 @@ from ctl.util.git import (
     ChangeRequest,
     EphemeralGitContext,
     GitManager,
+    RepositoryConfig,
+    TemporaryGitContext,
     current_ephemeral_git_context,
     ephemeral_git_context_state,
+    instance_url_from_repository_url,
+    is_github_host,
+    sanitize_url,
 )
 
 
@@ -297,26 +303,104 @@ def test_git_manager_add_and_commit(git_repo):
     assert "test_commit.txt" in file_paths
 
 
-# Test that a GitManager instance can correctly load repository config
+# Repository content is untrusted input: a config file committed to the repository
+# must never name the host that the operator's ambient token is sent to, and must
+# never supply the credentials ctl acts with (issue #30). `git_repo_with_config`
+# commits a config.yaml naming `https://gitlab.com` and a `github_token`, while the
+# repository's own origin is `http://localhost`.
 @patch("ctl.util.git.GithubService")
 @patch("ctl.util.git.GitlabService")
-def test_git_manager_load_repository_config(
+def test_git_manager_ignores_repository_content_config(
+    mock_gitlab_service, mock_github_service, git_repo_with_config, monkeypatch
+):
+    monkeypatch.setenv("GITLAB_TOKEN", "env_gitlab_token")
+
+    tmp_dir, repo = git_repo_with_config
+    repo.create_remote("origin", url="http://localhost")
+
+    mock_github_service.return_value = MagicMock()
+    mock_gitlab_service.return_value = MagicMock()
+
+    git_manager = GitManager(url="http://localhost", directory=tmp_dir)
+
+    # the host named by the repository is never used, for anything
+    assert git_manager.repository_config.gitlab_url == "http://localhost"
+    mock_gitlab_service.assert_called_once_with(
+        token="env_gitlab_token", instance_url="http://localhost"
+    )
+
+    # and the credential committed to the repository is not used either
+    mock_github_service.assert_not_called()
+
+
+# Companion to the above: with no ambient credential at all, a repository that names
+# a host and ships a token gets no services whatsoever
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+def test_git_manager_repository_content_cannot_create_services(
     mock_gitlab_service, mock_github_service, git_repo_with_config
 ):
     tmp_dir, repo = git_repo_with_config
     repo.create_remote("origin", url="http://localhost")
-    git_manager = GitManager(url="http://localhost", directory=tmp_dir)
 
-    # Mock the GithubService and GitlabService instances
     mock_github_service.return_value = MagicMock()
     mock_gitlab_service.return_value = MagicMock()
 
-    assert git_manager.repository_config.gitlab_url == "https://gitlab.com"
+    git_manager = GitManager(url="http://localhost", directory=tmp_dir)
 
-    # Check that the GithubService and GitlabService were called with the correct arguments
-    mock_github_service.assert_called_once_with(token="test_token")
+    mock_gitlab_service.assert_not_called()
+    mock_github_service.assert_not_called()
+    assert git_manager.services.gitlab is None
+    assert git_manager.services.github is None
+
+
+# The environment github token is the only one that can be used - the repository's
+# `github_token` was previously taken verbatim, with no environment precedence at all
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+def test_git_manager_github_token_comes_from_environment_only(
+    mock_gitlab_service, mock_github_service, git_repo_with_config, monkeypatch
+):
+    monkeypatch.setenv("GITHUB_TOKEN", "env_github_token")
+
+    tmp_dir, repo = git_repo_with_config
+    repo.create_remote("origin", url="http://localhost")
+
+    mock_github_service.return_value = MagicMock()
+    mock_gitlab_service.return_value = MagicMock()
+
+    # a config side token loses to the environment - the precedence #35 is about
+    git_manager = GitManager(
+        url="http://localhost",
+        directory=tmp_dir,
+        repository_config=RepositoryConfig(github_token="config_github_token"),
+    )
+
+    mock_github_service.assert_called_once_with(token="env_github_token")
+    assert git_manager.repository_config.github_token == "env_github_token"
+
+
+# `repository_config_filename` is accepted but ignored, so downstream callers that
+# still pass it keep working without a config file ever being read
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+def test_git_manager_repository_config_filename_is_ignored(
+    mock_gitlab_service, mock_github_service, git_repo_with_config, monkeypatch
+):
+    monkeypatch.setenv("GITLAB_TOKEN", "env_gitlab_token")
+
+    tmp_dir, repo = git_repo_with_config
+    repo.create_remote("origin", url="http://localhost")
+
+    mock_gitlab_service.return_value = MagicMock()
+
+    git_manager = GitManager(
+        url="http://localhost", directory=tmp_dir, repository_config_filename="config"
+    )
+
+    assert git_manager.repository_config.gitlab_url == "http://localhost"
     mock_gitlab_service.assert_called_once_with(
-        token=None, instance_url="https://gitlab.com"
+        token="env_gitlab_token", instance_url="http://localhost"
     )
 
 
@@ -369,7 +453,6 @@ def test_git_manager_default_service(
     mock_github_service.return_value = MagicMock()
     mock_gitlab_service.return_value = MagicMock()
 
-    git_manager.load_repository_config("config.yaml")
     assert git_manager.default_service == "github"
     assert mock_github_service.call_count == 1
     mock_github_service.assert_called_once_with(token="fake-github-token")
@@ -398,7 +481,6 @@ def test_git_manager_service(
     mock_github_service.return_value = MagicMock()
     mock_gitlab_service.return_value = MagicMock()
 
-    git_manager.load_repository_config("config.yaml")
     assert git_manager.service == git_manager.services.github
     assert mock_github_service.call_count == 1
     mock_github_service.assert_called_once_with(token="fake-github-token")
@@ -414,6 +496,413 @@ def test_git_manager_service(
 
     git_manager.services.github = None
     assert git_manager.service == git_manager.services.gitlab
+
+
+# --- gitlab instance url derivation (issue #30) ------------------------------
+
+
+@pytest.mark.parametrize(
+    "url,expected",
+    [
+        ("https://gitlab.example.com/group/repo.git", "https://gitlab.example.com"),
+        (
+            "https://user:token@gitlab.example.com/group/repo",
+            "https://gitlab.example.com",
+        ),
+        (
+            "https://gitlab.example.com:8443/group/repo",
+            "https://gitlab.example.com:8443",
+        ),
+        ("http://localhost", "http://localhost"),
+        ("http://localhost:8080/group/repo", "http://localhost:8080"),
+        # scp style remotes are the common form for ssh clones
+        ("git@gitlab.example.com:group/repo.git", "https://gitlab.example.com"),
+        ("gitlab.example.com:group/repo.git", "https://gitlab.example.com"),
+        # an ssh port says nothing about where the api lives
+        (
+            "ssh://git@gitlab.example.com:2222/group/repo.git",
+            "https://gitlab.example.com",
+        ),
+        # hosts are normalized, so a comparison against them cannot be dodged
+        ("https://GitLab.Example.COM/g/r", "https://gitlab.example.com"),
+        ("git@gitlab.example.com.:group/repo.git", "https://gitlab.example.com"),
+        # ipv6 literals have to come back out bracketed
+        ("https://[2001:db8::1]/g/r.git", "https://[2001:db8::1]"),
+        ("https://[2001:db8::1]:8443/g/r.git", "https://[2001:db8::1]:8443"),
+        # nothing that does not name a host
+        ("/srv/repos/repo.git", None),
+        ("../repo", None),
+        ("file:///srv/repos/repo.git", None),
+        ("", None),
+        (None, None),
+        # malformed authorities fail closed rather than raising
+        ("https://gitlab.example.com:99999/x", None),
+        ("https://2001:db8::1/g/r.git", None),
+        ("https://gitlab.example.com:notaport/x", None),
+    ],
+)
+def test_instance_url_from_repository_url(url, expected):
+    assert instance_url_from_repository_url(url) == expected
+
+
+# Operator supplied values are parsed strictly: a missing scheme is a mistake, and
+# reading it as an scp style remote would silently drop the port the operator named
+@pytest.mark.parametrize(
+    "url,expected",
+    [
+        ("https://gitlab.internal:8443/g/r", "https://gitlab.internal:8443"),
+        ("gitlab.internal:8443", None),
+        ("gitlab.internal", None),
+        ("git@gitlab.internal:group/repo.git", None),
+    ],
+)
+def test_instance_url_from_repository_url_without_scp(url, expected):
+    assert instance_url_from_repository_url(url, allow_scp=False) == expected
+
+
+@pytest.mark.parametrize(
+    "url,expected",
+    [
+        (
+            "https://oauth2:glpat-secret@git.example.com/g/r",
+            "https://git.example.com/g/r",
+        ),
+        ("https://git.example.com/g/r", "https://git.example.com/g/r"),
+        # scheme-less forms: urlparse finds no netloc to clean, so these are handled
+        # separately - a credential in one of them still must not reach a log line
+        ("git@git.example.com:g/r.git", "git.example.com:g/r.git"),
+        ("oauth2:glpat-secret@git.example.com:g/r.git", "git.example.com:g/r.git"),
+        ("/srv/repos/repo.git", "/srv/repos/repo.git"),
+        ("", ""),
+    ],
+)
+def test_sanitize_url(url, expected):
+    assert sanitize_url(url) == expected
+
+
+@pytest.mark.parametrize(
+    "host,expected",
+    [
+        ("github.com", True),
+        ("ssh.github.com", True),
+        ("gist.github.com", True),
+        ("gitlab.example.com", False),
+        # a host that merely ends in the string is not a github host
+        ("notgithub.com", False),
+        ("", False),
+    ],
+)
+def test_is_github_host(host, expected):
+    assert is_github_host(host) is expected
+
+
+# Fixture for a repository whose origin is an arbitrary (non cloneable) url - the
+# directory already holds a repository, so GitManager never tries to clone it
+@pytest.fixture
+def git_repo_with_origin():
+    def _make(origin_url):
+        tmp_dir = tempfile.mkdtemp()
+        repo = Repo.init(tmp_dir, initial_branch="main")
+        repo.git.config("user.email", "test@example.com")
+        repo.git.config("user.name", "Test User")
+        open(os.path.join(tmp_dir, "README.md"), "w").close()
+        repo.index.add(["README.md"])
+        repo.index.commit("Initial commit")
+        repo.create_remote("origin", url=origin_url)
+        return tmp_dir, repo
+
+    return _make
+
+
+# With no instance named by the operator, the instance is derived from the host the
+# repository was actually cloned from - so the token can only ever reach that host
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+def test_git_manager_derives_gitlab_url_from_origin(
+    mock_gitlab_service, mock_github_service, git_repo_with_origin, monkeypatch, caplog
+):
+    monkeypatch.setenv("GITLAB_TOKEN", "env_gitlab_token")
+    tmp_dir, repo = git_repo_with_origin("git@gitlab.example.com:group/repo.git")
+
+    mock_gitlab_service.return_value = MagicMock()
+
+    with caplog.at_level(logging.INFO, logger="ctl.util.git"):
+        git_manager = GitManager(
+            url="git@gitlab.example.com:group/repo.git", directory=tmp_dir
+        )
+
+    mock_gitlab_service.assert_called_once_with(
+        token="env_gitlab_token", instance_url="https://gitlab.example.com"
+    )
+    assert git_manager.repository_config.gitlab_url == "https://gitlab.example.com"
+
+    # the operator has to be able to read which host received their token
+    assert (
+        "Using gitlab instance https://gitlab.example.com (from the repository's "
+        "clone origin)" in caplog.text
+    )
+
+
+# An explicitly configured instance always wins over the derived one, and is
+# reported as such
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+def test_git_manager_env_gitlab_url_wins_over_derivation(
+    mock_gitlab_service, mock_github_service, git_repo_with_origin, monkeypatch, caplog
+):
+    monkeypatch.setenv("GITLAB_TOKEN", "env_gitlab_token")
+    monkeypatch.setenv("GITLAB_URL", "https://gitlab.operator.example/group/repo")
+    tmp_dir, repo = git_repo_with_origin("git@gitlab.example.com:group/repo.git")
+
+    mock_gitlab_service.return_value = MagicMock()
+
+    with caplog.at_level(logging.INFO, logger="ctl.util.git"):
+        GitManager(url="git@gitlab.example.com:group/repo.git", directory=tmp_dir)
+
+    mock_gitlab_service.assert_called_once_with(
+        token="env_gitlab_token", instance_url="https://gitlab.operator.example"
+    )
+    assert (
+        "Using gitlab instance https://gitlab.operator.example (from GITLAB_URL "
+        "environment variable)" in caplog.text
+    )
+
+
+# Derivation fails closed: an origin that does not name a host we can use gets no
+# service at all, and says what it looked at
+@pytest.mark.parametrize(
+    "origin_url,expected_in_log",
+    [
+        # github is the github service's territory, never a gitlab instance
+        ("git@github.com:group/repo.git", "is a github host"),
+        # ... and the check is not dodged by a trailing root dot, a case change or
+        # one of github's other hosts
+        ("git@GitHub.com.:group/repo.git", "is a github host"),
+        ("ssh://git@ssh.github.com:443/group/repo.git", "is a github host"),
+        # a local path names no host
+        ("/srv/repos/repo.git", "does not name a host"),
+        # neither does a malformed authority - it fails closed instead of raising
+        # (an unbracketed ipv6 literal is covered in
+        # test_instance_url_from_repository_url; git itself refuses it as a remote)
+        ("https://gitlab.example.com:99999/group/repo.git", "does not name a host"),
+    ],
+)
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+def test_git_manager_derivation_fails_closed(
+    mock_gitlab_service,
+    mock_github_service,
+    git_repo_with_origin,
+    monkeypatch,
+    caplog,
+    origin_url,
+    expected_in_log,
+):
+    monkeypatch.setenv("GITLAB_TOKEN", "env_gitlab_token")
+    tmp_dir, repo = git_repo_with_origin(origin_url)
+
+    with caplog.at_level(logging.WARNING, logger="ctl.util.git"):
+        git_manager = GitManager(url=origin_url, directory=tmp_dir)
+
+    mock_gitlab_service.assert_not_called()
+    assert git_manager.services.gitlab is None
+    assert expected_in_log in caplog.text
+    assert "not initializing a gitlab service" in caplog.text
+
+
+# The remaining fail-closed cases are states the manager can be in before an origin
+# has been established
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+def test_git_manager_derivation_without_origin_fails_closed(
+    mock_gitlab_service, mock_github_service, git_repo_with_origin, monkeypatch, caplog
+):
+    monkeypatch.setenv("GITLAB_TOKEN", "env_gitlab_token")
+    tmp_dir, repo = git_repo_with_origin("https://gitlab.example.com/group/repo.git")
+    git_manager = GitManager(
+        url="https://gitlab.example.com/group/repo.git", directory=tmp_dir
+    )
+
+    # nothing at all to go on
+    git_manager.origin = None
+    git_manager.url = None
+    git_manager.repo = None
+    with caplog.at_level(logging.WARNING, logger="ctl.util.git"):
+        assert git_manager.derive_gitlab_url() is None
+    assert "no origin, no url and no remotes" in caplog.text
+
+    # remotes that do not agree on a host
+    caplog.clear()
+    repo.create_remote("other", url="https://gitlab.other.example/group/repo.git")
+    git_manager.repo = repo
+    with caplog.at_level(logging.WARNING, logger="ctl.util.git"):
+        assert git_manager.derive_gitlab_url() is None
+    assert "do not agree on one" in caplog.text
+
+
+# No gitlab credential means there is nothing to protect and nothing to derive
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+def test_git_manager_no_derivation_without_token(
+    mock_gitlab_service, mock_github_service, git_repo_with_origin, caplog
+):
+    tmp_dir, repo = git_repo_with_origin("git@gitlab.example.com:group/repo.git")
+
+    with caplog.at_level(logging.WARNING, logger="ctl.util.git"):
+        git_manager = GitManager(
+            url="git@gitlab.example.com:group/repo.git", directory=tmp_dir
+        )
+
+    mock_gitlab_service.assert_not_called()
+    assert git_manager.services.gitlab is None
+    assert "gitlab service" not in caplog.text
+
+
+# The temporary context re-clones and builds a second GitManager - it must not be a
+# way back in for a host named by repository content
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+def test_temporary_git_context_carries_only_operator_config(
+    mock_gitlab_service, mock_github_service, git_repo_with_config, monkeypatch
+):
+    tmp_dir, repo = git_repo_with_config
+    repo.create_remote("origin", url=f"file://{tmp_dir}")
+    mock_gitlab_service.return_value = MagicMock()
+
+    # supplied by the caller only - nothing in the environment stands in for it, so
+    # the inner manager can only have it by way of the context carrying it over
+    git_manager = GitManager(
+        url=f"file://{tmp_dir}",
+        directory=tmp_dir,
+        repository_config=RepositoryConfig(
+            gitlab_url="https://gitlab.operator.example",
+            gitlab_token="operator_gitlab_token",
+        ),
+    )
+
+    with TemporaryGitContext(git_manager) as ctx:
+        # the config.yaml committed in the repository travels with the clone, and
+        # still does not get to name a host: the operator's instance is what the
+        # inner manager uses
+        assert os.path.exists(os.path.join(ctx.git_manager.directory, "config.yaml"))
+        assert (
+            ctx.git_manager.repository_config.gitlab_url
+            == "https://gitlab.operator.example"
+        )
+        assert ctx.git_manager.services.gitlab is not None
+
+    assert mock_gitlab_service.call_args_list
+    for call in mock_gitlab_service.call_args_list:
+        assert call.kwargs["instance_url"] == "https://gitlab.operator.example"
+
+
+# The derived instance url is resolved into the manager's own config. A caller that
+# builds one RepositoryConfig and reuses it across repositories must not have the
+# first repository's host applied to the second
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+def test_repository_config_is_not_shared_between_managers(
+    mock_gitlab_service, mock_github_service, git_repo_with_origin, monkeypatch
+):
+    monkeypatch.setenv("GITLAB_TOKEN", "env_gitlab_token")
+    mock_gitlab_service.return_value = MagicMock()
+
+    config = RepositoryConfig()
+
+    first_dir, _ = git_repo_with_origin("https://gitlab-a.example/group/repo.git")
+    GitManager(
+        url="https://gitlab-a.example/group/repo.git",
+        directory=first_dir,
+        repository_config=config,
+    )
+
+    # the caller's object is untouched by the first repository's derivation
+    assert config.gitlab_url is None
+
+    second_dir, _ = git_repo_with_origin("https://gitlab-b.example/group/repo.git")
+    GitManager(
+        url="https://gitlab-b.example/group/repo.git",
+        directory=second_dir,
+        repository_config=config,
+    )
+
+    instance_urls = [
+        call.kwargs["instance_url"] for call in mock_gitlab_service.call_args_list
+    ]
+    assert instance_urls == ["https://gitlab-a.example", "https://gitlab-b.example"]
+
+
+# An operator supplied value that is not a full url must never fall through to
+# GitlabService with no instance url - ogr defaults that to https://gitlab.com
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+def test_git_manager_rejects_unusable_operator_gitlab_url(
+    mock_gitlab_service, mock_github_service, git_repo_with_origin, monkeypatch
+):
+    monkeypatch.setenv("GITLAB_TOKEN", "env_gitlab_token")
+    monkeypatch.setenv("GITLAB_URL", "gitlab.internal:8443")
+
+    tmp_dir, _ = git_repo_with_origin("https://gitlab.example.com/group/repo.git")
+
+    with pytest.raises(ValueError, match="Could not determine a gitlab instance url"):
+        GitManager(url="https://gitlab.example.com/group/repo.git", directory=tmp_dir)
+
+    mock_gitlab_service.assert_not_called()
+
+
+# Credentials embedded in an origin must not reach a log line
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+def test_git_manager_does_not_log_origin_credentials(
+    mock_gitlab_service, mock_github_service, git_repo_with_origin, monkeypatch, caplog
+):
+    monkeypatch.setenv("GITLAB_TOKEN", "env_gitlab_token")
+    origin_url = "https://oauth2:glpat-SUPERSECRET@github.com/group/repo.git"
+    tmp_dir, _ = git_repo_with_origin(origin_url)
+
+    with caplog.at_level(logging.DEBUG, logger="ctl.util.git"):
+        GitManager(url=origin_url, directory=tmp_dir)
+
+    # the refusal names what it inspected, but not the credential in it
+    assert "is a github host" in caplog.text
+    assert "glpat-SUPERSECRET" not in caplog.text
+
+
+# The pre-clone pass cannot derive anything - warning from it would train operators
+# to ignore the warning that means a credential was withheld
+@patch("ctl.util.git.GithubService")
+@patch("ctl.util.git.GitlabService")
+def test_git_manager_does_not_warn_before_the_origin_is_known(
+    mock_gitlab_service, mock_github_service, git_repo_with_origin, monkeypatch, caplog
+):
+    monkeypatch.setenv("GITLAB_TOKEN", "env_gitlab_token")
+    tmp_dir, _ = git_repo_with_origin("https://gitlab.example.com/group/repo.git")
+
+    mock_gitlab_service.return_value = MagicMock()
+
+    # this is the `--checkout-path` shape: no url passed, it comes off the checkout
+    with caplog.at_level(logging.WARNING, logger="ctl.util.git"):
+        git_manager = GitManager(url=None, directory=tmp_dir)
+
+    assert caplog.text == ""
+    assert git_manager.services.gitlab is not None
+    mock_gitlab_service.assert_called_once_with(
+        token="env_gitlab_token", instance_url="https://gitlab.example.com"
+    )
+
+
+# Tokens must not be rendered by an incidental repr - the manager logs the config
+# object at debug level
+def test_repository_config_repr_hides_tokens():
+    config = RepositoryConfig(
+        gitlab_url="https://gitlab.example.com",
+        gitlab_token="secret-gitlab-token",
+        github_token="secret-github-token",
+    )
+
+    assert "secret-gitlab-token" not in repr(config)
+    assert "secret-github-token" not in repr(config)
+    assert "https://gitlab.example.com" in repr(config)
 
 
 # Test that a GitManager instance can sync with a "remote" repository

@@ -15,7 +15,6 @@ import uuid
 from collections.abc import Callable
 
 import git
-import munge
 import pydantic
 from git import GitCommandError
 from ogr.abstract import MergeCommitStatus, PRStatus
@@ -63,15 +62,182 @@ class MergeNotPossible(OSError):
 class RepositoryConfig(pydantic.BaseModel):
     """
     Repository config model
+
+    This is *operator* configuration: it is populated from the environment, from
+    command line arguments and by calling code.
+
+    It is deliberately never populated from content inside the repository that ctl
+    operates on. A file in the repository must not be able to name the host an
+    ambient credential is sent to, nor supply the credentials ctl acts with - that
+    is a confused deputy, and repository content is untrusted input. Do not add a
+    mechanism that reads any of these values back out of a checkout.
     """
 
     gitlab_url: str = pydantic.Field(default_factory=lambda: os.getenv("GITLAB_URL"))
+
+    # repr=False: pydantic renders field values in the model repr, so any incidental
+    # `f"{config}"` - a log line, an exception message, a debugger - would otherwise
+    # write the tokens out in plaintext
     gitlab_token: str = pydantic.Field(
-        default_factory=lambda: os.getenv("GITLAB_TOKEN")
+        default_factory=lambda: os.getenv("GITLAB_TOKEN"), repr=False
     )
     github_token: str = pydantic.Field(
-        default_factory=lambda: os.getenv("GITHUB_TOKEN")
+        default_factory=lambda: os.getenv("GITHUB_TOKEN"), repr=False
     )
+
+
+# ogr's GithubService is github.com only - `GithubService.instance_url` is hardcoded
+# to `https://github.com` - so an origin on a github host belongs to the github
+# service and a gitlab service must never be derived from it
+GITHUB_HOST = "github.com"
+
+
+def is_github_host(host: str) -> bool:
+    """
+    Returns True if the host belongs to github (`github.com` or any subdomain of it,
+    such as `ssh.github.com` or `gist.github.com`).
+    """
+
+    if not host:
+        return False
+
+    return host == GITHUB_HOST or host.endswith(f".{GITHUB_HOST}")
+
+
+def _split_repository_url(url: str, allow_scp: bool = True) -> tuple | None:
+    """
+    Splits a repository url into `(scheme, host, port)`, or returns `None` when it
+    does not name a usable host. The host is normalized (lower cased, trailing root
+    dot removed) and carries no credentials.
+
+    **Arguments**
+
+    - url: repository url
+    - allow_scp: accept scp style remotes (`git@host:path`). Off for operator
+      supplied values, where a missing scheme is a mistake rather than a remote form
+
+    **Returns**
+
+    `(scheme, host, port)` (`tuple`) or `None`
+    """
+
+    if not url:
+        return None
+
+    if "://" in url:
+        parsed = urllib.parse.urlparse(url)
+
+        try:
+            host, port = parsed.hostname, parsed.port
+        except ValueError:
+            # malformed authority - an unbracketed ipv6 literal, a port that is not
+            # a number or out of range
+            return None
+
+        if not host:
+            return None
+
+        # http stays http (local instances), everything else - including the ssh
+        # and git schemes a remote may use - addresses the api over https. A port is
+        # only carried over for http(s): an ssh port says nothing about where the
+        # api lives
+        if parsed.scheme in ("http", "https"):
+            return (parsed.scheme, _normalize_host(host), port)
+
+        return ("https", _normalize_host(host), None)
+
+    if not allow_scp:
+        return None
+
+    # scp style remote: [user@]host:path - the host part must not contain a slash,
+    # which is what separates it from a plain filesystem path
+    host_part, separator, path = url.partition(":")
+
+    if not separator or not path or "/" in host_part:
+        return None
+
+    host = host_part.rsplit("@", 1)[-1]
+
+    if not host:
+        return None
+
+    return ("https", _normalize_host(host), None)
+
+
+def _normalize_host(host: str) -> str:
+    """
+    Returns the host lower cased and without a trailing root dot, so that
+    `GitHub.com` and `github.com.` cannot slip past a host comparison.
+    """
+
+    return host.lower().rstrip(".")
+
+
+def sanitize_url(url: str) -> str:
+    """
+    Returns the url with any embedded credentials removed, so it is safe to log.
+
+    Repository urls routinely carry credentials (`https://oauth2:token@host/path`).
+    """
+
+    if not url:
+        return url
+
+    parsed = urllib.parse.urlparse(url)
+
+    if parsed.netloc:
+        if "@" not in parsed.netloc:
+            return url
+
+        return parsed._replace(netloc=parsed.netloc.rsplit("@", 1)[1]).geturl()
+
+    # scheme-less form (scp style remote, or a bare `user:secret@host:path`) - urlparse
+    # finds no netloc to clean, so strip the userinfo off the leading segment
+    host_part, separator, path = url.partition(":")
+
+    if not separator or "@" not in url:
+        return url
+
+    if "@" in host_part:
+        return f"{host_part.rsplit('@', 1)[1]}{separator}{path}"
+
+    # `user:secret@host:path` - the credential spans the first separator
+    userinfo, _, remainder = url.partition("@")
+
+    return remainder if ":" in userinfo else url
+
+
+def instance_url_from_repository_url(url: str, allow_scp: bool = True) -> str | None:
+    """
+    Returns the scheme and host (and port, for http/https) of a repository url, in
+    the form a service instance url wants, or `None` if the url does not name a host.
+
+    Handles regular urls (`https://host/path`, `ssh://git@host:22/path`) as well as
+    scp style git remotes (`git@host:path`). Any credentials embedded in the url are
+    dropped.
+
+    **Arguments**
+
+    - url: repository url
+    - allow_scp: accept scp style remotes. Off for operator supplied values
+
+    **Returns**
+
+    instance url (`str`) or `None`
+    """
+
+    split = _split_repository_url(url, allow_scp=allow_scp)
+
+    if not split:
+        return None
+
+    scheme, host, port = split
+
+    # ipv6 literals have to go back into the url bracketed
+    if ":" in host:
+        host = f"[{host}]"
+
+    return f"{scheme}://{host}" + (f":{port}" if port else "")
 
 
 class Services:
@@ -90,8 +256,8 @@ class GitManager:
     - default_branch: The default branch to use
     - default_service: The default service to use (github or gitlab)
     - log: The logger to use
-    - repository_config_filename: The name of the repository config file to look for
-        within the repository once it's checked out.
+    - repository_config_filename: **Deprecated and ignored.** ctl no longer reads
+        configuration from the content of the repository it operates on.
     - allow_unsafe: Whether to allow unsafe operations such as hard resets
     - submodules: Whether to initialize submodules
 
@@ -106,9 +272,9 @@ class GitManager:
     - default_service: The default service to use (github or gitlab)
     - services: The services available for this repository
     - log: The logger to use
-    - repository_config_filename: The name of the repository config file to look for
-        within the repository once it's checked out.
-    - repository_config: The repository config
+    - repository_config_filename: **Deprecated and ignored**, retained so existing
+        callers keep working.
+    - repository_config: The operator supplied repository config
     - allow_unsafe: Whether to allow unsafe operations such as hard resets
     - submodules: Whether to initialize submodules
 
@@ -131,7 +297,7 @@ class GitManager:
         default_branch: str = "main",
         default_service: str = None,
         log: object = None,
-        repository_config_filename="config",
+        repository_config_filename=None,
         allow_unsafe: bool = True,
         submodules: bool = True,
         repository_config: RepositoryConfig = None,
@@ -151,9 +317,25 @@ class GitManager:
 
         self.log = log if log else logging.getLogger(__name__)
 
+        # retained so callers passing it keep working, but nothing reads the file:
+        # configuration is never taken from repository content (see RepositoryConfig)
         self.repository_config_filename = repository_config_filename
+
+        if repository_config_filename:
+            self.log.info(
+                f"`repository_config_filename` ({repository_config_filename}) is "
+                "deprecated and ignored - ctl no longer reads configuration from the "
+                "content of the repository it operates on. Set GITLAB_URL / "
+                "GITLAB_TOKEN / GITHUB_TOKEN in the environment, or pass "
+                "`repository_config`, instead"
+            )
+
+        # copied, never referenced: `init_services` resolves values into this object
+        # (including an instance url derived from *this* repository's origin), and a
+        # caller that reuses one config across repositories must not have the first
+        # repository's host applied to the second
         self.repository_config = (
-            repository_config if repository_config else RepositoryConfig()
+            repository_config.model_copy() if repository_config else RepositoryConfig()
         )
 
         self.init_repository()
@@ -253,7 +435,9 @@ class GitManager:
                 )
 
             env = os.environ.copy()
-            self.log.debug(f"Cloning repository from {self.url}: {self.directory}")
+            self.log.debug(
+                f"Cloning repository from {sanitize_url(self.url)}: {self.directory}"
+            )
             self.repo = git.Repo.clone_from(
                 self.url,
                 self.directory,
@@ -268,13 +452,13 @@ class GitManager:
         self.set_origin()
 
         self.log.debug(
-            f"Repository initialized at {self.directory} from {self.url} - origin set to {self.origin.name if self.origin else None}"
+            f"Repository initialized at {self.directory} from {sanitize_url(self.url)} - "
+            f"origin set to {self.origin.name if self.origin else None}"
         )
 
-        # load the real repo config from the cloned repo
-        self.load_repository_config(self.repository_config_filename)
-
-        # re-init services with the newly loaded config
+        # re-init services now that the origin is known: when the operator has not
+        # named a gitlab instance, it is derived from the origin (see
+        # `derive_gitlab_url`). Nothing is read out of the checkout itself.
         self.init_services(self.repository_config)
 
     def init_submodules(self):
@@ -296,30 +480,6 @@ class GitManager:
         self.log.debug("Updating submodules")
         self.repo.git.submodule("update")
 
-    def load_repository_config(self, config_filename: str):
-        """
-        Will look for self.repository_config_filename in the repository and load it
-        """
-
-        try:
-            config_dict = munge.load_datafile(
-                config_filename,
-                search_path=self.directory,
-            )
-        except OSError:
-            # no config file found
-            config_dict = None
-
-        if config_dict:
-            self.repository_config = RepositoryConfig(**config_dict)
-            self.log.debug(
-                f"Loaded repository config from {config_filename} - {self.repository_config}"
-            )
-        elif not self.repository_config:
-            self.log.warning(
-                f"Could not find repository config file: `{config_filename}`"
-            )
-
     def set_origin(self):
         """
         Sets the origin repository object, which will hold a name
@@ -334,39 +494,142 @@ class GitManager:
         if not self.origin:
             remote = next(iter(self.repo.remotes or []), None)
             raise ValueError(
-                f"Could not find origin for repository {self.url} (first is {remote.url})"
+                f"Could not find origin for repository {sanitize_url(self.url)} "
+                f"(first is {sanitize_url(remote.url) if remote else None})"
             )
+
+    def derive_gitlab_url(self) -> str | None:
+        """
+        Derives the gitlab instance url from the repository's own origin.
+
+        This is the fallback for when the operator has not named an instance: the
+        only host ctl may send an ambient credential to is the host the repository
+        was cloned from.
+
+        Fails closed - when the origin cannot be determined unambiguously, does not
+        name a host, or is a github host, `None` is returned and no gitlab service
+        will be created. It never falls back to a default host.
+
+        **Returns**
+
+        instance url (`str`) or `None`
+        """
+
+        if self.origin and self.origin.url:
+            urls = [self.origin.url]
+            source = f"origin remote `{self.origin.name}`"
+        elif self.url:
+            urls = [self.url]
+            source = "repository url"
+        elif self.repo is not None and self.repo.remotes:
+            urls = [remote.url for remote in self.repo.remotes]
+            source = "repository remotes"
+        else:
+            self.log.warning(
+                "No gitlab instance url configured and none could be derived: the "
+                "repository has no origin, no url and no remotes - not initializing "
+                "a gitlab service. Set GITLAB_URL to name an instance explicitly"
+            )
+            return None
+
+        splits = {_split_repository_url(url) for url in urls}
+        inspected = ", ".join(sorted(sanitize_url(url) for url in urls))
+
+        if len(splits) > 1:
+            self.log.warning(
+                "No gitlab instance url configured and the repository's remotes do "
+                f"not agree on one ({source}: {inspected}) - not initializing a "
+                "gitlab service. Set GITLAB_URL to name an instance explicitly"
+            )
+            return None
+
+        split = splits.pop()
+
+        if not split:
+            self.log.warning(
+                "No gitlab instance url configured and none could be derived: "
+                f"{source} ({inspected}) does not name a host - not initializing a "
+                "gitlab service. Set GITLAB_URL to name an instance explicitly"
+            )
+            return None
+
+        if is_github_host(split[1]):
+            self.log.warning(
+                f"No gitlab instance url configured and {source} ({inspected}) is a "
+                "github host - not initializing a gitlab service"
+            )
+            return None
+
+        return instance_url_from_repository_url(urls[0])
 
     def init_services(self, config: RepositoryConfig):
         """
         Initializes the services for the repository
+
+        `config` is operator configuration - environment, command line arguments or
+        caller supplied (see `RepositoryConfig`). Nothing that comes out of the
+        repository itself may influence which host a credential is sent to.
         """
         # why do we have 2 configs?
         if config.gitlab_url != self.repository_config.gitlab_url:
             raise ValueError("config passed is not repo config")
 
         # argparse seems to be interfering with the GITLAB_URL var
-        gitlab_url = os.getenv("GITLAB_URL") or config.gitlab_url
+        env_gitlab_url = os.getenv("GITLAB_URL")
+        gitlab_url = env_gitlab_url or config.gitlab_url
         gitlab_token = os.getenv("GITLAB_TOKEN") or config.gitlab_token
+        github_token = os.getenv("GITHUB_TOKEN") or config.github_token
+
+        gitlab_url_source = (
+            "GITLAB_URL environment variable" if env_gitlab_url else "operator config"
+        )
+
+        # `init_repository` calls this once before the repository exists (to set up
+        # auth for the clone) and again once the origin is known. Only the second
+        # pass can derive anything, and warning from the first would train operators
+        # to ignore the warning that means a credential was withheld
+        can_derive = self.repo is not None
+
+        if not gitlab_url and gitlab_token and can_derive:
+            # the operator has a gitlab credential but named no instance: derive it
+            # from the repository's own origin, so the token can only ever go to the
+            # host the repository was cloned from
+            gitlab_url = self.derive_gitlab_url()
+            gitlab_url_source = "the repository's clone origin"
+
         # update repo config
         self.repository_config.gitlab_token = gitlab_token
+        self.repository_config.github_token = github_token
         self.repository_config.gitlab_url = gitlab_url
 
         if gitlab_url and not self.services.gitlab:
-            # instance_url wants only the scheme and host
-            # so we need to parse it out of the full url
-            instance_url = (
-                urllib.parse.urlparse(gitlab_url).scheme
-                + "://"
-                + urllib.parse.urlparse(gitlab_url).netloc
+            # instance_url wants only the scheme and host, so we need to parse it out
+            # of the full url. `allow_scp` is off: an operator supplied value without
+            # a scheme is a mistake, and reading it as an scp style remote would
+            # silently drop a port (`gitlab.internal:8443`)
+            instance_url = instance_url_from_repository_url(gitlab_url, allow_scp=False)
+
+            if not instance_url:
+                # never fall through to a service with no instance url: ogr defaults
+                # that to https://gitlab.com, which is exactly the wrong host to send
+                # an operator's token to
+                raise ValueError(
+                    f"Could not determine a gitlab instance url from "
+                    f"`{sanitize_url(gitlab_url)}` ({gitlab_url_source}) - it needs "
+                    "to be a full url, e.g. https://gitlab.example.com"
+                )
+
+            # the operator needs to be able to see which host received their token
+            self.log.info(
+                f"Using gitlab instance {instance_url} (from {gitlab_url_source})"
             )
 
             self.services.gitlab = GitlabService(
-                token=config.gitlab_token,
+                token=gitlab_token,
                 instance_url=instance_url,
             )
-        if config.github_token and not self.services.github:
-            self.services.github = GithubService(token=config.github_token)
+        if github_token and not self.services.github:
+            self.services.github = GithubService(token=github_token)
 
         if self.default_service and not getattr(self.services, self.default_service):
             raise ValueError(
@@ -1280,9 +1543,10 @@ class TemporaryGitContext:
             default_branch=self._initial_git_manager.default_branch,
             default_service=self._initial_git_manager.default_service,
             log=self._initial_git_manager.log,
-            repository_config_filename=self._initial_git_manager.repository_config_filename,
             allow_unsafe=self._initial_git_manager.allow_unsafe,
             submodules=self._initial_git_manager.submodules,
+            # operator config only - carrying this over cannot reintroduce a
+            # repository supplied host, because nothing puts one in it
             repository_config=self._initial_git_manager.repository_config,
         )
 
