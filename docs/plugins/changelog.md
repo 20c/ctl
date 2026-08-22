@@ -50,6 +50,27 @@ operation
 ctl changelog release 1.0.0
 ```
 
+#### What a release rewrites
+
+A release rewrites only the lines it changes: the residual section is reset in
+place and the new release block is inserted at its sorted position. Everything
+else in a `CHANGELOG.yaml` - comments, indentation, hand wrapped entries,
+quoting, and the order of the blocks already in the file - is left exactly as
+it was.
+
+Two things follow from that:
+
+- the file is **not** globally re-sorted on every release. A changelog whose
+  blocks are out of order keeps the order its author gave it; only the new
+  block is placed by sort order. The generated `CHANGELOG.md` is sorted
+  either way
+- a comment **inside** the residual section annotates entries that are moving
+  into the release, and cannot come along. Those are reported by file and line
+  as they are dropped, rather than disappearing quietly
+
+A `CHANGELOG.json` data file is written whole, as before - there are no
+comments in it to preserve.
+
 ### Changelog fragments (changelog.d)
 
 Instead of collecting unreleased changes in the `Unreleased` section of the

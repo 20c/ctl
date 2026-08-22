@@ -1,0 +1,17 @@
+fixed:
+- '`ctl changelog release` no longer deletes the comments in a CHANGELOG.yaml
+  or reformats the whole file. It used to load the changelog, mutate the parsed
+  structure and dump all of it back out, which drops every comment (YAML
+  round-trips do not carry them) and rewrote list indentation, string wrapping
+  and non-ASCII escaping across sections the release never touched. Only the
+  lines the release actually changes are rewritten now: the residual section is
+  reset in place and the new release block is inserted at its sorted position'
+- 'a comment inside the residual `Unreleased` section annotates entries that
+  move into the release and cannot come along - it is now reported by file and
+  line as it is dropped instead of disappearing silently'
+changed:
+- 'a release no longer re-sorts the whole changelog data file. A changelog
+  whose blocks are out of order keeps the order its author gave it, and only
+  the newly written block is placed by sort order - re-sorting rewrote blocks
+  the release had nothing to do with. The generated CHANGELOG.md is sorted
+  either way, and a CHANGELOG.json data file is still written whole'

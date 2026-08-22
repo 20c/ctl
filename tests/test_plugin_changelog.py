@@ -1,8 +1,12 @@
+import json
+import logging
 import os
 import shutil
 import subprocess
 
+import munge
 import pytest
+import yaml
 
 import ctl
 from ctl.exceptions import PluginOperationStopped
@@ -1219,3 +1223,351 @@ def test_check_ignores_ambient_git_env(tmpdir, ctlr, monkeypatch):
     monkeypatch.setenv("GIT_DIR", ".git")
 
     plugin.check(data_file)
+
+
+# release write fidelity (#32)
+#
+# `release` used to load the changelog, mutate the parsed structure and dump
+# the whole thing back out. Every comment in the file was deleted by that
+# round trip, and list indentation, string wrapping and non-ascii escaping
+# changed across sections the release never touched. Only the lines the
+# release actually changes are rewritten now, so what these tests pin is the
+# bytes of everything else.
+
+
+CHANGELOG_YML_COMMENTED = """\
+# project change log
+#
+# New entries go in changelog.d/ fragments - do not append here.
+1.1.0:
+  added:
+  - a long entry that is wrapped by hand across two lines rather than
+    left to the writer to fold wherever it likes
+  fixed:
+  - 'an entry that is quoted because it starts with a `#` marker: `#31`'
+
+# the first release, kept for the record
+1.0.0:
+  added:
+  - initial release
+"""
+
+
+def read(path):
+    with open(path, newline="") as fh:
+        return fh.read()
+
+
+def block_of(text, key):
+    """
+    returns the lines of one top level block, key line included
+    """
+
+    lines = text.splitlines()
+    start = lines.index(f"{key}:")
+    end = start + 1
+
+    while end < len(lines) and (
+        not lines[end] or lines[end].startswith((" ", "-", "#"))
+    ):
+        end += 1
+
+    return lines[start:end]
+
+
+def test_release_leaves_untouched_blocks_byte_identical(tmpdir, ctlr):
+    """
+    the release moves the residual entries into a new block and touches
+    nothing else - every release already in the file comes out as the exact
+    bytes it went in as, comments, hand wrapping and quoting included
+
+    this is the regression test for #32: the previous writer reserialized
+    the whole document, so both existing blocks came out reformatted and
+    all three comments were deleted
+    """
+
+    changelog = f"{CHANGELOG_YML_COMMENTED}"
+    unreleased = "Unreleased:\n  added:\n  - a new entry\n"
+
+    plugin, data_file, _, _ = setup_fragments(tmpdir, ctlr, f"{unreleased}{changelog}")
+
+    before = read(data_file)
+    plugin.release("1.2.0", data_file)
+    after = read(data_file)
+
+    for key in ("1.1.0", "1.0.0"):
+        assert block_of(after, key) == block_of(before, key)
+
+    # every comment survives, including the one between two version blocks
+    for comment in (
+        "# project change log",
+        "# New entries go in changelog.d/ fragments - do not append here.",
+        "# the first release, kept for the record",
+    ):
+        assert comment in after
+
+    # and the release itself happened
+    assert yaml.safe_load(after)["1.2.0"] == {"added": ["a new entry"]}
+    assert yaml.safe_load(after)["Unreleased"] == {
+        section: [] for section in CHANGELOG_SECTIONS
+    }
+
+
+def test_release_new_block_matches_the_codec_writer(tmpdir, ctlr):
+    """
+    the block a release writes is rendered by the same codec that wrote the
+    whole file before, so a changelog carrying no comments does not churn:
+    what lands is what the previous writer would have written
+    """
+
+    plugin, data_file, _, _ = setup_fragments(tmpdir, ctlr, CHANGELOG_YML_UNRELEASED)
+
+    plugin.release("1.1.0", data_file)
+    after = read(data_file)
+
+    expected = munge.get_codec("yaml")().dumps(
+        {"1.1.0": {"added": ["unreleased added entry"]}}
+    )
+
+    assert "\n".join(block_of(after, "1.1.0")) + "\n" == expected
+
+
+def test_release_twice_leaves_the_first_release_alone(tmpdir, ctlr):
+    """
+    rolling again must not re-touch what the previous roll wrote - a writer
+    that reformats on every pass produces a whole-file diff for each release
+    """
+
+    plugin, data_file, _, fragments_dir = setup_fragments(
+        tmpdir,
+        ctlr,
+        f"Unreleased:\n  added:\n  - first entry\n{CHANGELOG_YML_COMMENTED}",
+    )
+
+    plugin.release("1.2.0", data_file)
+    after_first = read(data_file)
+
+    write_file(
+        os.path.join(fragments_dir, "001-second.yaml"), "fixed:\n- second entry\n"
+    )
+    plugin.release("1.3.0", data_file)
+    after_second = read(data_file)
+
+    assert block_of(after_second, "1.2.0") == block_of(after_first, "1.2.0")
+    assert block_of(after_second, "1.1.0") == block_of(after_first, "1.1.0")
+    assert block_of(after_second, "1.0.0") == block_of(after_first, "1.0.0")
+
+
+def test_release_warns_about_comments_it_cannot_move(tmpdir, ctlr, caplog):
+    """
+    a comment inside the residual section annotates entries that are moving
+    into the release, and only the entries move. That loss is the one this
+    writer cannot avoid, so it is named - file and line - rather than done
+    silently
+    """
+
+    changelog = (
+        "Unreleased:\n"
+        "  added:\n"
+        "  # this note is about the entry below it\n"
+        "  - an entry\n"
+        "1.0.0:\n"
+        "  added:\n"
+        "  - initial release\n"
+    )
+
+    plugin, data_file, _, _ = setup_fragments(tmpdir, ctlr, changelog)
+
+    with caplog.at_level(logging.WARNING):
+        plugin.release("1.1.0", data_file)
+
+    warnings = [
+        record.getMessage()
+        for record in caplog.records
+        if record.levelno >= logging.WARNING
+    ]
+
+    assert any(
+        f"{data_file}:3" in message
+        and "this note is about the entry below it" in message
+        for message in warnings
+    ), warnings
+
+
+def test_release_does_not_warn_about_a_hash_in_an_entry(tmpdir, ctlr, caplog):
+    """
+    a `#` inside an entry is data, not a comment - deciding by pattern
+    rather than by what the parser reports would warn about a changelog
+    entry that references an issue number
+    """
+
+    changelog = (
+        "Unreleased:\n"
+        "  fixed:\n"
+        "  - 'fixed the thing, see `#31`'\n"
+        "1.0.0:\n"
+        "  added:\n"
+        "  - initial release\n"
+    )
+
+    plugin, data_file, _, _ = setup_fragments(tmpdir, ctlr, changelog)
+
+    with caplog.at_level(logging.WARNING):
+        plugin.release("1.1.0", data_file)
+
+    assert not [
+        record for record in caplog.records if record.levelno >= logging.WARNING
+    ]
+
+
+def test_release_preserves_missing_trailing_newline(tmpdir, ctlr):
+    """
+    a file that does not end with a newline must not acquire one, and the
+    appended block must not be glued onto its last line
+    """
+
+    changelog = "Unreleased:\n  added:\n  - a new entry\n1.0.0:\n  added:\n  - initial"
+
+    plugin, data_file, _, _ = setup_fragments(tmpdir, ctlr, changelog)
+
+    plugin.release("1.1.0", data_file)
+    after = read(data_file)
+
+    assert not after.endswith("\n")
+    assert yaml.safe_load(after)["1.1.0"] == {"added": ["a new entry"]}
+    assert yaml.safe_load(after)["1.0.0"] == {"added": ["initial"]}
+
+
+def test_release_preserves_crlf_line_endings(tmpdir, ctlr):
+    """
+    a CRLF changelog stays CRLF - rewriting it as LF throughout is the
+    whole-file diff this writer exists to avoid
+    """
+
+    changelog = CHANGELOG_YML_UNRELEASED.replace("\n", "\r\n")
+
+    plugin, data_file, _, _ = setup_fragments(tmpdir, ctlr, changelog)
+
+    plugin.release("1.1.0", data_file)
+    after = read(data_file)
+
+    assert "\r\n" in after
+    assert "\n" not in after.replace("\r\n", "")
+    assert yaml.safe_load(after)["1.1.0"] == {"added": ["unreleased added entry"]}
+
+
+def test_release_with_unreleased_as_the_last_block(tmpdir, ctlr):
+    """
+    the residual section does not have to be the first block - when it is
+    the last one there is no following key to bound it, and the new release
+    is inserted above it by sort order
+    """
+
+    changelog = (
+        "1.0.0:\n"
+        "  added:\n"
+        "  - initial release\n"
+        "Unreleased:\n"
+        "  added:\n"
+        "  - a new entry\n"
+    )
+
+    plugin, data_file, _, _ = setup_fragments(tmpdir, ctlr, changelog)
+
+    plugin.release("1.1.0", data_file)
+    after = read(data_file)
+
+    assert yaml.safe_load(after)["1.1.0"] == {"added": ["a new entry"]}
+    assert yaml.safe_load(after)["Unreleased"] == {
+        section: [] for section in CHANGELOG_SECTIONS
+    }
+    # existing block untouched, and the file still parses as one mapping
+    assert block_of(after, "1.0.0") == ["1.0.0:", "  added:", "  - initial release"]
+
+
+def test_release_with_empty_unreleased_and_fragments(tmpdir, ctlr):
+    """
+    in fragment mode the residual section is routinely empty - the release
+    is collected from the fragments and the empty block is still reset in
+    place
+    """
+
+    plugin, data_file, _, _ = setup_fragments(
+        tmpdir,
+        ctlr,
+        CHANGELOG_YML_EMPTY_UNRELEASED,
+        {"001-entry.yaml": "fixed:\n- a fragment entry\n"},
+    )
+
+    plugin.release("1.1.0", data_file)
+    after = read(data_file)
+
+    assert yaml.safe_load(after)["1.1.0"] == {"fixed": ["a fragment entry"]}
+    assert yaml.safe_load(after)["Unreleased"] == {
+        section: [] for section in CHANGELOG_SECTIONS
+    }
+
+
+def test_release_does_not_reorder_an_unsorted_changelog(tmpdir, ctlr):
+    """
+    the file is no longer globally re-sorted on every release. A changelog
+    whose blocks are out of order keeps the order its author gave it, and
+    only the new block is placed by sort order - re-sorting the whole file
+    is a diff nobody asked for, and the markdown is sorted when it is
+    generated either way
+    """
+
+    changelog = (
+        "Unreleased:\n"
+        "  added:\n"
+        "  - a new entry\n"
+        "1.0.0:\n"
+        "  added:\n"
+        "  - initial release\n"
+        "1.0.5:\n"
+        "  added:\n"
+        "  - out of order on purpose\n"
+    )
+
+    plugin, data_file, md_file, _ = setup_fragments(tmpdir, ctlr, changelog)
+
+    plugin.release("1.1.0", data_file)
+    after = read(data_file)
+
+    assert [key for key in yaml.safe_load(after)] == [
+        "Unreleased",
+        "1.1.0",
+        "1.0.0",
+        "1.0.5",
+    ]
+
+    # the markdown is generated in sorted order regardless
+    with open(md_file) as fh:
+        md = fh.read()
+
+    assert md.index("## 1.1.0") < md.index("## 1.0.5") < md.index("## 1.0.0")
+
+
+def test_release_json_data_file_still_uses_the_codec(tmpdir, ctlr):
+    """
+    only the yaml write path splices - a json changelog has no comments to
+    preserve and keeps the whole-file codec write
+    """
+
+    project_dir = os.path.join(f"{tmpdir}", "json_project")
+    data_file = os.path.join(project_dir, "CHANGELOG.json")
+    md_file = os.path.join(project_dir, "CHANGELOG.md")
+
+    write_file(
+        data_file,
+        '{"Unreleased": {"added": ["a new entry"]}, "1.0.0": {"added": ["initial"]}}',
+    )
+
+    plugin = instantiate(tmpdir, ctlr, data_file=data_file, md_file=md_file)
+    plugin.release("1.1.0", data_file)
+
+    with open(data_file) as fh:
+        written = json.load(fh)
+
+    assert written["1.1.0"] == {"added": ["a new entry"]}
+    assert written["Unreleased"] == {section: [] for section in CHANGELOG_SECTIONS}
