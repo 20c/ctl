@@ -1,0 +1,59 @@
+# Pre-tag gate. Mirrors .github/workflows/tests.yml (the `checks` job of the
+# release workflow) so a green pipeline here predicts a green release checks
+# job on the GitHub mirror — the tree gets linted and tested BEFORE a tag
+# makes it immutable. Lint, then tests; nothing is built or published.
+#
+# Deliberate differences from tests.yml: no Codecov upload (no token here,
+# and the release path skips it anyway) and `uv sync --locked`: GitHub's bare
+# `uv sync` re-resolves, so a pyproject.toml constraint bumped without
+# `uv lock` is exactly where the two sides would diverge. --locked fails the
+# job when the lock no longer matches pyproject.toml (--frozen would not).
+
+# Every branch push and every merge request, like tests.yml's `branches: ["**"]`:
+# a tag is cut from whatever branch the release prepares on, and a SHA with no
+# pipeline reads as "gate not applicable". A branch with an open MR gets one
+# pipeline (the MR's), not two.
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+stages:
+  - lint
+  - test
+
+variables:
+  UV_LOCKED: "1"
+  UV_CACHE_DIR: "$CI_PROJECT_DIR/.uv-cache"
+
+default:
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends git
+    - pip install --quiet uv
+    - uv sync --all-extras
+  cache:
+    key: uv
+    paths:
+      - .uv-cache/
+
+linting:
+  stage: lint
+  image: python:3.12-slim
+  script:
+    - uv run ruff check .
+    - uv run ruff format --check .
+
+test:
+  stage: test
+  needs: [linting]
+  image: python:$PYTHON_VERSION-slim
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+  script:
+    - git config --global user.email "ci@20c.com"
+    - git config --global user.name "CI Runner"
+    - uv run pytest --cov=src --cov-report=term-missing
+  coverage: '/^TOTAL.*\s+(\d+%)$/'

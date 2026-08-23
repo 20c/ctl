@@ -13,6 +13,9 @@
 - `ctl changelog check` operation - checks that the current branch touches the changelog (fragments or data file) for use as a CI gate
 - `ctl version set <version>` writes a version to the repository's version files with no git operations at all - no pull, commit, tag or push. This is the operation to use when the release is driven outside of ctl, where a commit or tag from ctl would bypass the caller's own gates
 - `ctl version bump --no-git` performs a semantic bump the same way, writing the version files without any git operations
+- ctl releases are published to PyPI by a GitHub Actions workflow triggered by a `v*` tag, using trusted publishing (OIDC), so the release path holds no PyPI API token
+- each release also gets a GitHub Release with the sdist and wheel attached
+- GitLab CI pipeline runs ruff and the test suite on every branch push and merge request, gating the tree before it is tagged
 ### Fixed
 - ephemeral git context push rejection when concurrent processes push to the same branch - pull before push to integrate remote changes
 - replaced deprecated pkg_resources with importlib.metadata
@@ -34,6 +37,7 @@
 - the `--init` flag now takes effect - it parsed and was then ignored, so the flag the "Ctl/VERSION file does not exist" error recommends did not actually work
 - `ctl changelog release` no longer deletes the comments in a CHANGELOG.yaml or reformats the whole file. It used to load the changelog, mutate the parsed structure and dump all of it back out, which drops every comment (YAML round-trips do not carry them) and rewrote list indentation, string wrapping and non-ASCII escaping across sections the release never touched. Only the lines the release actually changes are rewritten now: the residual section is reset in place and the new release block is inserted at its sorted position
 - a comment inside the residual `Unreleased` section annotates entries that move into the release and cannot come along - it is now reported by file and line as it is dropped instead of disappearing silently
+- the local gate and CI now run the same uv.lock-resolved ruff - pre-commit uses a local `uv run ruff` hook instead of a separately pinned mirror, so the two can no longer drift (#43)
 ### Changed
 - migrated from Poetry to modern pyproject.toml with hatchling build backend
 - migrated from black/isort/flake8/pyupgrade to ruff for linting and formatting

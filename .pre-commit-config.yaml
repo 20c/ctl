@@ -11,12 +11,23 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-added-large-files
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.4
+  # ruff runs from the project environment (uv.lock-resolved) rather than a
+  # separately pinned pre-commit mirror, so the local gate, GitLab CI and the
+  # GitHub checks job are all definitionally the same ruff.
+  - repo: local
     hooks:
       - id: ruff
-        args: [--fix]
+        name: ruff check
+        entry: uv run --extra dev ruff check
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
       - id: ruff-format
+        name: ruff format
+        entry: uv run --extra dev ruff format --check
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
   # Temporarily disabled until type annotations are added
   # - repo: https://github.com/pre-commit/mirrors-mypy
   #   rev: v1.8.0
