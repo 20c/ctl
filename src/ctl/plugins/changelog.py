@@ -575,8 +575,7 @@ class ChangeLogPlugin(ExecutablePlugin):
 
         if not isinstance(node, yaml.MappingNode):
             raise ValueError(
-                "Changelog data file does not contain a mapping of versions "
-                "to changes"
+                "Changelog data file does not contain a mapping of versions to changes"
             )
 
         lines = text.splitlines(keepends=True)

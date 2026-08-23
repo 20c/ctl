@@ -487,7 +487,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=2.10.1" },
     { name = "pytest-filedata", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "pyyaml", marker = "extra == 'dev'", specifier = ">1" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.14.6" },
     { name = "semver", specifier = "<=3" },
     { name = "setuptools", marker = "extra == 'dev'", specifier = ">=65" },
     { name = "tmpl", marker = "extra == 'dev'", specifier = ">=1" },
