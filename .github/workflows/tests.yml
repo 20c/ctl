@@ -1,6 +1,13 @@
 name: tests
 
-on: [push, pull_request]
+on:
+  push:
+    # Branches only: on a v* tag this workflow runs via release.yml's
+    # `checks` job instead, so it is not run twice for one push.
+    branches: ["**"]
+  pull_request:
+  # Called by release.yml as the tests gate on a v* tag.
+  workflow_call:
 
 concurrency:
   group: check-${{ github.ref }}
@@ -51,8 +58,13 @@ jobs:
       - name: Run tests
         run: |
           uv run pytest --cov=src --cov-report=xml --cov-report=term-missing
-      # upload coverage stats
+      # upload coverage stats — strict on branch and PR runs, but NOT on the
+      # release path: this workflow is also release.yml's `checks` gate on a
+      # v* tag, and a Codecov outage or an expired token must not strand a
+      # publish for a tag that is already public. (`github.event_name` is the
+      # caller's event inside a called workflow, so the ref type is the test.)
       - name: Upload coverage
+        if: github.ref_type != 'tag'
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage.xml

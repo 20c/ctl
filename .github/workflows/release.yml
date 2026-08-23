@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  # Tests gate: the repository's own CI workflow, run on the tagged commit. A
+  # tag on a red commit fails here before anything is built or published.
+  checks:
+    uses: ./.github/workflows/tests.yml
+    secrets: inherit
+
+  # Build holds no token. `uv build` runs the tagged tree's own build hooks,
+  # so keeping it out of the job that mints the OIDC token means the
+  # privileged job runs no repository code at all and needs no checkout.
+  build:
+    name: Build sdist and wheel
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the tagged tree
+        uses: actions/checkout@v4
+        with:
+          # Full history so a tag-derived version (hatch-vcs, once adopted)
+          # resolves; a wrong version costs a release, this costs seconds.
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Until the version is derived from the tag, the tag and pyproject.toml
+      # must agree; a mismatch here is a release that would publish the wrong
+      # number. This step goes when hatch-vcs lands (#39).
+      - name: Check the tag matches the version in pyproject.toml
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          pyver=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          if [ "${tag}" != "${pyver}" ]; then
+            echo "::error::Tag version '${tag}' does not match pyproject.toml version '${pyver}'"
+            exit 1
+          fi
+          echo "Tag and pyproject version match: ${tag}"
+
+      - name: Reproducible timestamps
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Upload the built distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      # The required reviewer on this environment is the human gate; it lives
+      # in repository settings, not here.
+      name: pypi
+      url: https://pypi.org/project/ctl/
+    # A job-level block REPLACES the workflow-level one rather than merging
+    # with it. This job needs only the OIDC token: no checkout, no repository
+    # code, no `contents` scope at all.
+    permissions:
+      id-token: write
+    steps:
+      - name: Download the built distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      # SHA-pinned (version in the comment; bump both together). No
+      # `skip-existing`: PyPI refusing an upload for a version it already holds
+      # is the signal we want, not something to swallow. PEP 740 attestations
+      # are this action's default under trusted publishing; stated explicitly
+      # so a bump cannot silently drop them.
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+        with:
+          attestations: true
+
+  github-release:
+    name: Create the GitHub Release
+    # Runs only after PyPI has accepted the upload: a Release pointing at a
+    # version that failed to publish is worse than no Release.
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    # `contents: write` is what creates the Release, confined to this job.
+    # `actions: read` lets the artifact download below use the run-scoped
+    # REST listing (see the step comment).
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      # This step is the partial-release recovery path: "Re-run failed jobs"
+      # after publish-pypi succeeded re-runs only this job and must still
+      # find the `dist` artifact from the original attempt. Without a
+      # github-token the download uses the internal artifact backend scoped
+      # by the runtime token, which is attempt-sensitive and has 404'd in
+      # exactly this scenario (actions/download-artifact#486). Passing the
+      # token forces the run-scoped REST lookup, which is attempt-agnostic.
+      - name: Download the built distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.run_id }}
+
+      - name: Create the Release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
