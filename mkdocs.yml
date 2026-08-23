@@ -10,6 +10,7 @@ nav:
   - Plugin Events: events.md
   - Plugin Permissons: plugin_permissions.md
   - Config Templating: config_template.md
+  - Releasing: release.md
   - API Documenation:
     - ctl.auth: api/auth.md
     - ctl.plugins: api/ctl.plugins.md
