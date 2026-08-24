@@ -1,5 +1,0 @@
-added:
-- 'ctl releases are published to PyPI by a GitHub Actions workflow triggered by a
-  `v*` tag, using trusted publishing (OIDC), so the release path holds no PyPI
-  API token'
-- 'Each release also gets a GitHub Release with the sdist and wheel attached'

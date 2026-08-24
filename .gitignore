@@ -11,5 +11,9 @@
 cfg/
 coverage.xml
 dist/
+# GitLab CI puts uv's cache at $CI_PROJECT_DIR/.uv-cache (it has to be inside
+# the project dir to be cacheable), and hatchling's sdist takes everything
+# git does not ignore — an sdist carrying a cached venv fails to build at all.
+.uv-cache/
 build/
 site/

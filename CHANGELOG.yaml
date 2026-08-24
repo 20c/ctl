@@ -86,6 +86,8 @@ Unreleased:
   - the local gate and CI now run the same uv.lock-resolved ruff - pre-commit uses
     a local `uv run ruff` hook instead of a separately pinned mirror, so the two
     can no longer drift (#43)
+  - publishing a release to PyPI no longer fails on the metadata version of the built
+    distributions
   changed:
   - migrated from Poetry to modern pyproject.toml with hatchling build backend
   - migrated from black/isort/flake8/pyupgrade to ruff for linting and formatting
@@ -118,6 +120,8 @@ Unreleased:
     e.g. `https://gitlab.example.com`. A value without one previously produced a service
     pointed at the malformed url `"://"`; it now raises a `ValueError` naming the
     value and the expected form'
+  - ctl's build backend is pinned, so the metadata version of published ctl distributions
+    changes only deliberately
   deprecated:
   - '`GitManager(repository_config_filename=...)` is accepted but ignored, and logs
     a notice when passed. Set `GITLAB_URL` / `GITLAB_TOKEN` / `GITHUB_TOKEN` in the

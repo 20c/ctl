@@ -38,6 +38,7 @@
 - `ctl changelog release` no longer deletes the comments in a CHANGELOG.yaml or reformats the whole file. It used to load the changelog, mutate the parsed structure and dump all of it back out, which drops every comment (YAML round-trips do not carry them) and rewrote list indentation, string wrapping and non-ASCII escaping across sections the release never touched. Only the lines the release actually changes are rewritten now: the residual section is reset in place and the new release block is inserted at its sorted position
 - a comment inside the residual `Unreleased` section annotates entries that move into the release and cannot come along - it is now reported by file and line as it is dropped instead of disappearing silently
 - the local gate and CI now run the same uv.lock-resolved ruff - pre-commit uses a local `uv run ruff` hook instead of a separately pinned mirror, so the two can no longer drift (#43)
+- publishing a release to PyPI no longer fails on the metadata version of the built distributions
 ### Changed
 - migrated from Poetry to modern pyproject.toml with hatchling build backend
 - migrated from black/isort/flake8/pyupgrade to ruff for linting and formatting
@@ -50,6 +51,7 @@
 - BREAKING: when no GitLab instance is named by the operator, the instance url is now derived from the repository's own clone origin, so an ambient token can only ever reach the host the repository was cloned from. Derivation handles https, ssh and scp style (`git@host:path`) origins, and fails closed - no origin, disagreeing remotes, an origin that names no host, or a github host produces no service at all rather than a guess, with a warning naming what was inspected. The instance url and where it came from are logged at INFO so it is visible on a normal run which host received the token
 - BREAKING: because a GitLab service is now created in cases where none was created before, a caller that has both `GITHUB_TOKEN` and `GITLAB_TOKEN` set, no `GITLAB_URL`, and no `default_service`, and that operates a repository whose origin is not a github host, will now get `ValueError("Multiple services available, please specify one as default via default_service")` from `GitManager.service` where it previously got the github service. Set `default_service`
 - BREAKING: `GITLAB_URL` (and `--gitlab-url`) must be a full url with a scheme, e.g. `https://gitlab.example.com`. A value without one previously produced a service pointed at the malformed url `"://"`; it now raises a `ValueError` naming the value and the expected form
+- ctl's build backend is pinned, so the metadata version of published ctl distributions changes only deliberately
 ### Deprecated
 - `GitManager(repository_config_filename=...)` is accepted but ignored, and logs a notice when passed. Set `GITLAB_URL` / `GITLAB_TOKEN` / `GITHUB_TOKEN` in the environment, or pass `repository_config`, instead
 ### Removed
