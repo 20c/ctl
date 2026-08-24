@@ -23,6 +23,7 @@ workflow:
 stages:
   - lint
   - test
+  - build
 
 variables:
   UV_LOCKED: "1"
@@ -57,3 +58,28 @@ test:
     - git config --global user.name "CI Runner"
     - uv run pytest --cov=src --cov-report=term-missing
   coverage: '/^TOTAL.*\s+(\d+%)$/'
+
+# The half of the gate that predicts the *publish* step rather than the checks
+# job. `uv build` here is the same build the release workflow runs, and the two
+# checks below are the two ways a release dies after trusted publishing has
+# already authenticated — on a tag, which cannot be re-run to success (#44).
+# Doing them on every merge request is the whole point: a backend or metadata
+# drift fails a pipeline someone can fix, instead of burning a version.
+build:
+  stage: build
+  needs: [linting]
+  image: python:3.12-slim
+  script:
+    - uv build
+    # Asks the wheel which hatchling built it, rather than trusting that the
+    # build constraint applied.
+    - uv run python ci/check_build_constraint.py
+    # Builds a throwaway environment from the publish action's own
+    # requirements at the SHA release.yml pins, and checks with that — the
+    # publisher's verdict rather than an approximation of it, and nothing of
+    # ours to keep in step with it.
+    - uv run python ci/publisher_metadata_gate.py
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week

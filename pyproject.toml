@@ -45,12 +45,23 @@ dev = [
     # utilities
     "jinja2>=2",
     "tmpl>=1",
-    "twine>=3",
+    # A floor, not a pin: which twine actually runs comes from uv.lock. ctl's
+    # pypi plugin imports twine as a library and twine <7 rejects
+    # Metadata-Version 2.5, so an older one cannot publish what a current build
+    # backend produces (#46). Nothing here feeds the release gate — that builds
+    # its own environment from the publish action's requirements at the pinned
+    # action ref (ci/publisher_metadata_gate.py), so it cannot drift from the
+    # publisher no matter what this line says.
+    "twine>=7",
     "PyYAML>1",
     "tomlkit<1",
     "setuptools>=65",
     # linting and formatting
-    "ruff>=0.14.6",
+    # Floors only. The single source of the ruff version is uv.lock, and
+    # .pre-commit-config.yaml runs ruff out of this same environment, so the
+    # local gate, GitLab CI and the GitHub checks job cannot disagree about it
+    # whatever this floor allows (#43).
+    "ruff>=0.1",
     "mypy>=0.950",
     "pre-commit>=2.13",
 ]
@@ -69,7 +80,22 @@ Homepage = "https://github.com/20c/ctl"
 Repository = "https://github.com/20c/ctl"
 Documentation = "https://ctl.readthedocs.io/en/latest"
 
+[tool.uv]
+# Build requirements resolve outside uv.lock, so `requires` below is the one
+# place the lockfile cannot reach and the only thing that holds the backend
+# still. It is not cosmetic: hatchling decides the Metadata-Version of what we
+# publish (1.27 emits 2.4, 1.32 emits 2.5), and the publish action's twine
+# rejects anything newer than it understands — after trusted publishing has
+# already authenticated, on a tag that cannot be re-run (#44). Moving this pin
+# means re-running ci/publisher_metadata_gate.py: the publish action decides
+# whether the new metadata version is publishable, and it gets the last word.
+build-constraint-dependencies = ["hatchling==1.32.0"]
+
 [build-system]
+# Deliberately unpinned: this is what downstream sees when it builds our sdist,
+# and pinning a backend for other people's builds is not ours to do. Our own
+# builds are pinned by [tool.uv] build-constraint-dependencies above; read that
+# as the real backend version, not this line.
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 

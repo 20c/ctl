@@ -12,7 +12,9 @@ checks  →  build  →  publish-pypi  →  github-release
   is skipped on tags so a Codecov outage cannot block a publish.
 - **build** — verifies the tag matches `project.version` in `pyproject.toml`
   (until the version is derived from the tag, #39), then `uv build` into the
-  `dist` artifact. Holds no token.
+  `dist` artifact, then checks the artifacts with the publish action's own
+  twine (see *Where the release's tool versions come from* below). Holds no
+  token.
 - **publish-pypi** — `environment: pypi`; downloads `dist`, publishes with
   PyPI trusted publishing (OIDC) and PEP 740 attestations. No checkout, no
   repository code, no `contents` scope. **Pauses for the environment's
@@ -50,6 +52,54 @@ These cannot live in the repository. Each one is a control, not hygiene.
    fine-grained PAT for the mirror (`contents:write` + `workflows:write`) and
    the SSH signing key. The tag is signed; nothing in CI verifies the
    signature — items 1–3 are the enforced controls.
+
+## Where the release's tool versions come from
+
+Two `v2.0.0` tags died to version drift before anything was published, both
+because a gate ran a different version of a tool than the release did (#43,
+#44). The rule that came out of it: **no hand-written `==` pins**. Floors are
+fine, `uv.lock` is the source of what our own tooling resolves to, and where a
+version has to match somebody else's, it is resolved from them rather than
+copied.
+
+Three versions decide whether a release publishes, and each is settled a
+different way:
+
+| what | where it comes from |
+|------|---------------------|
+| our own tooling (ruff, twine, pytest…) | `uv.lock`; `pyproject.toml` carries floors only |
+| the build backend that emits the metadata version | `[tool.uv] build-constraint-dependencies` — build requirements resolve outside `uv.lock`, so this is the one place the lockfile cannot reach |
+| the twine that decides if a distribution is publishable | the publish action, resolved at check time from `requirements/runtime.txt` at the SHA `release.yml` pins |
+
+That third row is the one that killed #44. `pypa/gh-action-pypi-publish`
+brings its own dependencies: at v1.14.2 `action.yml` is `using: composite` and
+trampolines to `ghcr.io/pypa/gh-action-pypi-publish:<github.action_ref>`, an
+image whose dependencies were installed under
+`PIP_CONSTRAINT=requirements/runtime.txt` from that same commit. The twine in
+there inspects our distributions, and the `Metadata-Version` values it accepts
+come from its `packaging`. A gate running any other pair is predicting it —
+and a gate that is merely *laxer* passes a merge request and then kills a tag.
+
+So `ci/publisher_metadata_gate.py` does not carry those versions. It reads the
+action SHA out of `release.yml`, installs that commit's `runtime.txt` into a
+throwaway environment, and checks with what it gets. One source, nothing to
+keep honest. `ci/check_build_constraint.py` separately asks the built wheel
+which hatchling produced it, because a build constraint that silently failed
+to apply looks exactly like no constraint at all.
+
+Both run in the GitLab merge-request pipeline, before anything is taggable,
+and again in the release workflow's `build` job as a last line of defence.
+`tests/test_publisher_pin.py` covers what construction cannot: that the pin is
+an immutable commit, that it serves those requirements, and that an image
+exists for it — a real commit with no published image passes everything else
+and then fails the publish step, after the tag.
+
+**To bump the publish action:** change the SHA and its version comment in
+`release.yml`. That is the whole change — the gate follows the pin, so nothing
+else in the repository names the publisher's versions. Then build and confirm
+`ci/publisher_metadata_gate.py` still passes: if the new action's twine rejects
+what our backend emits, the backend constraint has to move too. **To bump
+hatchling:** move the constraint, build, and run the same gate.
 
 ## When a run does not finish — the partial-release runbook
 
@@ -110,7 +160,12 @@ yank it from the project page with a note pointing at the replacement.
 
 ### `checks` or `build` failed
 
-Nothing has been published, so **re-running is free and safe** — it is the
+If `build` failed on the constraint check or on the publisher metadata gate,
+a version drift reached the tag past the merge-request gate — read *Where the
+release's tool versions come from* above; re-running will not help, because
+the tagged tree is what is wrong.
+
+Otherwise nothing has been published, so **re-running is free and safe** — it is the
 first thing to try, and unlike the sections above there is no duplicate
 upload to trip over. Use **Re-run failed jobs** for a flaky test or a
 transient runner problem; the tag and the environment approval are

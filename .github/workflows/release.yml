@@ -57,6 +57,17 @@ jobs:
       - name: Build sdist and wheel
         run: uv build
 
+      # Last line of defence. The merge-request pipeline runs these same two
+      # checks before anything is taggable (.gitlab-ci.yml), so reaching here
+      # red means a tag was cut past the gate — better to fail with the
+      # artifacts unpublished than to fail inside publish-pypi, where the
+      # version is already spent and the tag is already public.
+      - name: Check the build constraint bound
+        run: uv run --locked --extra dev python ci/check_build_constraint.py
+
+      - name: Check the distributions with the publish action's own twine
+        run: uv run --locked --extra dev python ci/publisher_metadata_gate.py
+
       - name: Upload the built distributions
         uses: actions/upload-artifact@v4
         with:
@@ -85,13 +96,26 @@ jobs:
           name: dist
           path: dist/
 
-      # SHA-pinned (version in the comment; bump both together). No
-      # `skip-existing`: PyPI refusing an upload for a version it already holds
-      # is the signal we want, not something to swallow. PEP 740 attestations
-      # are this action's default under trusted publishing; stated explicitly
-      # so a bump cannot silently drop them.
+      # SHA-pinned (version in the comment; bump both together). The action
+      # runs a container image tagged with THIS SHA, whose dependencies were
+      # pinned at image-build time by `requirements/runtime.txt` from the same
+      # commit (`action.yml` is composite and trampolines to
+      # ghcr.io/pypa/gh-action-pypi-publish:<ref>). The twine in that set
+      # inspects the
+      # distributions — v1.12.4 carried packaging 24.2, which understands
+      # Metadata-Version only up to 2.4, and rejected a 2.5 wheel here after
+      # trusted publishing had already authenticated (#44). v1.14.2 is the
+      # first release carrying twine 7.0.0 / packaging 26.2, which accept 2.5.
+      # The pre-tag gate installs that same file at that same SHA and checks
+      # with what it gets (ci/publisher_metadata_gate.py), so it runs what this
+      # step runs by construction — there is no second copy of these versions
+      # anywhere in the repository to fall out of step.
+      # No `skip-existing`: PyPI refusing an upload for a version it already
+      # holds is the signal we want, not something to swallow. PEP 740
+      # attestations are this action's default under trusted publishing;
+      # stated explicitly so a bump cannot silently drop them.
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           attestations: true
 
