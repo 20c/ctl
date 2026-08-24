@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/20c/ctl/api/ctl.plugins.changelog/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>ctl.plugins.changelog - ctl</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "ctl.plugins.changelog";
+        var mkdocs_page_input_path = "api/ctl.plugins.changelog.md";
+        var mkdocs_page_url = "/20c/ctl/api/ctl.plugins.changelog/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ctl
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../quickstart/">Quickstart</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugins/">Plugins</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../events/">Plugin Events</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugin_permissions/">Plugin Permissons</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../config_template/">Config Templating</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../release/">Releasing</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Documenation</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../auth/">ctl.auth</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins/">ctl.plugins</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.chain/">ctl.plugins.chain</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">ctl.plugins.changelog</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.copy/">ctl.plugins.copy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.command/">ctl.plugins.command</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.email/">ctl.plugins.email</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.git/">ctl.plugins.git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log/">ctl.plugins.log</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_alert/">ctl.plugins.log_alert</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_git/">ctl.plugins.log_git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.log_user/">ctl.plugins.log_user</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.pypi/">ctl.plugins.pypi</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.release/">ctl.plugins.release</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.repository/">ctl.plugins.repository</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.template/">ctl.plugins.template</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.venv/">ctl.plugins.venv</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.version/">ctl.plugins.version</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ctl.plugins.walk_dir/">ctl.plugins.walk_dir</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ctl</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">API Documenation</li>
+      <li class="breadcrumb-item active">ctl.plugins.changelog</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="ctlpluginschangelog">ctl.plugins.changelog</h1>
+<p>Plugin that allows you manage CHANGELOG.(md|yaml|json) files</p>
+<h1 id="functions">Functions</h1>
+<hr />
+<h2 id="comment_lines">comment_lines</h2>
+<p><code>def comment_lines(text)</code></p>
+<p>Returns the 0-based line numbers of every yaml comment in <code>text</code>.</p>
+<p>A <code>#</code> only opens a comment where it is not part of a scalar, and the
+parser is the only thing that knows the difference - <code>- fixed '#31'</code>
+carries a <code>#</code> that is data, and a <code>#</code> on the line above it is not. The
+scanner reports the character range of every token it produces and
+skips comments entirely, so a <code>#</code> that falls outside all of those
+ranges is a comment. Matching <code>^\s*#</code> instead would also claim the
+lines of a block scalar.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>text (<code>str</code>): yaml document text</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>set</code> of 0-based line numbers</p>
+<hr />
+<h2 id="temporary_plugin">temporary_plugin</h2>
+<p><code>def temporary_plugin(ctl, name, **config)</code></p>
+<p>instantiate an impromptu changelog plugin instance</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>ctl: ctl instance</li>
+<li>name: instance name</li>
+</ul>
+<p><strong>Keyword Arguments</strong></p>
+<p>Any keyword arguments will be passed on to plugin
+config</p>
+<p><strong>Returns</strong></p>
+<p><code>ChangeLogPlugin</code> instance</p>
+<hr />
+<h1 id="classes">Classes</h1>
+<hr />
+<h2 id="changelogplugin">ChangeLogPlugin</h2>
+<pre><code>ChangeLogPlugin(ctl.plugins.ExecutablePlugin)
+</code></pre>
+<p>manage changelog files</p>
+<h3 id="class-attributes">Class Attributes</h3>
+<ul>
+<li>ConfigSchema (<code>ConfigSchema Class</code>): Base plugin config schema</li>
+</ul>
+<h3 id="methods">Methods</h3>
+<h4 id="block_spans">block_spans</h4>
+<p><code>def block_spans(self, text)</code></p>
+<p>Returns the line span each top level key of a yaml mapping document
+occupies.</p>
+<p>The boundaries come from the parser's own marks rather than from
+matching indentation: a changelog entry may be indented any way
+that parses, and a <code>-</code> at column 0 inside a section list is the
+common case.</p>
+<p>Blank lines and comment lines that sit between two blocks are
+counted as part of neither. A comment above a key belongs to that
+key, and a writer that swallowed it into the block above would move
+somebody's annotation onto another release.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>text (<code>str</code>): yaml document text</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>list</code> of <code>(key, lead, start, end)</code> tuples, where <code>lead</code> is the
+first line of the block's leading comment run, <code>start</code> the line the
+key is on and <code>end</code> the first line after the block. All 0-based,
+<code>end</code> exclusive.</p>
+<hr />
+<h4 id="check">check</h4>
+<p><code>def check(self, data_file, kwargs)</code></p>
+<p>Checks that the current branch contains changelog changes.</p>
+<p>Diffs the current HEAD against a base ref and passes if the
+diff touches the changelog data file or any path inside the
+changelog fragments directory.</p>
+<p>Raises a <code>PluginOperationStopped</code> error if no changelog
+changes are detected or the base ref cannot be resolved.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file</li>
+</ul>
+<p><strong>Keyword Arguments</strong></p>
+<ul>
+<li>base (<code>str</code>): git ref to diff against, if not specified the
+branch reported by the CI environment is used, falling back to
+the first of origin/HEAD, origin/main, origin/master that
+resolves</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.check</code></p>
+</div>
+<hr />
+<h4 id="collect_release_section">collect_release_section</h4>
+<p><code>def collect_release_section(self, changelog, fragments_dir, fragment_mode, unreleased_key)</code></p>
+<p>Collects the changes that are to be moved into a new release
+section.</p>
+<p>In fragment mode the residual entries under <code>Unreleased</code> are
+merged first, followed by the changelog fragment entries in
+file name order. In legacy mode only the <code>Unreleased</code> entries
+are used and no fragments are collected.</p>
+<p>All fragments are loaded and validated here, before the caller
+writes anything.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>changelog (<code>dict</code>): loaded changelog data</li>
+<li>fragments_dir (<code>str</code>): file path to the changelog fragments
+directory</li>
+<li>fragment_mode (<code>bool</code>): whether to collect changelog fragments</li>
+<li>unreleased_key (<code>str</code>): the key the residual entries are stored
+under, or <code>None</code> if the changelog has none. The caller resolves it
+with <code>resolve_unreleased_key</code> before anything is written, and that
+resolution is the authoritative one - resolving again here could
+only ever disagree with the key the caller then resets.</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>tuple</code> of (release section <code>dict</code>, fragment file paths <code>list</code>)</p>
+<hr />
+<h4 id="datafile_to_md">datafile_to_md</h4>
+<p><code>def datafile_to_md(self, changelog_filepath)</code></p>
+<p>Will attempt to generate md formatted changelog
+string from changelog data file</p>
+<p>We are using munge so any codec that munge supports
+can be used (default=yaml)</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>changelog_filepath (<code>str</code>): filepath to your CHANGELOG.yaml file</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>str</code>: md formatted changelog</p>
+<hr />
+<h4 id="execute">execute</h4>
+<p><code>def execute(self, **kwargs)</code></p>
+<p>Execute the plugin's main action</p>
+<p>Will automatically call <code>prepare</code></p>
+<p><strong>Keyword Arguments</strong></p>
+<p>Any keyword arguments passed to this function will
+be stored in the plugin's <code>kwargs</code> attribute</p>
+<hr />
+<h4 id="fragments_dir_path">fragments_dir_path</h4>
+<p><code>def fragments_dir_path(self, data_file)</code></p>
+<p>Returns the resolved file path to the changelog fragments
+directory.</p>
+<p>A relative <code>fragments_dir</code> config value is resolved against
+the directory containing the changelog data file, an absolute
+value is used as is.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>str</code>: file path to the changelog fragments directory</p>
+<hr />
+<h4 id="generate">generate</h4>
+<p><code>def generate(self, md_file, data_file, kwargs)</code></p>
+<p>Generates a changelog markdown filefrom
+a CHANGELOG.(yaml|json) file that follows the 20c changelog
+format</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>md_file (<code>str</code>): file path to a CHANGELOG.md file
+this is where the output will be written to</li>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file</li>
+</ul>
+<p><strong>Keyword Arguments</strong></p>
+<ul>
+<li>print (<code>bool=False</code>): if True print the generated changelog
+to stdout instead of writing to a file</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.generate</code></p>
+</div>
+<hr />
+<h4 id="generate_clean">generate_clean</h4>
+<p><code>def generate_clean(self, data_file, kwargs)</code></p>
+<p>Will generate a clean CHANGELOG.(yaml|json) file with
+just an <code>unreleased</code> section in it.</p>
+<p>Will fail if a file already exists</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file
+this is where the output will be written to</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.generate_clean</code></p>
+</div>
+<hr />
+<h4 id="generate_datafile">generate_datafile</h4>
+<p><code>def generate_datafile(self, md_file, data_file, kwargs)</code></p>
+<p>Generates a changelog data file (yaml, json etc.) from
+a CHANGELOG.md file that follows the 20c changelog
+format.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>md_file (<code>str</code>): file path to a CHANGELOG.md file</li>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file
+this is where the output will be written to</li>
+</ul>
+<p><strong>Keyword Arguments</strong></p>
+<ul>
+<li>print (<code>bool=False</code>): if True print the generated changelog
+to stdout instead of writing to a file</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.generate_datafile</code></p>
+</div>
+<hr />
+<h4 id="is_fragment_filename">is_fragment_filename</h4>
+<p><code>def is_fragment_filename(self, filename)</code></p>
+<p>Returns whether the specified file name is a changelog fragment
+file name.</p>
+<p>Fragment files are <code>*.yaml</code> / <code>*.yml</code> files - hidden files and
+files with other extensions (<code>README.md</code>, <code>.gitkeep</code>) are not
+fragments.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>filename (<code>str</code>): file name (not a path)</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>bool</code></p>
+<hr />
+<h4 id="list_fragments">list_fragments</h4>
+<p><code>def list_fragments(self, fragments_dir)</code></p>
+<p>Returns the file paths of all changelog fragment files found
+in the specified directory, sorted by file name.</p>
+<p>Fragment files are <code>*.yaml</code> / <code>*.yml</code> files - hidden files and
+files with other extensions are ignored.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>fragments_dir (<code>str</code>): file path to a changelog fragments
+directory</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p>fragment file paths <code>list</code></p>
+<hr />
+<h4 id="load_fragment">load_fragment</h4>
+<p><code>def load_fragment(self, filepath)</code></p>
+<p>Loads and validates a single changelog fragment file</p>
+<p>A fragment file needs to contain a mapping of valid changelog
+sections to lists of change strings</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>filepath (<code>str</code>): file path to a changelog fragment file</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p>fragment <code>dict</code></p>
+<hr />
+<h4 id="load_fragments">load_fragments</h4>
+<p><code>def load_fragments(self, fragments_dir)</code></p>
+<p>Loads and validates all changelog fragment files found in the
+specified directory.</p>
+<p>Fragment files are <code>*.yaml</code> / <code>*.yml</code> files and are processed
+sorted by file name - hidden files and files with other
+extensions are ignored.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>fragments_dir (<code>str</code>): file path to a changelog fragments
+directory</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>tuple</code> of (fragment file paths <code>list</code>, merged sections <code>dict</code>)</p>
+<hr />
+<h4 id="md_to_dict">md_to_dict</h4>
+<p><code>def md_to_dict(self, changelog_filepath)</code></p>
+<p>will attempt to generate a dict from an
+existing CHANGELOG.md file</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>changelog_filepath (<code>str</code>): filepath to the CHANGELOG.md
+file</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p>changelog <code>dict</code></p>
+<hr />
+<h4 id="release">release</h4>
+<p><code>def release(self, version, data_file, kwargs)</code></p>
+<p>Adds the specified release to the changelog.</p>
+<p>This will validate and move all items under "unreleased"
+to a new section for the specified release version</p>
+<p>If a changelog fragments directory exists, all changelog
+fragment files in it will be collected into the release
+section as well and deleted afterwards</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>version (<code>str</code>): version mame (eg. tag name)</li>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Exposed to CLI</p>
+<p>namespace: <code>ctl.{plugin_name}.release</code></p>
+</div>
+<hr />
+<h4 id="remove_fragments">remove_fragments</h4>
+<p><code>def remove_fragments(self, version, data_file, fragment_files)</code></p>
+<p>Removes the changelog fragment files that were collected into a
+release.</p>
+<p>Raises <code>OSError</code> naming every fragment still on disk if one of them
+cannot be removed - a leftover fragment is collected into the next
+release as well, so the ones that were not reached have to be named
+rather than left to be discovered.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>version (<code>str</code>): the release the fragments were collected into</li>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file</li>
+<li>fragment_files (<code>list</code>): fragment file paths to remove</li>
+</ul>
+<hr />
+<h4 id="render_block">render_block</h4>
+<p><code>def render_block(self, key, value)</code></p>
+<p>Renders a single top level changelog block.</p>
+<p>The same codec that writes the whole file elsewhere, so a block
+written here is byte for byte the block the file-wide writer would
+have produced.</p>
+<hr />
+<h4 id="resolve_unreleased_key">resolve_unreleased_key</h4>
+<p><code>def resolve_unreleased_key(self, changelog)</code></p>
+<p>Returns the key under which the residual (unreleased) entries are
+stored in the changelog, matched case insensitively.</p>
+<p>A changelog written by <code>generate_clean</code> uses <code>Unreleased</code>, but a
+hand maintained one may use any casing - matching only the
+canonical form silently drops every residual entry in fragment
+mode, which is exactly the data loss the non-standard section
+carry over below exists to prevent.</p>
+<p>Keys are compared as strings for the same reason
+<code>release</code> compares them that way: an unquoted <code>1.0:</code> in a yaml
+changelog parses as a float.</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>changelog (<code>dict</code>): loaded changelog data</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>str</code> the matching key, or <code>None</code> if the changelog has none</p>
+<hr />
+<h4 id="run_git">run_git</h4>
+<p><code>def run_git(self, repo_dir, *args)</code></p>
+<p>Runs a git command in the specified directory</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>repo_dir (<code>str</code>): directory to run the git command in</li>
+<li>any other arguments will be passed to git as command
+arguments</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>tuple</code> of (success <code>bool</code>, stdout <code>str</code>, stderr <code>str</code>)</p>
+<hr />
+<h4 id="sort_changelog">sort_changelog</h4>
+<p><code>def sort_changelog(self, changelog)</code></p>
+<p>Takes a changelog <code>dict</code> and sorts keys by version using
+natural sort</p>
+<p>Returns the sorted <code>dict</code></p>
+<hr />
+<h4 id="validate">validate</h4>
+<p><code>def validate(self, data_file, version)</code></p>
+<p>Checks if the specified release version exists in the changelog
+and will raise a <code>ChangelogVersionMissing</code> Exception when it
+does not</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file</li>
+<li>version (<code>str</code>)</li>
+</ul>
+<hr />
+<h4 id="version_exists">version_exists</h4>
+<p><code>def version_exists(self, data_file, version)</code></p>
+<p>Checks if the specified release exists in the changelog</p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file</li>
+<li>version (<code>str</code>)</li>
+</ul>
+<p><strong>Returns</strong></p>
+<p><code>True</code> if release exists, <code>False</code> if not</p>
+<hr />
+<h4 id="write_release_yaml">write_release_yaml</h4>
+<p><code>def write_release_yaml(self, data_file, version, release_section, unreleased_key, existing_keys)</code></p>
+<p>Writes a release into a yaml changelog by rewriting only the lines
+the release actually changes: the residual section is reset in
+place and the new release block is inserted at its sorted position.</p>
+<p>Everything else in the file - comments, indentation, line wrapping,
+quoting, the order of blocks already there - is left as the bytes
+it already was. Reserializing the parsed document instead is what
+deletes every comment in the file and reformats sections the
+release never touched.</p>
+<p>Two consequences worth knowing about:</p>
+<ul>
+<li>the file is no longer globally re-sorted on every release. A
+  changelog whose blocks are out of order stays that way, and only
+  the new block is placed by sort order</li>
+<li>a comment inside the residual section is attached to entries that
+  are moving into the release, and cannot come along. That is
+  warned about rather than done silently</li>
+</ul>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|yml) file</li>
+<li>version (<code>str</code>): version name (eg. tag name)</li>
+<li>release_section (<code>dict</code>): the changes to write under <code>version</code></li>
+<li>unreleased_key (<code>str</code>): the key holding the residual entries, or
+  <code>None</code> if the changelog has none</li>
+<li>existing_keys (<code>list</code>): the changelog's keys, for sorting</li>
+</ul>
+<hr />
+<h2 id="changelogpluginconfig">ChangeLogPluginConfig</h2>
+<pre><code>ChangeLogPluginConfig(confu.schema.core.Schema)
+</code></pre>
+<p>Config schema for the ChangeLogPlugin plugin</p>
+<h3 id="class-attributes_1">Class Attributes</h3>
+<ul>
+<li>data_file (<code>Str</code>): path to a changelog data file</li>
+<li>fragments_dir (<code>Str</code>): path to a changelog fragments directory - a relative path will be resolved against the directory containing the changelog data file</li>
+<li>md_file (<code>Str</code>): path to a changelog markdown file</li>
+</ul>
+<h2 id="changelogversionmissing">ChangelogVersionMissing</h2>
+<pre><code>ChangelogVersionMissing(builtins.KeyError)
+</code></pre>
+<p>Raised when a changlog data file is validated
+to contain a specific version but that version
+is missing</p>
+<h3 id="methods_1">Methods</h3>
+<h4 id="__init__">__init__</h4>
+<p><code>def __init__(self, data_file, version)</code></p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li>data_file (<code>str</code>): file path to a CHANGELOG.(yaml|json) file</li>
+<li>version (<code>str</code>)</li>
+</ul>
+<hr />
+<h2 id="strictfragmentloader">StrictFragmentLoader</h2>
+<pre><code>StrictFragmentLoader(yaml.loader.SafeLoader)
+</code></pre>
+<p>A yaml safe loader that rejects duplicate mapping keys instead of
+silently letting the last one win.</p>
+<p>A changelog fragment is deleted once it has been collected into a
+release, so a duplicated section key would drop the shadowed
+entries unrecoverably.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../ctl.plugins.chain/" class="btn btn-neutral float-left" title="ctl.plugins.chain"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../ctl.plugins.copy/" class="btn btn-neutral float-right" title="ctl.plugins.copy">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../ctl.plugins.chain/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../ctl.plugins.copy/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

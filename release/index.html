@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/20c/ctl/release/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Releasing - ctl</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Releasing";
+        var mkdocs_page_input_path = "release.md";
+        var mkdocs_page_url = "/20c/ctl/release/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> ctl
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../quickstart/">Quickstart</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plugins/">Plugins</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../events/">Plugin Events</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../plugin_permissions/">Plugin Permissons</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../config_template/">Config Templating</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Releasing</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#preconditions-host-side-the-operators">Preconditions — host-side, the operator's</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#where-the-releases-tool-versions-come-from">Where the release's tool versions come from</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Documenation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/auth/">ctl.auth</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins/">ctl.plugins</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.chain/">ctl.plugins.chain</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.changelog/">ctl.plugins.changelog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.copy/">ctl.plugins.copy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.command/">ctl.plugins.command</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.email/">ctl.plugins.email</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.git/">ctl.plugins.git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.log/">ctl.plugins.log</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.log_alert/">ctl.plugins.log_alert</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.log_git/">ctl.plugins.log_git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.log_user/">ctl.plugins.log_user</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.pypi/">ctl.plugins.pypi</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.release/">ctl.plugins.release</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.repository/">ctl.plugins.repository</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.template/">ctl.plugins.template</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.venv/">ctl.plugins.venv</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.version/">ctl.plugins.version</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/ctl.plugins.walk_dir/">ctl.plugins.walk_dir</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">ctl</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Releasing</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="releasing-ctl">Releasing ctl</h1>
+<p>A release is a <code>v*</code> tag on the GitHub mirror (<code>github.com/20c/ctl</code>).
+<code>.github/workflows/release.yml</code> runs on that tag:</p>
+<pre><code>checks  →  build  →  publish-pypi  →  github-release
+</code></pre>
+<ul>
+<li><strong>checks</strong> — <code>tests.yml</code> on the tagged commit (lint + the Python matrix).
+  A tag on a red commit fails here before anything is built. Coverage upload
+  is skipped on tags so a Codecov outage cannot block a publish.</li>
+<li><strong>build</strong> — verifies the tag matches <code>project.version</code> in <code>pyproject.toml</code>
+  (until the version is derived from the tag, #39), then <code>uv build</code> into the
+  <code>dist</code> artifact, then checks the artifacts with the publish action's own
+  twine (see <em>Where the release's tool versions come from</em> below). Holds no
+  token.</li>
+<li><strong>publish-pypi</strong> — <code>environment: pypi</code>; downloads <code>dist</code>, publishes with
+  PyPI trusted publishing (OIDC) and PEP 740 attestations. No checkout, no
+  repository code, no <code>contents</code> scope. <strong>Pauses for the environment's
+  required reviewer before any step runs.</strong></li>
+<li><strong>github-release</strong> — after PyPI accepts: creates the GitHub Release with the
+  same sdist and wheel attached.</li>
+</ul>
+<p>The tag is cut by lmer's release flow (version + changelog roll on the GitLab
+side, a merged release MR, then the signed tag pushed to GitHub and then
+GitLab). This page covers what the workflow needs from the host and what to do
+when a run does not finish.</p>
+<h2 id="preconditions-host-side-the-operators">Preconditions — host-side, the operator's</h2>
+<p>These cannot live in the repository. Each one is a control, not hygiene.</p>
+<ol>
+<li><strong>PyPI trusted publisher for <code>ctl</code> must pin <code>environment: pypi</code>.</strong>
+   Register it as owner <code>20c</code>, repository <code>ctl</code>, workflow <code>release.yml</code>,
+   environment <strong><code>pypi</code></strong> — the environment field is not optional here.
+   This is the load-bearing half of the publish boundary: the tag's own tree
+   supplies <code>release.yml</code>, so a workflow that omitted the <code>environment:</code>
+   block would otherwise publish with no approval prompt. With the publisher
+   pinned to the environment, PyPI rejects any OIDC token that does not
+   carry the <code>pypi</code> environment claim, and the only way to get that claim is
+   to declare the environment — which triggers its required reviewer.
+   <strong>Without this pin, the human gate does not exist.</strong></li>
+<li><strong>GitHub environment <code>pypi</code></strong> with a required reviewer and a deployment
+   tag-pattern policy of <code>v*</code>. Every release pauses here until approved;
+   the approval prompt shows a ref, not a diff.</li>
+<li><strong>Tag ruleset on <code>v*</code></strong> (restrict create/update/delete) with the release
+   bot as the only bypass. This is what decides <em>who can start</em> a release.</li>
+<li><strong>GitLab protected tags <code>v*</code></strong> on the canonical repository — leg 2 pushes
+   the tag there last, after GitHub is green.</li>
+<li><strong>Release credentials</strong> provisioned to release sessions only: the
+   fine-grained PAT for the mirror (<code>contents:write</code> + <code>workflows:write</code>) and
+   the SSH signing key. The tag is signed; nothing in CI verifies the
+   signature — items 1–3 are the enforced controls.</li>
+</ol>
+<h2 id="where-the-releases-tool-versions-come-from">Where the release's tool versions come from</h2>
+<p>Two <code>v2.0.0</code> tags died to version drift before anything was published, both
+because a gate ran a different version of a tool than the release did (#43,</p>
+<h1 id="44-the-rule-that-came-out-of-it-no-hand-written-pins-floors-are">44). The rule that came out of it: <strong>no hand-written <code>==</code> pins</strong>. Floors are</h1>
+<p>fine, <code>uv.lock</code> is the source of what our own tooling resolves to, and where a
+version has to match somebody else's, it is resolved from them rather than
+copied.</p>
+<p>Three versions decide whether a release publishes, and each is settled a
+different way:</p>
+<table>
+<thead>
+<tr>
+<th>what</th>
+<th>where it comes from</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>our own tooling (ruff, twine, pytest…)</td>
+<td><code>uv.lock</code>; <code>pyproject.toml</code> carries floors only</td>
+</tr>
+<tr>
+<td>the build backend that emits the metadata version</td>
+<td><code>[tool.uv] build-constraint-dependencies</code> — build requirements resolve outside <code>uv.lock</code>, so this is the one place the lockfile cannot reach</td>
+</tr>
+<tr>
+<td>the twine that decides if a distribution is publishable</td>
+<td>the publish action, resolved at check time from <code>requirements/runtime.txt</code> at the SHA <code>release.yml</code> pins</td>
+</tr>
+</tbody>
+</table>
+<p>That third row is the one that killed #44. <code>pypa/gh-action-pypi-publish</code>
+brings its own dependencies: at v1.14.2 <code>action.yml</code> is <code>using: composite</code> and
+trampolines to <code>ghcr.io/pypa/gh-action-pypi-publish:&lt;github.action_ref&gt;</code>, an
+image whose dependencies were installed under
+<code>PIP_CONSTRAINT=requirements/runtime.txt</code> from that same commit. The twine in
+there inspects our distributions, and the <code>Metadata-Version</code> values it accepts
+come from its <code>packaging</code>. A gate running any other pair is predicting it —
+and a gate that is merely <em>laxer</em> passes a merge request and then kills a tag.</p>
+<p>So <code>ci/publisher_metadata_gate.py</code> does not carry those versions. It reads the
+action SHA out of <code>release.yml</code>, installs that commit's <code>runtime.txt</code> into a
+throwaway environment, and checks with what it gets. One source, nothing to
+keep honest. <code>ci/check_build_constraint.py</code> separately asks the built wheel
+which hatchling produced it, because a build constraint that silently failed
+to apply looks exactly like no constraint at all.</p>
+<p>Both run in the GitLab merge-request pipeline, before anything is taggable,
+and again in the release workflow's <code>build</code> job as a last line of defence.
+<code>tests/test_publisher_pin.py</code> covers what construction cannot: that the pin is
+an immutable commit, that it serves those requirements, and that an image
+exists for it — a real commit with no published image passes everything else
+and then fails the publish step, after the tag.</p>
+<p><strong>To bump the publish action:</strong> change the SHA and its version comment in
+<code>release.yml</code>. That is the whole change — the gate follows the pin, so nothing
+else in the repository names the publisher's versions. Then build and confirm
+<code>ci/publisher_metadata_gate.py</code> still passes: if the new action's twine rejects
+what our backend emits, the backend constraint has to move too. <strong>To bump
+hatchling:</strong> move the constraint, build, and run the same gate.</p>
+<h2 id="when-a-run-does-not-finish-the-partial-release-runbook">When a run does not finish — the partial-release runbook</h2>
+<p>Read this before the run, not during it. The workflow deliberately does not
+set <code>skip-existing</code>, so PyPI refusing a duplicate upload is a hard failure.
+That makes one recovery path right and two wrong.</p>
+<h3 id="publish-pypi-succeeded-github-release-failed"><code>publish-pypi</code> succeeded, <code>github-release</code> failed</h3>
+<p>The package is on PyPI; there is no GitHub Release yet.</p>
+<ol>
+<li>Open the failed run in GitHub Actions.</li>
+<li>Choose <strong>Re-run failed jobs</strong> — <em>not</em> "Re-run all jobs".
+   Only <code>github-release</code> re-runs; it downloads the <code>dist</code> artifact from the
+   original run (artifacts live 90 days) and <code>action-gh-release</code> is
+   idempotent on an existing Release, so this is safe to repeat.</li>
+<li>If the artifact has expired or the re-run is impossible, create the
+   Release by hand: GitHub → Releases → Draft a new release → choose the
+   existing tag → attach the sdist and wheel <strong>downloaded from PyPI</strong>
+   (<code>pip download ctl==X.Y.Z --no-deps --no-binary :all:</code> for the sdist,
+   <code>--only-binary :all:</code> for the wheel) so the Release carries the exact
+   published bytes.</li>
+</ol>
+<p><strong>Do not</strong> "Re-run all jobs": <code>publish-pypi</code> re-runs, PyPI rejects the
+duplicate, and <code>github-release</code> never reaches its turn.
+<strong>Do not</strong> delete and re-push the tag: same rejection, plus the tag would
+no longer match the signed tag the release run recorded.</p>
+<h3 id="publish-pypi-failed-partway-one-file-on-pypi-one-missing"><code>publish-pypi</code> failed partway — one file on PyPI, one missing</h3>
+<p>Twine uploads the sdist and wheel one at a time; a network failure between
+them leaves the version on PyPI with one file. Re-running <code>publish-pypi</code>
+hits the duplicate refusal on the file that did land.</p>
+<ol>
+<li>Download the <code>dist</code> artifact from the failed run (Actions → the run →
+   Artifacts → <code>dist</code>).</li>
+<li>Upload the missing file only, as a PyPI project owner with a scoped
+   token: <code>twine upload dist/&lt;missing-file&gt;</code>. The version is already on
+   PyPI; this completes it rather than republishing it.</li>
+<li>Then <strong>Re-run failed jobs</strong> is still wrong (it would retry the publish).
+   Create the GitHub Release by hand as in step 3 above, attaching both
+   files from the artifact.</li>
+</ol>
+<p><strong>Know what a hand-completed version looks like afterwards:</strong> the file the
+workflow uploaded carries a PEP 740 attestation; the file you upload from a
+laptop does not and cannot — attestations are minted from the workflow's
+OIDC identity, and <code>twine</code> on a personal token has no such identity. The
+version ends up <strong>one file attested, one unattested</strong>, permanently (PyPI
+does not accept an attestation after the fact, and the file cannot be
+replaced). Every other ctl release is fully attested, so whoever notices the
+asymmetry later will read it as a defect; if that matters, it is the
+argument for the alternative below, which ends with every file attested.</p>
+<p>If completing the version by hand is not acceptable, the alternative is a
+new patch version: roll the changelog again and cut <code>vX.Y.(Z+1)</code>. The
+partial version stays on PyPI (PyPI does not allow re-using a version);
+yank it from the project page with a note pointing at the replacement.</p>
+<h3 id="checks-or-build-failed"><code>checks</code> or <code>build</code> failed</h3>
+<p>If <code>build</code> failed on the constraint check or on the publisher metadata gate,
+a version drift reached the tag past the merge-request gate — read <em>Where the
+release's tool versions come from</em> above; re-running will not help, because
+the tagged tree is what is wrong.</p>
+<p>Otherwise nothing has been published, so <strong>re-running is free and safe</strong> — it is the
+first thing to try, and unlike the sections above there is no duplicate
+upload to trip over. Use <strong>Re-run failed jobs</strong> for a flaky test or a
+transient runner problem; the tag and the environment approval are
+unaffected because <code>publish-pypi</code> never ran.</p>
+<p>If the failure is real (the code is broken at the tag), fix on <code>main</code>
+through the normal flow and cut the next version; a <code>v*</code> tag is never
+re-pointed.</p>
+<h3 id="recording">Recording</h3>
+<p>Whatever path was taken, record it in the release run (the lmer run
+directory for that release) so the next person can see what state the
+version was left in.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../config_template/" class="btn btn-neutral float-left" title="Config Templating"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../api/auth/" class="btn btn-neutral float-right" title="ctl.auth">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../config_template/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../api/auth/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

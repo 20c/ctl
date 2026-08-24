@@ -1,0 +1,69 @@
+# this config file is used to setup ctl plugins
+# pymdgen can use to generate usage documentation
+
+ctl:
+  plugins:
+
+    # plugin: git
+
+    - name: git
+      type: git
+      config:
+        repo_url: git@github.com:20c/nonexistant-repo
+
+    # plugin: copy
+
+    - name: copy
+      type: copy
+      config:
+        source: source
+        output: output
+
+    # plugin: template
+
+    - name: template
+      type: template
+      config:
+        source: source
+        output: output
+
+
+    # plugin: pypi
+
+    - name: pypi
+      type: pypi
+      config:
+        config_file: ~/.pypirc
+
+    # plugin: venv
+
+    - name: venv
+      type: venv
+      config:
+        python_version: "3.6"
+
+    # plugin: version
+
+    - name: version
+      type: version
+
+    # plugin: chain
+
+    - name: chain
+      type: chain
+      config:
+        arguments:
+          - name: tag
+            help: deploy this tag (e.g. 1.0.0)
+        chain:
+          - stage: copy
+            plugin: copy
+
+    # plugin: changelog
+
+    - name: changelog
+      type: changelog
+
+  permissions:
+    - namespace: ctl
+      permission: r

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/20c/ctl/plugins/changelog/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Changelog - ctl</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Changelog";
+        var mkdocs_page_input_path = "plugins/changelog.md";
+        var mkdocs_page_url = "/20c/ctl/plugins/changelog/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ctl
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../quickstart/">Quickstart</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../">Plugins</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../events/">Plugin Events</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../plugin_permissions/">Plugin Permissons</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../config_template/">Config Templating</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../release/">Releasing</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Documenation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/auth/">ctl.auth</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins/">ctl.plugins</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.chain/">ctl.plugins.chain</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.changelog/">ctl.plugins.changelog</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.copy/">ctl.plugins.copy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.command/">ctl.plugins.command</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.email/">ctl.plugins.email</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.git/">ctl.plugins.git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log/">ctl.plugins.log</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_alert/">ctl.plugins.log_alert</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_git/">ctl.plugins.log_git</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.log_user/">ctl.plugins.log_user</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.pypi/">ctl.plugins.pypi</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.release/">ctl.plugins.release</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.repository/">ctl.plugins.repository</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.template/">ctl.plugins.template</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.venv/">ctl.plugins.venv</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.version/">ctl.plugins.version</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/ctl.plugins.walk_dir/">ctl.plugins.walk_dir</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ctl</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Changelog</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="changelog-plugin">Changelog Plugin</h2>
+<p>Use this plugin to manage CHANGELOG.yaml and CHANGELOG.md files</p>
+<h3 id="changelogmd">CHANGELOG.md</h3>
+<pre><code class="language-md"># Changelog
+
+
+## unreleased
+### added
+- a feature was added
+### fixed
+- a bug was fixed
+
+## 1.0.0
+### added
+- initial release
+</code></pre>
+<h3 id="changelogyaml">CHANGELOG.yaml</h3>
+<pre><code class="language-yaml">unreleased:
+  added:
+    - a feature was added
+  fixed:
+    - a bug was fixed
+
+1.0.0:
+  added:
+    - initial release
+</code></pre>
+<h3 id="config-example">Config Example</h3>
+<pre><code class="language-yaml">ctl:
+  plugins:
+
+    - type: changelog
+      name: changelog
+      config:
+        # you can paths for the files here
+        # these are also exposed to the CLI
+        # data_file: CHANGELOG.yaml
+        # md_file: CHANGELOG.md
+
+        # config only - there is no --fragments-dir command line argument
+        # fragments_dir: changelog.d
+
+
+  permissions:
+    - namespace: ctl
+      permission: crud
+</code></pre>
+<h3 id="generate-yaml-from-md">Generate .yaml from .md</h3>
+<pre><code class="language-sh">ctl changelog generate_datafile
+</code></pre>
+<h3 id="generate-md-from-yaml">Generate .md from .yaml</h3>
+<pre><code class="language-sh">ctl changelog generate
+</code></pre>
+<h3 id="generate-a-fresh-yaml-file">Generate a fresh .yaml file</h3>
+<pre><code class="language-sh">ctl changelog generate_clean
+</code></pre>
+<h3 id="note-new-release">Note new release</h3>
+<p>This will make a new section in the CHANGELOG.yaml file for the specified release version
+and move all the items that exist in <code>unreleased</code> to it</p>
+<p>This can only be done if a CHANGELOG.yaml file exists, CHANGELOG.md is not a valid target for this
+operation</p>
+<pre><code class="language-sh">ctl changelog release 1.0.0
+</code></pre>
+<h4 id="what-a-release-rewrites">What a release rewrites</h4>
+<p>A release rewrites only the lines it changes: the residual section is reset in
+place and the new release block is inserted at its sorted position. Everything
+else in a <code>CHANGELOG.yaml</code> - comments, indentation, hand wrapped entries,
+quoting, and the order of the blocks already in the file - is left exactly as
+it was.</p>
+<p>Two things follow from that:</p>
+<ul>
+<li>the file is <strong>not</strong> globally re-sorted on every release. A changelog whose
+  blocks are out of order keeps the order its author gave it; only the new
+  block is placed by sort order. The generated <code>CHANGELOG.md</code> is sorted
+  either way</li>
+<li>a comment <strong>inside</strong> the residual section annotates entries that are moving
+  into the release, and cannot come along. Those are reported by file and line
+  as they are dropped, rather than disappearing quietly</li>
+</ul>
+<p>A <code>CHANGELOG.json</code> data file is written whole, as before - there are no
+comments in it to preserve.</p>
+<h3 id="changelog-fragments-changelogd">Changelog fragments (changelog.d)</h3>
+<p>Instead of collecting unreleased changes in the <code>Unreleased</code> section of the
+CHANGELOG.yaml file, each change can be noted in its own small YAML file in a
+<code>changelog.d/</code> directory next to the changelog data file.</p>
+<p>On <code>ctl changelog release &lt;version&gt;</code> all fragment files are collected into the
+new release section and deleted afterwards.</p>
+<p>Since two branches never touch the same fragment file this eliminates the
+merge conflicts that come from every branch editing the same <code>Unreleased</code>
+section.</p>
+<p>Fragment mode activates automatically when the fragments directory exists -
+repositories without a <code>changelog.d/</code> directory are completely unaffected.</p>
+<p>The directory location can be changed through the <code>fragments_dir</code> config
+attribute (default <code>changelog.d</code>) - a relative value is resolved against the
+directory containing the changelog data file.</p>
+<h4 id="fragment-file-format">Fragment file format</h4>
+<p>A fragment file is a YAML mapping of section name to a list of entry strings.</p>
+<pre><code class="language-yaml">added:
+  - a feature was added
+fixed:
+  - a bug was fixed
+</code></pre>
+<p>Valid sections are the lowercase <code>added</code>, <code>fixed</code>, <code>changed</code>, <code>deprecated</code>,
+<code>removed</code> and <code>security</code> - section names are case-sensitive, so <code>Added:</code> is an
+error.</p>
+<p>Fragment file names follow the convention <code>YYYYMMDD-&lt;topic&gt;.yaml</code> - file names
+only need to be unique, fragments are collected sorted by file name.</p>
+<p>Files that are not <code>*.yaml</code> / <code>*.yml</code> (README.md, .gitkeep) as well as hidden
+files are ignored. An empty <code>.yaml</code> file is a validation error since it parses
+to None - use a non-yaml name for placeholder files.</p>
+<p>Subdirectories are not scanned - only fragment files directly in the fragments
+directory are collected.</p>
+<p>A section key may not appear twice in the same fragment file. Since a fragment
+is deleted once it has been collected into a release, letting the last key win
+would silently drop the shadowed entries, so a duplicate key is a validation
+error instead.</p>
+<h4 id="release-behavior-with-fragments">Release behavior with fragments</h4>
+<p>When <code>ctl changelog release &lt;version&gt;</code> runs with a fragments directory
+present:</p>
+<ul>
+<li>all fragments are validated before anything is written - validation errors
+  name the offending file</li>
+<li>per section, residual <code>Unreleased:</code> entries are merged first, then the
+  fragment entries in file name order</li>
+<li>non-standard section keys under <code>Unreleased:</code> are carried over to the
+  release section as well, they are never dropped</li>
+<li>the CHANGELOG.md file is regenerated</li>
+<li>the fragment files are deleted last, after the release has been written to
+  the data file and the markdown has been regenerated</li>
+</ul>
+<p>A populated <code>Unreleased:</code> section is still allowed - a friendly suggestion to
+move its items to fragments is printed.</p>
+<div class="admonition note">
+<p class="admonition-title">Release is not atomic</p>
+<p>If a release fails between writing the data file and deleting the
+fragments, a re-run will error with "already exists" and the leftover
+fragments need to be removed by hand. The removal error names the
+fragments that are still on disk - they would otherwise be collected into
+the next release a second time.</p>
+</div>
+<h3 id="check-for-changelog-changes-ci">Check for changelog changes (CI)</h3>
+<p>The <code>check</code> operation checks that the current branch touched the changelog -
+the data file itself, or a fragment file added, changed or deleted directly in
+the fragments directory - using <code>git diff --name-only &lt;base&gt;...HEAD</code> (three-dot,
+i.e. changes since the merge-base with the base ref).</p>
+<p>Only paths that <code>release</code> would actually collect satisfy the gate, so a nested
+<code>changelog.d/&lt;subdir&gt;/entry.yaml</code> or a <code>changelog.d/README.md</code> edit does not
+pass it.</p>
+<p>If <code>--base</code> is not passed the base ref is taken from the CI environment
+(<code>GITHUB_BASE_REF</code>, <code>CI_MERGE_REQUEST_TARGET_BRANCH_NAME</code>), falling back to the
+first of <code>origin/HEAD</code>, <code>origin/main</code>, <code>origin/master</code> that resolves. The exit
+code is 1 when no changelog change is found or the base ref cannot be resolved.</p>
+<p>When one of those CI variables is set the target branch is known, so an
+<code>origin/&lt;branch&gt;</code> that does not resolve is an error rather than a reason to
+guess - fetch the base ref in the checkout step, or pass <code>--base</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">The fallback guess is not the branch's base</p>
+<p>The <code>origin/HEAD</code> fallback is only the right answer for a branch that
+targets the default branch. A branch that targets, say, <code>develop</code> is
+diffed against the default branch instead, so a changelog entry that
+arrived with <code>develop</code> satisfies the gate even though the branch itself
+added none. The fallback logs a warning naming the ref it guessed - pass
+<code>--base</code> explicitly wherever branches target anything but the default
+branch.</p>
+</div>
+<pre><code class="language-sh"># diff against origin/HEAD -&gt; origin/main -&gt; origin/master
+ctl changelog check
+
+# diff against an explicit base ref
+ctl changelog check --base upstream/main
+</code></pre>
+<p>Example usage in a GitHub Actions workflow:</p>
+<pre><code class="language-yaml">- uses: actions/checkout@v4
+  with:
+    # the three-dot diff needs the merge-base to be present
+    fetch-depth: 0
+- run: ctl changelog check --base origin/${{ github.base_ref }}
+</code></pre>
+<div class="admonition note">
+<p class="admonition-title">CI caveats</p>
+<ul>
+<li>The three-dot diff needs the merge-base to be present, so shallow
+  checkouts (fetch-depth 1) must fetch the base ref / history first.</li>
+<li><code>origin/HEAD</code> is typically unset in fetch-based CI checkouts - the
+  default base then falls through to <code>origin/main</code> / <code>origin/master</code>.</li>
+<li>The default-base logic assumes the remote is named <code>origin</code> - pass
+  <code>--base</code> otherwise.</li>
+<li><code>check</code> reads committed history only - a fragment that has been written
+  but not committed does not satisfy the gate.</li>
+</ul>
+</div>
+<h3 id="usage">Usage</h3>
+<div class="admonition note">
+<p class="admonition-title">Plugin name</p>
+<p>This usage documentation assumes that the plugin instance name
+is <code>changelog</code></p>
+</div>
+<pre><code class="language-sh">usage: ctl changelog [-h]
+                     {generate,generate_datafile,generate_clean,release,check}
+                     ...
+
+options:
+  -h, --help            show this help message and exit
+
+Operation:
+  {generate,generate_datafile,generate_clean,release,check}
+    generate            generate CHANGELOG.md
+    generate_datafile   generate CHANGELOG.yaml from CHANGELOG.md
+    generate_clean      generate fresh CHANGELOG.(yaml|json) file
+    release             Create new section for release and move all items
+                        under unreleased to it - requires a
+                        CHANGELOG.(yaml|json) file. Will regenerate the
+                        CHANGELOG.md file after
+    check               Check that the current branch touches the changelog -
+                        passes if the diff against the base ref contains
+                        changes to the changelog data file or the changelog
+                        fragments directory
+
+</code></pre>
+<h4 id="generate">generate</h4>
+<pre><code class="language-sh">usage: ctl changelog generate [-h] [--print] [--data-file DATA_FILE]
+                              [--md-file MD_FILE]
+
+options:
+  -h, --help            show this help message and exit
+
+  --print               if set no file will be generated and output will be
+                        printed to console instead.
+  --data-file DATA_FILE
+                        path to a changelog data file (CHANGELOG.yaml)
+  --md-file MD_FILE     path to a changelog markdown file (CHANGELOG.md)
+
+</code></pre>
+<h4 id="generate_datafile">generate_datafile</h4>
+<pre><code class="language-sh">usage: ctl changelog generate_datafile [-h] [--print] [--data-file DATA_FILE]
+                                       [--md-file MD_FILE]
+
+options:
+  -h, --help            show this help message and exit
+
+  --print               if set no file will be generated and output will be
+                        printed to console instead.
+  --data-file DATA_FILE
+                        path to a changelog data file (CHANGELOG.yaml)
+  --md-file MD_FILE     path to a changelog markdown file (CHANGELOG.md)
+
+</code></pre>
+<h4 id="generate_clean">generate_clean</h4>
+<pre><code class="language-sh">usage: ctl changelog generate_clean [-h] [--data-file DATA_FILE]
+
+options:
+  -h, --help            show this help message and exit
+  --data-file DATA_FILE
+                        path to a changelog data file (CHANGELOG.yaml)
+
+</code></pre>
+<h4 id="release">release</h4>
+<pre><code class="language-sh">usage: ctl changelog release [-h] [--data-file DATA_FILE] version
+
+positional arguments:
+  version               release version
+
+options:
+  -h, --help            show this help message and exit
+  --data-file DATA_FILE
+                        path to a changelog data file (CHANGELOG.yaml)
+
+</code></pre>
+<h4 id="check">check</h4>
+<pre><code class="language-sh">usage: ctl changelog check [-h] [--base BASE] [--data-file DATA_FILE]
+
+options:
+  -h, --help            show this help message and exit
+  --base BASE           git ref to diff against - if not specified the branch
+                        reported by the CI environment is used, falling back
+                        to the first of origin/HEAD, origin/main,
+                        origin/master that resolves
+  --data-file DATA_FILE
+                        path to a changelog data file (CHANGELOG.yaml)
+
+</code></pre>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
